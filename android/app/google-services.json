@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "429962499757",
+    "project_id": "shizen-app",
+    "storage_bucket": "shizen-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429962499757:android:5103c88fdb882032ad9824",
+        "android_client_info": {
+          "package_name": "com.example.shizen_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "429962499757-kkkfo7797ots4dn1m0gudrpsl5vp678t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.shizen_app",
+            "certificate_hash": "7bde2c47b0ba0523bc62425b291fb10a02d387a9"
+          }
+        },
+        {
+          "client_id": "429962499757-qusfdvcj9hkfbo8emccn6l0a0vtqtii4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPA6r9kM9W0pAjufZvLKBy-UoYkT_mHfI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "429962499757-qusfdvcj9hkfbo8emccn6l0a0vtqtii4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
