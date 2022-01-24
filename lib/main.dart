@@ -3,11 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import './themes/custom_theme.dart';
 
-import './constants/words.dart';
-import './constants/images.dart';
+import './utils/words.dart';
+import './utils/images.dart';
 
 import './splashscreen.dart';
 import './modules/signup/signup.dart';
+import './modules/login/login.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,11 +30,14 @@ class MyApp extends StatelessWidget {
         }
 
         if (snapshot.connectionState == ConnectionState.done) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Shizen',
-            theme: CustomTheme.lightTheme,
-            home: IntroScreen(),
+          return GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'Shizen',
+              theme: CustomTheme.lightTheme,
+              home: IntroScreen(),
+            ),
           );
         }
 
@@ -63,7 +67,7 @@ class _WelcomePageState extends State<WelcomePage> {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 100, 8, 100),
+          padding: const EdgeInsets.fromLTRB(8, 120, 8, 0),
           child: Column(
             // Invoke "debug painting" (press "p" in the console, choose the
             // "Toggle Debug Paint" action from the Flutter Inspector in Android
@@ -92,8 +96,14 @@ class _WelcomePageState extends State<WelcomePage> {
                   minimumSize:
                       Size((MediaQuery.of(context).size.width * 0.65), 45),
                 ),
-                onPressed: () {},
-                child: Text(Words.buttonLogin,
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EmailLogIn(),
+                      ));
+                },
+                child: Text(Words.loginButton,
                     style: Theme.of(context).textTheme.bodyText1),
               ),
               Padding(
@@ -114,7 +124,7 @@ class _WelcomePageState extends State<WelcomePage> {
                         builder: (context) => EmailSignUp(),
                       ));
                 },
-                child: Text(Words.buttonSignup,
+                child: Text(Words.signupButton,
                     style: Theme.of(context).textTheme.bodyText1),
               ),
             ],

@@ -5,31 +5,23 @@ import 'package:flutter/material.dart';
 
 import '../../main.dart';
 
-class SignUpController {
+class LogInController {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore firstore = FirebaseFirestore.instance;
 
-  Future<void> registerToDb(
+  Future<void> logInToDb(
     TextEditingController emailController,
     TextEditingController passwordController,
-    TextEditingController nameController,
-    TextEditingController ageController,
     BuildContext context,
   ) async {
     await firebaseAuth
-        .createUserWithEmailAndPassword(
+        .signInWithEmailAndPassword(
             email: emailController.text, password: passwordController.text)
         .then((result) {
-      firestore.collection('users').doc(result.user!.uid).set({
-        'email': emailController.text,
-        'age': ageController.text,
-        'name': nameController.text,
-      }).then((res) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => WelcomePage()),
-        );
-      });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => WelcomePage()),
+      );
     }).catchError((err) {
       showDialog(
           context: context,

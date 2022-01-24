@@ -1,30 +1,27 @@
 import 'package:flutter/material.dart';
 import '../../utils/words.dart';
 import '../../themes/custom_theme.dart';
-import '../login/login.dart';
+import '../signup/signup.dart';
 import '../../main.dart';
 
-class SignupField extends StatelessWidget {
-  const SignupField({
+class LoginField extends StatelessWidget {
+  const LoginField({
     Key? key,
     required this.controller,
     required this.fieldText,
     required this.validator,
     this.widthPercentage = 1,
-    this.keyboardType,
     this.obscureText = false,
   }) : super(key: key);
 
   final TextEditingController controller;
   final String fieldText;
   final double widthPercentage;
-  final TextInputType? keyboardType;
   final bool obscureText;
   final String? Function(String?) validator;
 
   static String? emailValidator(String? value) {
     String valueString = value as String;
-    print(valueString);
     if (valueString.isEmpty) {
       return "Enter an Email Address";
     } else if (!valueString.contains('@')) {
@@ -43,25 +40,6 @@ class SignupField extends StatelessWidget {
     return null;
   }
 
-  static String? ageValidator(String? value) {
-    String valueString = value as String;
-    if (valueString.isEmpty) {
-      return "You have not filled anything in";
-    } else if (int.parse(valueString) > 130) {
-      return "That is not a realistic age!";
-    }
-    return null;
-  }
-
-  static String? normalValidator(String? value) {
-    String valueString = value as String;
-    if (valueString.isEmpty) {
-      return "You have not filled anything in";
-    } else {
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -70,7 +48,6 @@ class SignupField extends StatelessWidget {
         width: (MediaQuery.of(context).size.width * widthPercentage),
         child: TextFormField(
           controller: controller,
-          keyboardType: keyboardType,
           obscureText: obscureText,
           style: TextStyle(color: Color(0xff58865C)),
           decoration: InputDecoration(
@@ -80,7 +57,6 @@ class SignupField extends StatelessWidget {
             enabledBorder: UnderlineInputBorder(
                 borderSide: const BorderSide(color: Color(0xff35566D))),
           ),
-          // The validator receives the text that the user has entered.
           validator: validator,
         ),
       ),
@@ -108,7 +84,7 @@ Widget cancelButton(BuildContext context) {
   );
 }
 
-Widget logInRedirect(BuildContext context) {
+Widget signUpRedirect(BuildContext context) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
@@ -122,10 +98,10 @@ Widget logInRedirect(BuildContext context) {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EmailLogIn(),
+                  builder: (context) => EmailSignUp(),
                 ));
           },
-          child: Text(Words.loginButton,
+          child: Text(Words.signupButton,
               style: Theme.of(context).textTheme.bodyText2)),
     ],
   );

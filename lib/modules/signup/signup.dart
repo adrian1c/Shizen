@@ -1,13 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
-
 import 'package:flutter/material.dart';
 
-import '../../main.dart';
 import './widgets.dart';
 import './controller.dart';
-import '../../constants/words.dart';
+import '../../utils/words.dart';
 import '../../themes/custom_theme.dart';
 
 class EmailSignUp extends StatefulWidget {
@@ -25,6 +20,15 @@ class _EmailSignUpState extends State<EmailSignUp> {
   final _formKey = GlobalKey<FormState>();
 
   @override
+  void dispose() {
+    super.dispose();
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    ageController.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
         decoration: BoxDecoration(color: Color(0xffF3F7F9)),
@@ -35,9 +39,8 @@ class _EmailSignUpState extends State<EmailSignUp> {
             child: Column(
               children: <Widget>[
                 Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(
-                      top: 30.0, left: 20.0, bottom: 30.0),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.only(top: 30.0, bottom: 30.0),
                   child: Text(
                     Words.signupDesc,
                     style: CustomTheme.lightTheme.textTheme.headline2,
@@ -48,111 +51,89 @@ class _EmailSignUpState extends State<EmailSignUp> {
                     child: SingleChildScrollView(
                         child: Column(children: <Widget>[
                       SignupField(
-                          nameController: emailController,
-                          fieldText: Words.signupFieldEmail,
-                          widthPercentage: 1),
+                        controller: emailController,
+                        fieldText: Words.emailField,
+                        validator: (String? value) =>
+                            SignupField.emailValidator(value),
+                      ),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           SignupField(
-                              nameController: nameController,
-                              fieldText: Words.signupFieldName,
-                              widthPercentage: 0.5),
+                            controller: nameController,
+                            fieldText: Words.signupFieldName,
+                            widthPercentage: 0.5,
+                            validator: (String? value) =>
+                                SignupField.normalValidator(value),
+                          ),
                           SignupField(
-                              nameController: ageController,
-                              fieldText: Words.signupFieldAge,
-                              widthPercentage: 0.25),
+                            controller: ageController,
+                            fieldText: Words.signupFieldAge,
+                            widthPercentage: 0.25,
+                            keyboardType: TextInputType.number,
+                            validator: (String? value) =>
+                                SignupField.ageValidator(value),
+                          ),
                         ],
                       ),
                       SignupField(
-                          nameController: passwordController,
-                          fieldText: Words.signupFieldPassword,
-                          widthPercentage: 1),
+                        controller: passwordController,
+                        fieldText: Words.passwordField,
+                        obscureText: true,
+                        validator: (String? value) =>
+                            SignupField.passwordValidator(value),
+                      ),
                       SignupField(
-                          nameController: confirmPasswordController,
-                          fieldText: Words.signupFieldConfirmPassword,
-                          widthPercentage: 1),
+                        controller: confirmPasswordController,
+                        fieldText: Words.signupFieldConfirmPassword,
+                        obscureText: true,
+                        validator: (String? value) =>
+                            SignupField.passwordValidator(value),
+                      ),
                       Padding(
                         padding: EdgeInsets.all(20.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 15.0),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints.tightFor(
-                                    width: 80, height: 35),
-                                child: ElevatedButton(
-                                    style: ButtonStyle(
-                                        backgroundColor:
-                                            MaterialStateProperty.all(
-                                                Color(0xffE7B76F)),
-                                        shape: MaterialStateProperty.all(
-                                            RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        20.0)))),
-                                    onPressed: () {
-                                      if (_formKey.currentState!.validate()) {
-                                        SignUpController().registerToDb(
-                                          emailController,
-                                          passwordController,
-                                          nameController,
-                                          ageController,
-                                          context,
-                                        );
-                                      }
-                                    },
-                                    child: Text('OK',
-                                        style: TextStyle(
-                                            fontSize: 20,
-                                            shadows: [
-                                              Shadow(
-                                                blurRadius: 2.0,
-                                                color: Color(0xff000000),
-                                                offset: Offset(1.0, 1.0),
-                                              )
-                                            ],
-                                            letterSpacing: 3.0))),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                primary: Color(0xff4B7586),
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10))),
+                                minimumSize: Size(
+                                    (MediaQuery.of(context).size.width * 0.65),
+                                    45),
                               ),
-                            ),
-                            TextButton(
                               onPressed: () {
-                                // Navigator.push(
-                                //     context,
-                                //     MaterialPageRoute(
-                                //       builder: (context) => EmailLogIn(),
-                                //     ));
+                                if (_formKey.currentState!.validate()) {
+                                  SignUpController().registerToDb(
+                                    emailController,
+                                    passwordController,
+                                    nameController,
+                                    ageController,
+                                    context,
+                                  );
+                                }
                               },
-                              child: Text(
-                                'BACK',
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    color: Color(0xffE7B76F),
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: 2.0,
-                                        color: Color(0xff000000),
-                                        offset: Offset(1.0, 1.0),
-                                      )
-                                    ]),
-                              ),
+                              child: Text(Words.submitButton,
+                                  style: Theme.of(context).textTheme.bodyText1),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: cancelButton(context),
                             ),
                           ],
                         ),
                       ),
-                    ])))
+                    ]))),
+                Padding(
+                  padding: const EdgeInsets.only(top: 50),
+                  child: logInRedirect(context),
+                ),
               ],
             ),
           ),
         ));
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    ageController.dispose();
   }
 }
