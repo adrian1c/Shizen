@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_splash_screen/easy_splash_screen.dart';
 import './main.dart';
-import './constants/images.dart';
+import './utils/images.dart';
 
 class IntroScreen extends StatelessWidget {
   Future<Widget> checkLogIn() async {
     User? result = FirebaseAuth.instance.currentUser;
     if (result != null) {
-      print("Yes");
       return Future.value(new WelcomePage());
     } else {
-      print("no");
       return Future.value(new WelcomePage());
     }
   }

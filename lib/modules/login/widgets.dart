@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
-import '../../utils/words.dart';
-import '../../themes/custom_theme.dart';
+import '../../utils/allUtils.dart';
 import '../signup/signup.dart';
 import '../../main.dart';
 
@@ -62,6 +60,44 @@ class LoginField extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget loginButton(
+  GlobalKey<FormState> _formKey,
+  BuildContext context,
+  TextEditingController emailController,
+  TextEditingController passwordController,
+  ValueNotifier _isLoading,
+) {
+  return ValueListenableBuilder(
+      valueListenable: _isLoading,
+      builder: (context, data, _) {
+        if (data != true) {
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: Color(0xff4B7586),
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10))),
+              minimumSize: Size((MediaQuery.of(context).size.width * 0.65), 45),
+            ),
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                _isLoading.value = true;
+                await Database().logInToDb(
+                  emailController,
+                  passwordController,
+                  context,
+                );
+                _isLoading.value = false;
+              }
+            },
+            child: Text(Words.enterButton,
+                style: Theme.of(context).textTheme.bodyText1),
+          );
+        }
+
+        return SpinKitWave(color: Color(0xff4B7586), size: 30);
+      });
 }
 
 Widget cancelButton(BuildContext context) {

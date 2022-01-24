@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
-import '../../utils/words.dart';
-import '../../themes/custom_theme.dart';
+import '../../utils/allUtils.dart';
 import '../login/login.dart';
 import '../../main.dart';
 
@@ -24,7 +22,6 @@ class SignupField extends StatelessWidget {
 
   static String? emailValidator(String? value) {
     String valueString = value as String;
-    print(valueString);
     if (valueString.isEmpty) {
       return "Enter an Email Address";
     } else if (!valueString.contains('@')) {
@@ -86,6 +83,48 @@ class SignupField extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget signupButton(
+  GlobalKey<FormState> _formKey,
+  BuildContext context,
+  TextEditingController emailController,
+  TextEditingController passwordController,
+  TextEditingController nameController,
+  TextEditingController ageController,
+  ValueNotifier _isLoading,
+) {
+  return ValueListenableBuilder(
+      valueListenable: _isLoading,
+      builder: (context, data, _) {
+        if (data != true) {
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: Color(0xff4B7586),
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10))),
+              minimumSize: Size((MediaQuery.of(context).size.width * 0.65), 45),
+            ),
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                _isLoading.value = true;
+                await Database().registerToDb(
+                  emailController,
+                  passwordController,
+                  nameController,
+                  ageController,
+                  context,
+                );
+                _isLoading.value = false;
+              }
+            },
+            child: Text(Words.submitButton,
+                style: Theme.of(context).textTheme.bodyText1),
+          );
+        }
+
+        return SpinKitWave(color: Color(0xff4B7586), size: 30);
+      });
 }
 
 Widget cancelButton(BuildContext context) {

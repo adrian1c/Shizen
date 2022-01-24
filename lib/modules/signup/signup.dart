@@ -1,9 +1,5 @@
-import 'package:flutter/material.dart';
-
+import '../../utils/allUtils.dart';
 import './widgets.dart';
-import './controller.dart';
-import '../../utils/words.dart';
-import '../../themes/custom_theme.dart';
 
 class EmailSignUp extends StatefulWidget {
   @override
@@ -18,6 +14,8 @@ class _EmailSignUpState extends State<EmailSignUp> {
   TextEditingController ageController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+
+  ValueNotifier _isLoading = ValueNotifier(false);
 
   @override
   void dispose() {
@@ -95,29 +93,14 @@ class _EmailSignUpState extends State<EmailSignUp> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                primary: Color(0xff4B7586),
-                                shape: const RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10))),
-                                minimumSize: Size(
-                                    (MediaQuery.of(context).size.width * 0.65),
-                                    45),
-                              ),
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  SignUpController().registerToDb(
-                                    emailController,
-                                    passwordController,
-                                    nameController,
-                                    ageController,
-                                    context,
-                                  );
-                                }
-                              },
-                              child: Text(Words.submitButton,
-                                  style: Theme.of(context).textTheme.bodyText1),
+                            signupButton(
+                              _formKey,
+                              context,
+                              emailController,
+                              passwordController,
+                              nameController,
+                              ageController,
+                              _isLoading,
                             ),
                             Padding(
                               padding: const EdgeInsets.only(top: 30),

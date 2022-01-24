@@ -1,10 +1,5 @@
-import 'package:flutter/material.dart';
-
+import '../../utils/allUtils.dart';
 import './widgets.dart';
-import './controller.dart';
-import '../../utils/images.dart';
-import '../../utils/words.dart';
-import '../../themes/custom_theme.dart';
 
 class EmailLogIn extends StatefulWidget {
   @override
@@ -16,6 +11,15 @@ class _EmailLogInState extends State<EmailLogIn> {
   TextEditingController passwordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+
+  ValueNotifier _isLoading = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    super.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,29 +64,12 @@ class _EmailLogInState extends State<EmailLogIn> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  primary: Color(0xff4B7586),
-                                  shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(10))),
-                                  minimumSize: Size(
-                                      (MediaQuery.of(context).size.width *
-                                          0.65),
-                                      45),
-                                ),
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    LogInController().logInToDb(
-                                      emailController,
-                                      passwordController,
-                                      context,
-                                    );
-                                  }
-                                },
-                                child: Text(Words.enterButton,
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1),
+                              loginButton(
+                                _formKey,
+                                context,
+                                emailController,
+                                passwordController,
+                                _isLoading,
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(top: 30),
