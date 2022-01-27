@@ -2,9 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 
 import './utils/allUtils.dart';
 
-import './splashscreen.dart';
 import './modules/signup/signup.dart';
 import './modules/login/login.dart';
+import './modules/tasks/tasks.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +33,9 @@ class MyApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               title: 'Shizen',
               theme: CustomTheme.lightTheme,
-              home: IntroScreen(),
+              home: FirebaseAuth.instance.currentUser != null
+                  ? TaskPage(uid: FirebaseAuth.instance.currentUser!.uid)
+                  : WelcomePage(),
             ),
           );
         }
