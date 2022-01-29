@@ -17,6 +17,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).uid;
+    print(uid);
     return LogoutButton(uid: uid, context: context);
   }
 }

@@ -13,6 +13,8 @@ class AddTrackerTask extends StatefulWidget {
 class _AddTrackerTaskState extends State<AddTrackerTask> {
   @override
   Widget build(BuildContext context) {
+    print(Provider.of<UserProvider>(context).uid);
+
     return Container(child: Text("Hey this is tracker nice"));
   }
 }

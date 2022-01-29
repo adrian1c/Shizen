@@ -57,8 +57,7 @@ class _AddToDoTaskState extends State<AddToDoTask> {
 
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
-
+    print(Provider.of<UserProvider>(context).uid);
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 

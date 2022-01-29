@@ -57,7 +57,9 @@ class LogoutButton extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(10))),
         minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
       ),
-      onPressed: () async => await Database(uid).signOut(context),
+      onPressed: () async =>
+          await Provider.of<UserProvider>(context, listen: false)
+              .signOut(context),
       child: Text("Logout", style: Theme.of(context).textTheme.bodyText1),
     );
   }

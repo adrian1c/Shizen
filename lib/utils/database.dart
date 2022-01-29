@@ -13,32 +13,6 @@ class Database {
 
   final String uid;
 
-  Future<void> signOut(context) async {
-    await firebaseAuth.signOut().then((result) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => WelcomePage()),
-      );
-    }).catchError((err) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Error"),
-              content: Text(err.message),
-              actions: [
-                TextButton(
-                  child: Text("Ok"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-            );
-          });
-    });
-  }
-
   Stream getToDoTasks() {
     return firestore
         .collection('users')

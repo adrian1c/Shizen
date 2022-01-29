@@ -65,45 +65,6 @@ class LoginField extends StatelessWidget {
   }
 }
 
-Future<void> logInToDb(
-  TextEditingController emailController,
-  TextEditingController passwordController,
-  BuildContext context,
-) async {
-  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
-
-  await firebaseAuth
-      .signInWithEmailAndPassword(
-          email: emailController.text, password: passwordController.text)
-      .then((result) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) =>
-            MainScaffoldStack(uid: result.user!.uid),
-      ),
-      (route) => false,
-    );
-  }).catchError((err) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Error"),
-            content: Text(err.message),
-            actions: [
-              TextButton(
-                child: Text("Ok"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          );
-        });
-  });
-}
-
 Widget loginButton(
   GlobalKey<FormState> _formKey,
   BuildContext context,
@@ -125,7 +86,8 @@ Widget loginButton(
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 _isLoading.value = true;
-                await logInToDb(
+                await Provider.of<UserProvider>(context, listen: false)
+                    .logInToDb(
                   emailController,
                   passwordController,
                   context,

@@ -9,7 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  runApp(ChangeNotifierProvider<UserProvider>(
+      lazy: false, create: (context) => UserProvider(), child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -33,9 +34,9 @@ class MyApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               title: 'Shizen',
               theme: CustomTheme.lightTheme,
-              home: FirebaseAuth.instance.currentUser != null
+              home: Provider.of<UserProvider>(context).checkLoggedIn()
                   ? MainScaffoldStack(
-                      uid: FirebaseAuth.instance.currentUser!.uid)
+                      uid: Provider.of<UserProvider>(context).uid)
                   : WelcomePage(),
             ),
           );
