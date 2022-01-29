@@ -1,7 +1,6 @@
 import 'package:shizen_app/utils/allUtils.dart';
+import 'package:shizen_app/widgets/button.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
-import 'package:collection/collection.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 
 class AddToDoTask extends StatefulWidget {
   AddToDoTask({Key? key}) : super(key: key);
@@ -58,6 +57,8 @@ class _AddToDoTaskState extends State<AddToDoTask> {
 
   @override
   Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).uid;
+
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 
@@ -192,11 +193,14 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        createButton(),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text("Cancel"),
-                        ),
+                        CreateButton(onPressed: () {
+                          print("$isRecur $isReminder $isDeadline");
+                          print("$recurListValue $reminderTime $deadlineDate");
+                        }),
+                        CancelButton(onPressed: () {
+                          Navigator.of(context).pop();
+                          print("Test");
+                        }),
                       ],
                     ),
                   ),
@@ -284,16 +288,6 @@ class _AddToDoTaskState extends State<AddToDoTask> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget createButton() {
-    return ElevatedButton(
-      onPressed: () {
-        print("$isRecur $isReminder $isDeadline");
-        print("$recurListValue $reminderTime $deadlineDate");
-      },
-      child: Text("Create"),
     );
   }
 }

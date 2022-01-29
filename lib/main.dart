@@ -1,10 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 
-import './utils/allUtils.dart';
+import 'package:shizen_app/utils/allUtils.dart';
 
 import './modules/signup/signup.dart';
 import './modules/login/login.dart';
-import './modules/tasks/tasks.dart';
 import './mainScaffoldStack.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 

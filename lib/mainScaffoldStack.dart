@@ -3,6 +3,8 @@ import 'package:shizen_app/utils/allUtils.dart';
 import './modules/tasks/tasks.dart';
 import './modules/friends/friends.dart';
 import './modules/community/community.dart';
+import './modules/progress/progress.dart';
+import './modules/profile/profile.dart';
 import './models/provider.dart';
 
 class MainScaffoldStack extends StatefulWidget {
@@ -80,9 +82,13 @@ class _MainScaffoldStackState extends State<MainScaffoldStack> {
               selectedIndex = index;
             }),
           ),
-          body: IndexedStack(
-              index: selectedIndex,
-              children: <Widget>[TaskPage(), FriendsPage(), CommunityPage()])),
+          body: IndexedStack(index: selectedIndex, children: <Widget>[
+            TaskPage(),
+            FriendsPage(),
+            CommunityPage(),
+            ProgressPage(),
+            ProfilePage(),
+          ])),
     );
   }
 }

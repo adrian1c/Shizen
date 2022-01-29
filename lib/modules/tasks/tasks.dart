@@ -1,7 +1,7 @@
+import 'package:shizen_app/widgets/button.dart';
+
 import './addtodo.dart';
 import './addtracker.dart';
-import 'package:provider/provider.dart';
-import '../../models/provider.dart';
 import '../../utils/allUtils.dart';
 import 'package:flutter_colorful_tab/flutter_colorful_tab.dart';
 
@@ -40,7 +40,7 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              //Text(uid),
+              Text(uid),
               ColorfulTabBar(
                 tabs: [
                   TabItem(color: Colors.red, title: Text('To Do')),
@@ -55,9 +55,6 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
                   trackerTask(uid),
                 ]),
               ),
-              ElevatedButton(
-                  onPressed: () async => await Database(uid).signOut(context),
-                  child: Text("Logout")),
               ElevatedButton(
                   onPressed: () {
                     Navigator.push(

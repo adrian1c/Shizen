@@ -42,39 +42,3 @@ class CustomTheme {
     );
   }
 }
-
-// getTabRoute(context, uid, index) {
-//   switch (index) {
-//     case 0:
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (context) => TaskPage(uid: uid)),
-//       );
-//       break;
-//     case 1:
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (context) => FriendsPage(uid: uid)),
-//       );
-//       break;
-//     case 2:
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (context) => CommunityPage(uid: uid)),
-//       );
-//       break;
-//     case 3:
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (context) => TaskPage(uid: uid)),
-//       );
-//       break;
-//     case 4:
-//       Navigator.pushReplacement(
-//         context,
-//         MaterialPageRoute(builder: (context) => TaskPage(uid: uid)),
-//       );
-//       break;
-//     default:
-//   }
-// }
