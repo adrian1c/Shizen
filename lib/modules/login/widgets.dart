@@ -2,6 +2,9 @@ import '../../utils/allUtils.dart';
 import '../signup/signup.dart';
 import '../../main.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../mainScaffoldStack.dart';
+
 class LoginField extends StatelessWidget {
   const LoginField({
     Key? key,
@@ -62,6 +65,45 @@ class LoginField extends StatelessWidget {
   }
 }
 
+Future<void> logInToDb(
+  TextEditingController emailController,
+  TextEditingController passwordController,
+  BuildContext context,
+) async {
+  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+
+  await firebaseAuth
+      .signInWithEmailAndPassword(
+          email: emailController.text, password: passwordController.text)
+      .then((result) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) =>
+            MainScaffoldStack(uid: result.user!.uid),
+      ),
+      (route) => false,
+    );
+  }).catchError((err) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Error"),
+            content: Text(err.message),
+            actions: [
+              TextButton(
+                child: Text("Ok"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        });
+  });
+}
+
 Widget loginButton(
   GlobalKey<FormState> _formKey,
   BuildContext context,
@@ -83,7 +125,7 @@ Widget loginButton(
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 _isLoading.value = true;
-                await Database().logInToDb(
+                await logInToDb(
                   emailController,
                   passwordController,
                   context,

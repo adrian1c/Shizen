@@ -4,86 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
-import '../../modules/tasks/tasks.dart';
 
 class Database {
+  Database(this.uid);
+
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  Future<void> registerToDb(
-    TextEditingController emailController,
-    TextEditingController passwordController,
-    TextEditingController nameController,
-    TextEditingController ageController,
-    BuildContext context,
-  ) async {
-    await firebaseAuth
-        .createUserWithEmailAndPassword(
-            email: emailController.text, password: passwordController.text)
-        .then((result) {
-      firestore.collection('users').doc(result.user!.uid).set({
-        'email': emailController.text,
-        'age': ageController.text,
-        'name': nameController.text,
-      }).then((res) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => WelcomePage()),
-        );
-      });
-    }).catchError((err) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Error"),
-              content: Text(err.message),
-              actions: [
-                TextButton(
-                  child: Text("Ok"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-            );
-          });
-    });
-  }
-
-  Future<void> logInToDb(
-    TextEditingController emailController,
-    TextEditingController passwordController,
-    BuildContext context,
-  ) async {
-    await firebaseAuth
-        .signInWithEmailAndPassword(
-            email: emailController.text, password: passwordController.text)
-        .then((result) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => TaskPage(uid: result.user!.uid)),
-      );
-    }).catchError((err) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Error"),
-              content: Text(err.message),
-              actions: [
-                TextButton(
-                  child: Text("Ok"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-            );
-          });
-    });
-  }
+  final String uid;
 
   Future<void> signOut(context) async {
     await firebaseAuth.signOut().then((result) {
@@ -111,7 +39,7 @@ class Database {
     });
   }
 
-  Stream getToDoTasks(uid) {
+  Stream getToDoTasks() {
     return firestore
         .collection('users')
         .doc(uid)
@@ -119,7 +47,7 @@ class Database {
         .snapshots();
   }
 
-  Stream getTrackerTasks(uid) {
+  Stream getTrackerTasks() {
     return firestore
         .collection('users')
         .doc(uid)

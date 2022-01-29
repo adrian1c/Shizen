@@ -5,6 +5,7 @@ import './utils/allUtils.dart';
 import './modules/signup/signup.dart';
 import './modules/login/login.dart';
 import './modules/tasks/tasks.dart';
+import './mainScaffoldStack.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 void main() {
@@ -34,7 +35,8 @@ class MyApp extends StatelessWidget {
               title: 'Shizen',
               theme: CustomTheme.lightTheme,
               home: FirebaseAuth.instance.currentUser != null
-                  ? TaskPage(uid: FirebaseAuth.instance.currentUser!.uid)
+                  ? MainScaffoldStack(
+                      uid: FirebaseAuth.instance.currentUser!.uid)
                   : WelcomePage(),
             ),
           );

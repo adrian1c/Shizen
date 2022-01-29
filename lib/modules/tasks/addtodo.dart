@@ -1,8 +1,11 @@
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:collection/collection.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 class AddToDoTask extends StatefulWidget {
+  AddToDoTask({Key? key}) : super(key: key);
+
   @override
   _AddToDoTaskState createState() => _AddToDoTaskState();
 }
@@ -189,11 +192,7 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        ElevatedButton(
-                          onPressed: () =>
-                              print("$isRecur $isReminder $isDeadline"),
-                          child: Text("Create"),
-                        ),
+                        createButton(),
                         ElevatedButton(
                           onPressed: () => Navigator.of(context).pop(),
                           child: Text("Cancel"),
@@ -285,6 +284,16 @@ class _AddToDoTaskState extends State<AddToDoTask> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget createButton() {
+    return ElevatedButton(
+      onPressed: () {
+        print("$isRecur $isReminder $isDeadline");
+        print("$recurListValue $reminderTime $deadlineDate");
+      },
+      child: Text("Create"),
     );
   }
 }
