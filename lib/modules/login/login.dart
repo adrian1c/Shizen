@@ -19,6 +19,7 @@ class _EmailLogInState extends State<EmailLogIn> {
     super.dispose();
     emailController.dispose();
     passwordController.dispose();
+    _isLoading.dispose();
   }
 
   @override

@@ -24,6 +24,7 @@ class _EmailSignUpState extends State<EmailSignUp> {
     emailController.dispose();
     passwordController.dispose();
     ageController.dispose();
+    _isLoading.dispose();
   }
 
   @override

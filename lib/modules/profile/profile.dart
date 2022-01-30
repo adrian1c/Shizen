@@ -9,6 +9,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  ValueNotifier _isLoading = ValueNotifier(false);
+
   @override
   void dispose() {
     super.dispose();
@@ -18,6 +20,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).uid;
     print(uid);
-    return LogoutButton(uid: uid, context: context);
+    return LogoutButton(
+      uid: uid,
+      context: context,
+      isLoading: _isLoading,
+    );
   }
 }

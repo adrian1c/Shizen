@@ -1,14 +1,16 @@
-class TodoTask {
+class ToDoTask {
+  String? key;
   String title = '';
   String desc = '';
-  final String dateCreated;
+  DateTime dateCreated = DateTime.now();
   Map<String, dynamic> settings = {
-    "isRecur": "0",
-    "isReminder": false,
-    "isDeadline": "0",
+    "recur": [],
+    "reminder": null,
+    "deadline": null,
   };
+  bool isComplete = false;
 
-  TodoTask(this.title, this.desc, this.dateCreated, this.settings);
+  ToDoTask(this.title, this.desc, this.settings);
 
   toJson() {
     return {
@@ -16,6 +18,7 @@ class TodoTask {
       'title': title,
       'desc': desc,
       'settings': settings,
+      'isComplete': isComplete,
     };
   }
 }

@@ -63,22 +63,26 @@ class _MainScaffoldStackState extends State<MainScaffoldStack> {
           title: Text(widget.title[selectedIndex]),
           centerTitle: true,
         ),
-        bottomNavigationBar: GNav(
-          rippleColor: Colors.grey[300]!,
-          hoverColor: Colors.grey[100]!,
-          gap: 5,
-          activeColor: Colors.white,
-          iconSize: 20,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          tabMargin: EdgeInsets.fromLTRB(5, 0, 5, 5),
-          duration: Duration(milliseconds: 400),
-          tabBackgroundColor: Colors.grey[850]!,
-          color: Colors.black,
-          tabs: widget.screens,
-          selectedIndex: selectedIndex,
-          onTabChange: (index) => setState(() {
-            selectedIndex = index;
-          }),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+              color: Colors.grey, borderRadius: BorderRadius.circular(20)),
+          child: GNav(
+            rippleColor: Colors.grey[300]!,
+            hoverColor: Colors.grey[100]!,
+            gap: 5,
+            activeColor: Colors.white,
+            iconSize: 20,
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            tabMargin: EdgeInsets.fromLTRB(5, 10, 5, 10),
+            duration: Duration(milliseconds: 400),
+            tabBackgroundColor: Colors.grey[850]!,
+            color: Colors.black,
+            tabs: widget.screens,
+            selectedIndex: selectedIndex,
+            onTabChange: (index) => setState(() {
+              selectedIndex = index;
+            }),
+          ),
         ),
         body: IndexedStack(index: selectedIndex, children: <Widget>[
           TaskPage(),

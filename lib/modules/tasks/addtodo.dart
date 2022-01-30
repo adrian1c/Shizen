@@ -1,3 +1,4 @@
+import 'package:shizen_app/models/todoTask.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
@@ -16,6 +17,13 @@ class _AddToDoTaskState extends State<AddToDoTask> {
   bool isRecur = false;
   bool isReminder = false;
   bool isDeadline = false;
+
+  Map<String, bool> validateFields = {
+    "titleValid": false,
+    "recurValid": true,
+    "reminderValid": true,
+    "deadlineValid": true,
+  };
 
   List recurListKey = [
     'Monday',
@@ -57,7 +65,7 @@ class _AddToDoTaskState extends State<AddToDoTask> {
 
   @override
   Widget build(BuildContext context) {
-    print(Provider.of<UserProvider>(context).uid);
+    String uid = Provider.of<UserProvider>(context).uid;
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 
@@ -95,9 +103,26 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                           "Recurring",
                           isRecur,
                           (value) {
-                            setState(() {
-                              isRecur = value;
-                            });
+                            if (!value) {
+                              setState(() {
+                                isRecur = value;
+                                recurListValue = [
+                                  false,
+                                  false,
+                                  false,
+                                  false,
+                                  false,
+                                  false,
+                                  false
+                                ];
+                                validateFields["recurValid"] = true;
+                              });
+                            } else {
+                              setState(() {
+                                isRecur = value;
+                                validateFields["recurValid"] = false;
+                              });
+                            }
                           },
                           () {
                             showDialog(
@@ -124,6 +149,18 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                                                           recurListValue[
                                                                   index] =
                                                               value ?? false;
+                                                          if (recurListValue
+                                                              .contains(true)) {
+                                                            setState(() =>
+                                                                validateFields[
+                                                                        "recurValid"] =
+                                                                    true);
+                                                          } else {
+                                                            setState(() =>
+                                                                validateFields[
+                                                                        "recurValid"] =
+                                                                    false);
+                                                          }
                                                         }));
                                                   },
                                                 ),
@@ -147,16 +184,29 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                           "Reminder",
                           isReminder,
                           (value) {
-                            setState(() {
-                              isReminder = value;
-                            });
+                            if (!value) {
+                              setState(() {
+                                isReminder = value;
+                                reminderTime = null;
+                                validateFields["reminderValid"] = true;
+                              });
+                            } else {
+                              setState(() {
+                                isReminder = value;
+                                validateFields["reminderValid"] = false;
+                              });
+                            }
                           },
                           () {
-                            DatePicker.showTimePicker(
+                            DatePicker.showDateTimePicker(
                               context,
-                              onConfirm: (time) =>
-                                  setState(() => reminderTime = time),
-                              showSecondsColumn: false,
+                              minTime: DateTime.now(),
+                              onConfirm: (time) {
+                                setState(() {
+                                  reminderTime = time;
+                                  validateFields["reminderValid"] = true;
+                                });
+                              },
                             );
                           },
                           reminderTime != null
@@ -169,16 +219,27 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                           "Deadline",
                           isDeadline,
                           (value) {
-                            setState(() {
-                              isDeadline = value;
-                            });
+                            if (!value) {
+                              setState(() {
+                                isDeadline = value;
+                                deadlineDate = null;
+                                validateFields["deadlineValid"] = true;
+                              });
+                            } else {
+                              setState(() {
+                                isDeadline = value;
+                                validateFields["deadlineValid"] = false;
+                              });
+                            }
                           },
                           () {
-                            DatePicker.showDateTimePicker(
-                              context,
-                              onConfirm: (date) =>
-                                  setState(() => deadlineDate = date),
-                            );
+                            DatePicker.showDateTimePicker(context,
+                                minTime: DateTime.now(), onConfirm: (date) {
+                              setState(() {
+                                deadlineDate = date;
+                                validateFields["deadlineValid"] = true;
+                              });
+                            });
                           },
                           deadlineDate != null
                               ? deadlineDate.toString()
@@ -192,10 +253,24 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        CreateButton(onPressed: () {
-                          print("$isRecur $isReminder $isDeadline");
-                          print("$recurListValue $reminderTime $deadlineDate");
-                        }),
+                        CreateButton(
+                          onPressed: !validateFields.containsValue(false)
+                              ? () async {
+                                  setState(() {
+                                    validateFields["title"] = false;
+                                  });
+                                  var newTask = ToDoTask(titleController.text,
+                                      descController.text, {
+                                    "recur": recurListValue,
+                                    "reminder": reminderTime,
+                                    "deadline": deadlineDate,
+                                  });
+                                  await Database(uid).addToDoTask(newTask);
+                                  Navigator.of(context).pop();
+                                }
+                              : () {},
+                          isValid: !validateFields.containsValue(false),
+                        ),
                         CancelButton(onPressed: () {
                           Navigator.of(context).pop();
                           print("Test");
@@ -221,6 +296,13 @@ class _AddToDoTaskState extends State<AddToDoTask> {
           enabledBorder: UnderlineInputBorder(
               borderSide: const BorderSide(color: Color(0xff35566D))),
         ),
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            setState(() => validateFields["titleValid"] = true);
+          } else {
+            setState(() => validateFields["titleValid"] = false);
+          }
+        },
         // The validator receives the text that the user has entered.
         validator: (value) {
           String valueString = value as String;
