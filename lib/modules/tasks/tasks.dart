@@ -14,6 +14,7 @@ class TaskPage extends StatefulWidget {
 
 class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
   late TabController _tabController;
+  ValueNotifier _isSwitching = ValueNotifier(true);
 
   @override
   void initState() {
@@ -23,6 +24,8 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
       vsync: this,
       initialIndex: 0,
     );
+    _tabController.addListener(_handleTabSelection);
+    _tabController.animation!.addListener(_handleTabAnimation);
   }
 
   @override
@@ -31,18 +34,32 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
     _tabController.dispose();
   }
 
+  void _handleTabAnimation() {
+    _tabController.animation!.value < 0.5
+        ? _isSwitching.value = true
+        : _isSwitching.value = false;
+  }
+
+  void _handleTabSelection() {
+    if (_tabController.index == 0) {
+      print(_tabController.index);
+      _isSwitching.value = true;
+    } else {
+      _isSwitching.value = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).uid;
     return SafeArea(
-      minimum: EdgeInsets.fromLTRB(8, 30, 8, 30),
+      minimum: EdgeInsets.fromLTRB(8, 10, 8, 0),
       child: Center(
         child: Stack(
           alignment: AlignmentDirectional.topCenter,
           children: <Widget>[
             Column(
               children: [
-                Text(uid),
                 ColorfulTabBar(
                   tabs: [
                     TabItem(color: Colors.red, title: Text('To Do')),
@@ -60,20 +77,25 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
               ],
             ),
             Positioned(
-              bottom: 0,
+              bottom: 20,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => _tabController.index == 0
+                          builder: (context) => _isSwitching.value
                               ? AddToDoTask()
                               : AddTrackerTask()));
                 },
-                child: //Using ValueNotifier is better than StatefulBuilder TODO IN FUTURE
-                    _tabController.index == 0
-                        ? Text("Add To Do Task")
-                        : Text("Add Tracker"),
+                child: ValueListenableBuilder(
+                    valueListenable: _isSwitching,
+                    builder: (context, data, _) {
+                      if (data == true) {
+                        return Text("Add To Do Task");
+                      } else {
+                        return Text("Add Tracker");
+                      }
+                    }),
               ),
             ),
           ],
@@ -88,11 +110,11 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
         builder: (context, AsyncSnapshot snapshot) {
           if (!snapshot.hasData) return const Text("Loading...");
 
-          return Container(
+          return Material(
             child: ListView.builder(
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
-                return toDoListTile(snapshot.data.docs, index);
+                return toDoListTile(snapshot.data.docs, index, uid);
               },
             ),
           );
@@ -111,33 +133,87 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
         });
   }
 
-  Widget toDoListTile(task, index) {
+  Widget toDoListTile(task, index, uid) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          Container(child: Text("Test")),
-          ListTile(
-            title: Text(task[index]["title"]),
-            subtitle: Text(task[index]["desc"]),
-            leading: Checkbox(
-              value: false,
-              onChanged: (value) {
-                print(value);
-              },
+      padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
+      child: ListTile(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(task[index]["title"]),
+            Row(
+              children: [
+                task[index]["settings"]["recur"].contains(true)
+                    ? Icon(Icons.repeat, color: Colors.blue, size: 20)
+                    : Icon(Icons.repeat, color: Colors.black26, size: 20),
+                task[index]["settings"]["reminder"] != null
+                    ? Icon(Icons.notifications_active,
+                        color: Colors.blue, size: 20)
+                    : Icon(Icons.notifications_active,
+                        color: Colors.black26, size: 20),
+                task[index]["settings"]["deadline"] != null
+                    ? Icon(Icons.alarm, color: Colors.blue, size: 20)
+                    : Icon(Icons.alarm, color: Colors.black26, size: 20)
+              ],
             ),
-            trailing: Container(
+          ],
+        ),
+        subtitle: task[index]["desc"] != ""
+            ? Container(
                 decoration: BoxDecoration(
-                  border: Border(
-                      left: BorderSide(color: Colors.grey[600]!, width: 1)),
+                    border: Border(
+                        top: BorderSide(color: Colors.grey[600]!, width: 1))),
+                child: Text(
+                  task[index]["desc"],
+                  maxLines: 2,
+                  overflow: TextOverflow.fade,
+                  softWrap: true,
                 ),
-                child:
-                    IconButton(onPressed: () {}, icon: Icon(Icons.camera_alt))),
-            horizontalTitleGap: 0,
-            contentPadding: EdgeInsets.only(left: 0),
-            tileColor: Colors.amber[400],
-          ),
-        ],
+              )
+            : null,
+        leading: Checkbox(
+          value: false,
+          onChanged: (value) {
+            print(value);
+          },
+        ),
+        onTap: () {
+          print("${task[index].id}");
+        },
+        onLongPress: () {
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Delete"),
+                  content: Text("Do you want to delete this task?"),
+                  actions: [
+                    TextButton(
+                      child: Text("Yes"),
+                      onPressed: () {
+                        Database(uid).deleteToDoTask(task[index].id);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                        child: Text("Cancel"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        })
+                  ],
+                );
+              });
+        },
+        trailing: Container(
+            decoration: BoxDecoration(
+              border:
+                  Border(left: BorderSide(color: Colors.grey[600]!, width: 1)),
+            ),
+            child: IconButton(onPressed: () {}, icon: Icon(Icons.camera_alt))),
+        horizontalTitleGap: 0,
+        contentPadding: EdgeInsets.all(0),
+        tileColor: Colors.amberAccent[200],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
