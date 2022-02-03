@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 
 import '../../utils/allUtils.dart';
+import './functions.dart';
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({Key? key}) : super(key: key);
@@ -27,8 +28,6 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
-    var itemList = List.generate(10, (int index) => "Index $index");
-
     String uid = Provider.of<UserProvider>(context).uid;
     return SafeArea(
         minimum: EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -54,33 +53,49 @@ class _FriendsPageState extends State<FriendsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.person_add_alt_1_rounded),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: Text("New Requests"),
-                          )
-                        ],
-                      ),
-                      newRequestArrow(itemList),
-                    ],
-                  ),
-                  newRequestBuilder(itemList),
-                  Row(
-                    children: [
-                      Text("You have 10 friends"),
-                    ],
-                  ),
-                  ListView.builder(
-                      physics: NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: itemList.length,
-                      itemBuilder: (context, index) {
-                        return friendListTile(index);
+                  FutureBuilder<Map<dynamic, dynamic>>(
+                      future: Database(uid).friendsPageData(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const Text("Loading");
+
+                        var newRequestData = snapshot.data!["newRequests"];
+                        var friendsData = snapshot.data!["friendsList"];
+
+                        return Column(
+                          children: [
+                            newRequestData.length > 0
+                                ? Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.person_add_alt_1_rounded),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: Text("New Requests"),
+                                          )
+                                        ],
+                                      ),
+                                      newRequestData.length > 2
+                                          ? newRequestArrow(newRequestData)
+                                          : Container(),
+                                    ],
+                                  )
+                                : Container(),
+                            newRequestData.length > 0
+                                ? newRequestBuilder(
+                                    newRequestData, friendsData, uid)
+                                : Text("You have no new requests"),
+                            Row(
+                              children: [
+                                Text("You have ${friendsData.length} friends"),
+                              ],
+                            ),
+                            friendsBuilder(friendsData, uid),
+                          ],
+                        );
                       }),
                 ],
               ),
@@ -140,16 +155,13 @@ class _FriendsPageState extends State<FriendsPage> {
                                   return Text("No results found");
                                 }
                                 return Material(
-                                  child: SizedBox(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.5,
-                                    child: ListView.builder(
-                                      itemCount: results.length,
-                                      itemBuilder: (context, index) {
-                                        return searchListTile(
-                                            results[index], uid);
-                                      },
-                                    ),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: results.length,
+                                    itemBuilder: (context, index) {
+                                      return searchListTile(
+                                          results[index], uid);
+                                    },
                                   ),
                                 );
                               }),
@@ -176,10 +188,6 @@ class _FriendsPageState extends State<FriendsPage> {
     return ValueListenableBuilder(
         valueListenable: _isExpanded,
         builder: (context, data, _) {
-          if (itemList.length < 3) {
-            return Container();
-          }
-
           if (data != true) {
             return IconButton(
                 onPressed: () {
@@ -196,39 +204,30 @@ class _FriendsPageState extends State<FriendsPage> {
         });
   }
 
-  Widget newRequestBuilder(itemList) {
+  Widget newRequestBuilder(itemList, friendsList, uid) {
     return ValueListenableBuilder(
         valueListenable: _isExpanded,
         builder: (context, data, _) {
-          if (data != true) {
-            return ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: 2,
-                itemBuilder: (context, index) {
-                  return newRequestListTile(index);
-                });
-          }
-
           return ListView.builder(
               physics: NeverScrollableScrollPhysics(),
               shrinkWrap: true,
-              itemCount: itemList.length,
+              itemCount:
+                  data != true && itemList.length > 2 ? 2 : itemList.length,
               itemBuilder: (context, index) {
-                return newRequestListTile(index);
+                return newRequestListTile(itemList, friendsList, index, uid);
               });
         });
   }
 
-  Widget newRequestListTile(index) {
+  Widget newRequestListTile(itemList, friendsList, index, uid) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
       child: Material(
         child: ListTile(
           contentPadding: const EdgeInsets.all(10),
-          title: Text("Jack Ng $index"),
+          title: Text("${itemList[index]["name"]}"),
           subtitle: Text(
-            "Bio of person $index this is a test to see if it wraps",
+            "${itemList[index]["email"]}",
             overflow: TextOverflow.ellipsis,
           ),
           trailing: SizedBox(
@@ -237,14 +236,24 @@ class _FriendsPageState extends State<FriendsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  onPressed: () {
+                  onPressed: () async {
                     print("Decline");
+                    await Database(uid)
+                        .declineFriendReq(itemList[index].id)
+                        .then((value) =>
+                            setState(() => itemList.removeAt(index)));
                   },
                   icon: Icon(Icons.cancel_outlined),
                 ),
                 IconButton(
-                  onPressed: () {
+                  onPressed: () async {
                     print("Accept");
+                    await Database(uid).acceptFriendReq(itemList[index].id);
+                    setState(() {
+                      itemList.removeAt(index);
+                      friendsList = friendsList;
+                    });
+                    print(friendsList);
                   },
                   icon: Icon(Icons.check),
                 ),
@@ -260,16 +269,30 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-  Widget friendListTile(index) {
+  Widget friendsBuilder(itemList, uid) {
+    return ListView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: itemList.length,
+        itemBuilder: (context, index) {
+          return friendListTile(itemList, index, uid);
+        });
+  }
+
+  Widget friendListTile(itemList, index, uid) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
       child: Material(
         child: ListTile(
           contentPadding: const EdgeInsets.all(10),
-          title: Text("Jack Ng $index"),
+          title: Text(
+            "${itemList[index]["name"]}",
+            style: TextStyle(color: Colors.white),
+          ),
           subtitle: Text(
-            "Bio of person $index this is a test to see if it wraps",
+            "${itemList[index]["email"]}",
             overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: Colors.white),
           ),
           trailing: IconButton(
             onPressed: () {
@@ -288,8 +311,15 @@ class _FriendsPageState extends State<FriendsPage> {
                                 },
                                 child: Text("View Profile")),
                             TextButton(
-                                onPressed: () {
+                                onPressed: () async {
                                   print("Remove");
+                                  await Database(uid)
+                                      .declineFriendReq(itemList[index].id)
+                                      .then((value) => setState(
+                                          () => itemList.removeAt(index)));
+                                  print(itemList);
+
+                                  Navigator.of(context).pop();
                                 },
                                 child: Text("Remove Friend")),
                             TextButton(
@@ -326,7 +356,8 @@ class _FriendsPageState extends State<FriendsPage> {
           ),
           trailing: IconButton(
             onPressed: () {
-              Database(uid).sendFriendReq(user);
+              Database(uid).sendFriendReq(user.id);
+              Navigator.of(context).pop();
             },
             icon: Icon(Icons.person_add),
           ),

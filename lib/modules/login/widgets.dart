@@ -128,7 +128,7 @@ Widget signUpRedirect(BuildContext context) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      Text(Words.signupFieldHaveAccount,
+      Text("Don't have an account?",
           style: Theme.of(context).textTheme.bodyText2),
       TextButton(
           style: TextButton.styleFrom(
