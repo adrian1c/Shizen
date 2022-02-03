@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 import '../../utils/allUtils.dart';
 import '../signup/signup.dart';
 import '../../main.dart';
@@ -13,6 +15,7 @@ class LoginField extends StatelessWidget {
     required this.validator,
     this.widthPercentage = 1,
     this.obscureText = false,
+    this.keyboardType,
   }) : super(key: key);
 
   final TextEditingController controller;
@@ -20,6 +23,7 @@ class LoginField extends StatelessWidget {
   final double widthPercentage;
   final bool obscureText;
   final String? Function(String?) validator;
+  final TextInputType? keyboardType;
 
   static String? emailValidator(String? value) {
     String valueString = value as String;
@@ -50,6 +54,10 @@ class LoginField extends StatelessWidget {
         child: TextFormField(
           controller: controller,
           obscureText: obscureText,
+          keyboardType: keyboardType,
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'\s')),
+          ],
           style: TextStyle(color: Color(0xff58865C)),
           decoration: InputDecoration(
             contentPadding: EdgeInsets.only(top: 0.0, left: 5.0),

@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 import '../../utils/allUtils.dart';
 import '../login/login.dart';
@@ -16,6 +17,7 @@ class SignupField extends StatelessWidget {
     this.widthPercentage = 1,
     this.keyboardType,
     this.obscureText = false,
+    this.inputFormatters = const [],
   }) : super(key: key);
 
   final TextEditingController controller;
@@ -24,6 +26,7 @@ class SignupField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final String? Function(String?) validator;
+  final List<TextInputFormatter> inputFormatters;
 
   static String? emailValidator(String? value) {
     String valueString = value as String;
@@ -41,6 +44,20 @@ class SignupField extends StatelessWidget {
       return "Enter password";
     } else if (valueString.length < 8) {
       return "Your password must be longer than 8 characters";
+    }
+    return null;
+  }
+
+  static String? confirmPasswordValidator(
+      String? passValue, String? confValue) {
+    String passVal = passValue as String;
+    String confVal = confValue as String;
+    if (confVal.isEmpty) {
+      return "Enter password";
+    } else if (confVal.length < 8) {
+      return "Your password must be longer than 8 characters";
+    } else if (confValue != passVal) {
+      return "The two passwords are not the same";
     }
     return null;
   }
@@ -74,6 +91,7 @@ class SignupField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          inputFormatters: inputFormatters,
           style: TextStyle(color: Color(0xff58865C)),
           decoration: InputDecoration(
             contentPadding: EdgeInsets.only(top: 0.0, left: 5.0),

@@ -120,6 +120,11 @@ class Database {
     };
 
     var friendsFields = await firestore.collection('friends').doc(uid).get();
+
+    if (!friendsFields.exists) {
+      return results;
+    }
+
     var friendsMap = friendsFields.data();
 
     if (friendsMap!.isEmpty) {

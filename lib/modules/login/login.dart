@@ -50,10 +50,12 @@ class _EmailLogInState extends State<EmailLogIn> {
                     child: SingleChildScrollView(
                       child: Column(children: <Widget>[
                         LoginField(
-                            controller: emailController,
-                            fieldText: Words.emailField,
-                            validator: (String? value) =>
-                                LoginField.emailValidator(value)),
+                          controller: emailController,
+                          fieldText: Words.emailField,
+                          validator: (String? value) =>
+                              LoginField.emailValidator(value),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
                         LoginField(
                             controller: passwordController,
                             fieldText: Words.passwordField,

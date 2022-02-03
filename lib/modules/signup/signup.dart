@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 import '../../utils/allUtils.dart';
 import './widgets.dart';
 
@@ -54,6 +56,10 @@ class _EmailSignUpState extends State<EmailSignUp> {
                         fieldText: Words.emailField,
                         validator: (String? value) =>
                             SignupField.emailValidator(value),
+                        keyboardType: TextInputType.emailAddress,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                        ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -64,6 +70,7 @@ class _EmailSignUpState extends State<EmailSignUp> {
                             widthPercentage: 0.5,
                             validator: (String? value) =>
                                 SignupField.normalValidator(value),
+                            keyboardType: TextInputType.name,
                           ),
                           SignupField(
                             controller: ageController,
@@ -72,6 +79,9 @@ class _EmailSignUpState extends State<EmailSignUp> {
                             keyboardType: TextInputType.number,
                             validator: (String? value) =>
                                 SignupField.ageValidator(value),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                           ),
                         ],
                       ),
@@ -81,13 +91,20 @@ class _EmailSignUpState extends State<EmailSignUp> {
                         obscureText: true,
                         validator: (String? value) =>
                             SignupField.passwordValidator(value),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                        ],
                       ),
                       SignupField(
                         controller: confirmPasswordController,
                         fieldText: Words.signupFieldConfirmPassword,
                         obscureText: true,
                         validator: (String? value) =>
-                            SignupField.passwordValidator(value),
+                            SignupField.confirmPasswordValidator(
+                                passwordController.text, value),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                        ],
                       ),
                       Padding(
                         padding: EdgeInsets.all(20.0),
