@@ -1,12 +1,11 @@
 import 'package:shizen_app/utils/allUtils.dart';
 
 class CancelButton extends StatelessWidget {
-  CancelButton({Key? key, this.onPressed}) : super(key: key);
-
-  final Function()? onPressed;
+  const CancelButton({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    print("Built cancelbutton");
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         primary: Color(0xffF24C4C),
@@ -14,7 +13,7 @@ class CancelButton extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(10))),
         minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
       ),
-      onPressed: onPressed,
+      onPressed: () => Navigator.of(context).pop(),
       child: Text(Words.cancelButton,
           style: Theme.of(context).textTheme.bodyText1),
     );
@@ -22,24 +21,29 @@ class CancelButton extends StatelessWidget {
 }
 
 class CreateButton extends StatelessWidget {
-  CreateButton({Key? key, required this.onPressed, required this.isValid})
+  const CreateButton({Key? key, required this.onPressed, required this.isValid})
       : super(key: key);
 
   final Function()? onPressed;
-  final bool isValid;
+  final ValueNotifier isValid;
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        primary: isValid ? Color(0xff4B7586) : Colors.grey[400],
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10))),
-        minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
-      ),
-      onPressed: onPressed,
-      child: Text("Create", style: Theme.of(context).textTheme.bodyText1),
-    );
+    print("Built CreateButton");
+    return ValueListenableBuilder(
+        valueListenable: isValid,
+        builder: (context, data, _) {
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: data != false ? Color(0xff4B7586) : Colors.grey[400],
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10))),
+              minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
+            ),
+            onPressed: onPressed,
+            child: Text("Create", style: Theme.of(context).textTheme.bodyText1),
+          );
+        });
   }
 }
 

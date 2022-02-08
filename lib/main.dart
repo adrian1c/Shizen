@@ -30,14 +30,18 @@ class MyApp extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.done) {
           return GestureDetector(
             onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              title: 'Shizen',
-              theme: CustomTheme.lightTheme,
-              home: Provider.of<UserProvider>(context).checkLoggedIn()
-                  ? MainScaffoldStack(
-                      uid: Provider.of<UserProvider>(context).uid)
-                  : WelcomePage(),
+            child: Sizer(
+              builder: (context, orientation, deviceType) {
+                return MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  title: 'Shizen',
+                  theme: CustomTheme.lightTheme,
+                  home: Provider.of<UserProvider>(context).checkLoggedIn()
+                      ? MainScaffoldStack(
+                          uid: Provider.of<UserProvider>(context).uid)
+                      : WelcomePage(),
+                );
+              },
             ),
           );
         }

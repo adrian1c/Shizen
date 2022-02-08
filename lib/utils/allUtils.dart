@@ -7,3 +7,4 @@ export 'package:flutter/material.dart';
 export 'package:google_nav_bar/google_nav_bar.dart';
 export 'package:provider/provider.dart';
 export 'package:shizen_app/models/provider.dart';
+export 'package:sizer/sizer.dart';

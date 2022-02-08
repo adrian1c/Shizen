@@ -14,9 +14,9 @@ class _AddToDoTaskState extends State<AddToDoTask> {
   TextEditingController titleController = TextEditingController();
   TextEditingController descController = TextEditingController();
 
-  bool isRecur = false;
-  bool isReminder = false;
-  bool isDeadline = false;
+  ValueNotifier isRecur = ValueNotifier(false);
+  ValueNotifier isReminder = ValueNotifier(false);
+  ValueNotifier isDeadline = ValueNotifier(false);
 
   Map<String, bool> validateFields = {
     "titleValid": false,
@@ -38,6 +38,8 @@ class _AddToDoTaskState extends State<AddToDoTask> {
 
   DateTime? reminderTime;
   DateTime? deadlineDate;
+
+  final ValueNotifier isValid = ValueNotifier(false);
 
   final _formKey = GlobalKey<FormState>();
 
@@ -63,8 +65,17 @@ class _AddToDoTaskState extends State<AddToDoTask> {
     return output;
   }
 
+  bool checkValidity(Map<String, bool> validateFields) {
+    bool isValid = false;
+    if (!validateFields.containsValue(false)) {
+      isValid = true;
+    }
+    return isValid;
+  }
+
   @override
   Widget build(BuildContext context) {
+    print("Built AddToDoTask");
     String uid = Provider.of<UserProvider>(context).uid;
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
@@ -104,24 +115,22 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                           isRecur,
                           (value) {
                             if (!value) {
-                              setState(() {
-                                isRecur = value;
-                                recurListValue = [
-                                  false,
-                                  false,
-                                  false,
-                                  false,
-                                  false,
-                                  false,
-                                  false
-                                ];
-                                validateFields["recurValid"] = true;
-                              });
+                              isRecur.value = value;
+                              setState(() => recurListValue = [
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    false
+                                  ]);
+                              validateFields["recurValid"] = true;
+                              isValid.value = checkValidity(validateFields);
                             } else {
-                              setState(() {
-                                isRecur = value;
-                                validateFields["recurValid"] = false;
-                              });
+                              isRecur.value = value;
+                              validateFields["recurValid"] = false;
+                              isValid.value = checkValidity(validateFields);
                             }
                           },
                           () {
@@ -144,24 +153,29 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                                                   value: recurListValue[index],
                                                   onChanged: (value) {
                                                     print(value);
-                                                    _setState(() =>
-                                                        setState(() {
-                                                          recurListValue[
-                                                                  index] =
-                                                              value ?? false;
-                                                          if (recurListValue
-                                                              .contains(true)) {
-                                                            setState(() =>
-                                                                validateFields[
-                                                                        "recurValid"] =
-                                                                    true);
-                                                          } else {
-                                                            setState(() =>
-                                                                validateFields[
-                                                                        "recurValid"] =
-                                                                    false);
-                                                          }
-                                                        }));
+                                                    _setState(() {
+                                                      setState(() {
+                                                        recurListValue[index] =
+                                                            value ?? false;
+                                                      });
+
+                                                      if (recurListValue
+                                                          .contains(true)) {
+                                                        validateFields[
+                                                                "recurValid"] =
+                                                            true;
+                                                        isValid.value =
+                                                            checkValidity(
+                                                                validateFields);
+                                                      } else {
+                                                        validateFields[
+                                                                "recurValid"] =
+                                                            false;
+                                                        isValid.value =
+                                                            checkValidity(
+                                                                validateFields);
+                                                      }
+                                                    });
                                                   },
                                                 ),
                                               );
@@ -185,16 +199,14 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                           isReminder,
                           (value) {
                             if (!value) {
-                              setState(() {
-                                isReminder = value;
-                                reminderTime = null;
-                                validateFields["reminderValid"] = true;
-                              });
+                              isReminder.value = value;
+                              setState(() => reminderTime = null);
+                              validateFields["reminderValid"] = true;
+                              isValid.value = checkValidity(validateFields);
                             } else {
-                              setState(() {
-                                isReminder = value;
-                                validateFields["reminderValid"] = false;
-                              });
+                              isReminder.value = value;
+                              validateFields["reminderValid"] = false;
+                              isValid.value = checkValidity(validateFields);
                             }
                           },
                           () {
@@ -202,10 +214,9 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                               context,
                               minTime: DateTime.now(),
                               onConfirm: (time) {
-                                setState(() {
-                                  reminderTime = time;
-                                  validateFields["reminderValid"] = true;
-                                });
+                                setState(() => reminderTime = time);
+                                validateFields["reminderValid"] = true;
+                                isValid.value = checkValidity(validateFields);
                               },
                             );
                           },
@@ -220,25 +231,22 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                           isDeadline,
                           (value) {
                             if (!value) {
-                              setState(() {
-                                isDeadline = value;
-                                deadlineDate = null;
-                                validateFields["deadlineValid"] = true;
-                              });
+                              isDeadline.value = value;
+                              setState(() => deadlineDate = null);
+                              validateFields["deadlineValid"] = true;
+                              isValid.value = checkValidity(validateFields);
                             } else {
-                              setState(() {
-                                isDeadline = value;
-                                validateFields["deadlineValid"] = false;
-                              });
+                              isDeadline.value = value;
+                              validateFields["deadlineValid"] = false;
+                              isValid.value = checkValidity(validateFields);
                             }
                           },
                           () {
                             DatePicker.showDateTimePicker(context,
                                 minTime: DateTime.now(), onConfirm: (date) {
-                              setState(() {
-                                deadlineDate = date;
-                                validateFields["deadlineValid"] = true;
-                              });
+                              setState(() => deadlineDate = date);
+                              validateFields["deadlineValid"] = true;
+                              isValid.value = checkValidity(validateFields);
                             });
                           },
                           deadlineDate != null
@@ -256,9 +264,8 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                         CreateButton(
                           onPressed: !validateFields.containsValue(false)
                               ? () async {
-                                  setState(() {
-                                    validateFields["title"] = false;
-                                  });
+                                  validateFields["title"] = false;
+                                  isValid.value = checkValidity(validateFields);
                                   var newTask = ToDoTask(titleController.text,
                                       descController.text, {
                                     "recur": recurListValue,
@@ -269,12 +276,9 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                                   Navigator.of(context).pop();
                                 }
                               : () {},
-                          isValid: !validateFields.containsValue(false),
+                          isValid: isValid,
                         ),
-                        CancelButton(onPressed: () {
-                          Navigator.of(context).pop();
-                          print("Test");
-                        }),
+                        const CancelButton(),
                       ],
                     ),
                   ),
@@ -284,6 +288,7 @@ class _AddToDoTaskState extends State<AddToDoTask> {
   }
 
   Widget titleTextField() {
+    print("Built titleTextField");
     return TextFormField(
         controller: titleController,
         style: TextStyle(color: Color(0xff58865C)),
@@ -298,9 +303,11 @@ class _AddToDoTaskState extends State<AddToDoTask> {
         ),
         onChanged: (value) {
           if (value.isNotEmpty) {
-            setState(() => validateFields["titleValid"] = true);
+            validateFields["titleValid"] = true;
+            isValid.value = checkValidity(validateFields);
           } else {
-            setState(() => validateFields["titleValid"] = false);
+            validateFields["titleValid"] = false;
+            isValid.value = checkValidity(validateFields);
           }
         },
         // The validator receives the text that the user has entered.
@@ -315,6 +322,8 @@ class _AddToDoTaskState extends State<AddToDoTask> {
   }
 
   Widget descTextField() {
+    print("Built descTextField");
+
     return TextFormField(
         controller: descController,
         style: TextStyle(color: Color(0xff58865C)),
@@ -339,36 +348,41 @@ class _AddToDoTaskState extends State<AddToDoTask> {
         });
   }
 
-  Widget isButton(width, icon, text, isValue, Function(bool)? switchFunction,
-      Function()? editFunction, data) {
-    return Column(
-      children: [
-        Container(
-          width: width * 0.25,
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10), color: Colors.blue),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                icon,
-                Text(text),
-                Switch(
-                  value: isValue,
-                  onChanged: switchFunction,
-                  activeTrackColor: Colors.lightGreenAccent,
-                  activeColor: Colors.green,
+  Widget isButton(width, icon, text, ValueNotifier isValue,
+      Function(bool)? switchFunction, Function()? editFunction, data) {
+    return ValueListenableBuilder(
+        valueListenable: isValue,
+        builder: (context, value, _) {
+          return Column(
+            children: [
+              Container(
+                width: width * 0.25,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.blue),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      icon,
+                      Text(text),
+                      Switch(
+                        value: isValue.value,
+                        onChanged: switchFunction,
+                        activeTrackColor: Colors.lightGreenAccent,
+                        activeColor: Colors.green,
+                      ),
+                      value == true
+                          ? IconButton(
+                              onPressed: editFunction, icon: Icon(Icons.edit))
+                          : Container(),
+                      value == true ? Text(data) : Container(),
+                    ],
+                  ),
                 ),
-                isValue == true
-                    ? IconButton(
-                        onPressed: editFunction, icon: Icon(Icons.edit))
-                    : Container(),
-                isValue == true ? Text(data) : Container(),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+              ),
+            ],
+          );
+        });
   }
 }

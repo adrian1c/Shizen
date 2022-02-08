@@ -112,6 +112,7 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
 
           return Material(
             child: ListView.builder(
+              physics: BouncingScrollPhysics(),
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
                 return toDoListTile(snapshot.data.docs, index, uid);
