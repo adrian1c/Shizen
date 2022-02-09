@@ -1,11 +1,12 @@
 import 'package:menu_button/menu_button.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
+import 'package:shizen_app/models/communityPost.dart';
 
 class AddNewPost extends StatefulWidget {
   AddNewPost({Key? key}) : super(key: key);
 
-  String selectedValue = 'Friends only';
+  static String visibilityValue = 'Friends Only';
 
   @override
   _AddNewPostState createState() => _AddNewPostState();
@@ -13,9 +14,17 @@ class AddNewPost extends StatefulWidget {
 
 class _AddNewPostState extends State<AddNewPost> {
   List<String> items = [
-    'Friends only',
+    'Friends Only',
     'Everyone',
     'Anonymous',
+  ];
+
+  final TextEditingController postDescController = TextEditingController();
+
+  final List<TextEditingController> hashtagController = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
   ];
 
   final ValueNotifier isValid = ValueNotifier(false);
@@ -23,16 +32,19 @@ class _AddNewPostState extends State<AddNewPost> {
   @override
   void initState() {
     super.initState();
+    AddNewPost.visibilityValue = 'Friends only';
   }
 
   @override
   void dispose() {
     super.dispose();
+    hashtagController[0].dispose();
+    hashtagController[1].dispose();
+    hashtagController[2].dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    print("Built AddNewPost");
     String uid = Provider.of<UserProvider>(context).uid;
 
     return Scaffold(
@@ -55,12 +67,14 @@ class _AddNewPostState extends State<AddNewPost> {
                         const Icon(Icons.visibility_sharp),
                         const Text("Visibility"),
                         DropdownVisibility(
-                            items: items, selectedValue: widget.selectedValue),
+                            items: items,
+                            visibilityValue: AddNewPost.visibilityValue),
                       ],
                     ),
                   ],
                 ),
-                PostDescField(isValid: isValid),
+                PostDescField(
+                    isValid: isValid, postDescController: postDescController),
                 Ink(
                   child: InkWell(
                     child: Padding(
@@ -80,24 +94,53 @@ class _AddNewPostState extends State<AddNewPost> {
                   ),
                 ),
                 Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 20, 50, 20),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.tag_rounded),
+                          const Text("Hashtag (max 3)"),
+                        ],
+                      ),
+                      Container(
+                        child: ListView.builder(
+                            physics: NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: hashtagController.length,
+                            itemBuilder: (context, index) {
+                              return HashtagField(
+                                  hashtagController: hashtagController[index]);
+                            }),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
                   padding: const EdgeInsets.fromLTRB(50, 20, 50, 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CreateButton(
-                        onPressed: isValid.value
-                            ? () async {
-                                // var newPost = CommunityPost(
-                                //     titleController.text, descController.text, {
-                                //   "recur": recurListValue,
-                                //   "reminder": reminderTime,
-                                //   "deadline": deadlineDate,
-                                // });
-                                // await Database(uid).addToDoTask(newTask);
-                                // Navigator.of(context).pop();
-                                print("Nice ${widget.selectedValue}");
-                              }
-                            : () {},
+                        onPressed: () async {
+                          final List<String> hashtags = [
+                            hashtagController[0].text,
+                            hashtagController[1].text,
+                            hashtagController[2].text,
+                          ];
+                          hashtags.removeWhere((item) => item == '');
+                          var newPost = CommunityPost(
+                            uid,
+                            postDescController.text,
+                            hashtags,
+                            AddNewPost.visibilityValue,
+                          );
+                          print(newPost.toJson());
+                          await Database(uid).addNewPost(newPost);
+                          Navigator.of(context).pop();
+                        },
                         isValid: isValid,
                       ),
                       const CancelButton(),
@@ -111,7 +154,6 @@ class _AddNewPostState extends State<AddNewPost> {
   }
 
   Future<dynamic> showAttach() {
-    print("Built popup");
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -161,14 +203,13 @@ class _AddNewPostState extends State<AddNewPost> {
   }
 }
 
-// ignore: must_be_immutable
 class DropdownVisibility extends StatefulWidget {
   DropdownVisibility(
-      {Key? key, required this.items, required this.selectedValue})
+      {Key? key, required this.items, required this.visibilityValue})
       : super(key: key);
 
   final List<String> items;
-  late String selectedValue;
+  final String visibilityValue;
 
   @override
   _DropdownVisibilityState createState() => _DropdownVisibilityState();
@@ -177,9 +218,8 @@ class DropdownVisibility extends StatefulWidget {
 class _DropdownVisibilityState extends State<DropdownVisibility> {
   @override
   Widget build(BuildContext context) {
-    print("Built dropdownVisibilty");
     return MenuButton<String>(
-      child: VisibilityItem(selectedValue: widget.selectedValue),
+      child: VisibilityItem(visibilityValue: AddNewPost.visibilityValue),
       items: widget.items,
       itemBuilder: (String value) => Container(
         height: 40,
@@ -188,26 +228,24 @@ class _DropdownVisibilityState extends State<DropdownVisibility> {
         child: Text(value),
       ),
       toggledChild: Container(
-        child: VisibilityItem(selectedValue: widget.selectedValue),
+        child: VisibilityItem(visibilityValue: widget.visibilityValue),
       ),
       onItemSelected: (String value) {
         setState(() {
-          widget.selectedValue = value;
+          AddNewPost.visibilityValue = value;
         });
       },
-      onMenuButtonToggle: (bool isToggle) {
-        print(isToggle);
-      },
+      onMenuButtonToggle: (bool isToggle) {},
       // showSelectedItemOnList: false,
     );
   }
 }
 
 class VisibilityItem extends StatefulWidget {
-  const VisibilityItem({Key? key, required this.selectedValue})
+  const VisibilityItem({Key? key, required this.visibilityValue})
       : super(key: key);
 
-  final String selectedValue;
+  final String visibilityValue;
 
   @override
   VisibilityItemState createState() => VisibilityItemState();
@@ -216,7 +254,6 @@ class VisibilityItem extends StatefulWidget {
 class VisibilityItemState extends State<VisibilityItem> {
   @override
   Widget build(BuildContext context) {
-    print("Built normalChildButton");
     return SizedBox(
       width: 125,
       height: 40,
@@ -226,7 +263,7 @@ class VisibilityItemState extends State<VisibilityItem> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Flexible(
-                child: Text(widget.selectedValue,
+                child: Text(AddNewPost.visibilityValue,
                     overflow: TextOverflow.ellipsis)),
             const SizedBox(
               width: 12,
@@ -247,30 +284,35 @@ class VisibilityItemState extends State<VisibilityItem> {
 }
 
 class PostDescField extends StatefulWidget {
-  const PostDescField({Key? key, required this.isValid}) : super(key: key);
+  PostDescField(
+      {Key? key, required this.isValid, required this.postDescController})
+      : super(key: key);
 
   final ValueNotifier isValid;
+  final TextEditingController postDescController;
 
   @override
   _PostDescFieldState createState() => _PostDescFieldState();
 }
 
 class _PostDescFieldState extends State<PostDescField> {
-  TextEditingController postDescController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
     super.dispose();
-    postDescController.dispose();
+    widget.postDescController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    print("Built PostDescField");
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
       child: TextFormField(
-          controller: postDescController,
+          controller: widget.postDescController,
           style: TextStyle(color: Color(0xff58865C)),
           keyboardType: TextInputType.multiline,
           maxLines: 10,
@@ -286,15 +328,12 @@ class _PostDescFieldState extends State<PostDescField> {
           ),
           // The validator receives the text that the user has entered.
           onChanged: (value) {
-            print(value);
             if (value != '') {
-              setState(() {
-                widget.isValid.value = true;
-              });
+              print("Not empty");
+              widget.isValid.value = true;
             } else {
-              setState(() {
-                widget.isValid.value = false;
-              });
+              print("Empty");
+              widget.isValid.value = false;
             }
           },
           validator: (value) {
@@ -305,6 +344,26 @@ class _PostDescFieldState extends State<PostDescField> {
               return null;
             }
           }),
+    );
+  }
+}
+
+class HashtagField extends StatefulWidget {
+  HashtagField({Key? key, required this.hashtagController}) : super(key: key);
+
+  final TextEditingController hashtagController;
+
+  @override
+  _HashtagFieldState createState() => _HashtagFieldState();
+}
+
+class _HashtagFieldState extends State<HashtagField> {
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.hashtagController,
+      decoration: InputDecoration(hintText: 'Hashtag'),
+      onChanged: (value) {},
     );
   }
 }

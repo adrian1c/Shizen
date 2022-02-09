@@ -152,4 +152,21 @@ class Database {
     print(results);
     return results;
   }
+
+  Future<void> addNewPost(communityPost) async {
+    print("Firing addToDoTask");
+    await firestore
+        .collection('posts')
+        .add(communityPost.toJson())
+        .whenComplete(() => print("Done"))
+        .catchError((e) => print(e));
+  }
+
+  Future<QuerySnapshot> getCommunityPost(filter) {
+    print("Firing getCommunityPost");
+    return firestore
+        .collection('posts')
+        .where('visibility', isEqualTo: filter)
+        .get();
+  }
 }

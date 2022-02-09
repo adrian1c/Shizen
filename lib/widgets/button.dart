@@ -40,7 +40,11 @@ class CreateButton extends StatelessWidget {
                   borderRadius: BorderRadius.all(Radius.circular(10))),
               minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
             ),
-            onPressed: onPressed,
+            onPressed: data != false
+                ? onPressed
+                : () {
+                    print("Not valid");
+                  },
             child: Text("Create", style: Theme.of(context).textTheme.bodyText1),
           );
         });
