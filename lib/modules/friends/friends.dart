@@ -62,6 +62,7 @@ class _FriendsPageState extends State<FriendsPage> {
                         var friendsData = snapshot.data!["friendsList"];
 
                         return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             newRequestData.length > 0
                                 ? Row(
@@ -88,6 +89,7 @@ class _FriendsPageState extends State<FriendsPage> {
                                 ? newRequestBuilder(
                                     newRequestData, friendsData, uid)
                                 : Text("You have no new requests"),
+                            Divider(),
                             Row(
                               children: [
                                 Text("You have ${friendsData.length} friends"),

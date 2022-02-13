@@ -19,6 +19,8 @@ class _CommunityPageState extends State<CommunityPage> {
     'Anonymous',
   ];
 
+  final TextEditingController hashtagController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +29,7 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   void dispose() {
     super.dispose();
+    hashtagController.dispose();
   }
 
   @override
@@ -60,6 +63,7 @@ class _CommunityPageState extends State<CommunityPage> {
                         children: [
                           Icon(Icons.tag_rounded),
                           Text("Hashtag"),
+                          HashtagFilter(hashtagController: hashtagController),
                         ],
                       ),
                     ],
@@ -118,7 +122,7 @@ class _CommunityPostListState extends State<CommunityPostList> {
               itemCount: snapshot.data.length,
               itemBuilder: (context, index) {
                 return Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                   child: PostListTile(postData: snapshot.data[index]),
                 );
               });
@@ -135,8 +139,11 @@ class PostListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Divider(),
         Row(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Placeholder(
               fallbackWidth: 5.h,
@@ -158,6 +165,21 @@ class PostListTile extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
           child: Text(postData['desc']),
         ),
+        postData['hashtags'].length > 0
+            ? Container(
+                width: 100.w,
+                height: 30,
+                child: ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: postData['hashtags'].length,
+                  itemBuilder: (context, index) {
+                    return Text('#${postData['hashtags'][index]}   ');
+                  },
+                ),
+              )
+            : Container(),
+        Divider(),
       ],
     );
   }
@@ -182,9 +204,10 @@ class _DropdownVisibilityState extends State<DropdownVisibility> {
       child: VisibilityItem(visibilityValue: CommunityPage.visibilityValue),
       items: widget.items,
       itemBuilder: (String value) => Container(
-        height: 40,
+        // height: 40,
+        width: 25.w,
         alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
         child: Text(value),
       ),
       toggledChild: Container(
@@ -217,10 +240,9 @@ class VisibilityItemState extends State<VisibilityItem> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 125,
-      height: 40,
+      width: 25.w,
       child: Padding(
-        padding: const EdgeInsets.only(left: 5, right: 5),
+        padding: const EdgeInsets.only(top: 5, bottom: 5, left: 5, right: 5),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -240,6 +262,39 @@ class VisibilityItemState extends State<VisibilityItem> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class HashtagFilter extends StatefulWidget {
+  HashtagFilter({Key? key, required this.hashtagController}) : super(key: key);
+
+  final TextEditingController hashtagController;
+
+  @override
+  _HashtagFilterState createState() => _HashtagFilterState();
+}
+
+class _HashtagFilterState extends State<HashtagFilter> {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 25.w,
+      child: TextField(
+        controller: widget.hashtagController,
+        maxLength: 20,
+        decoration: InputDecoration(
+          hintText: 'Hashtag',
+          contentPadding: EdgeInsets.all(5),
+          border: OutlineInputBorder(
+            borderRadius: new BorderRadius.circular(5.0),
+            borderSide: new BorderSide(),
+          ),
+        ),
+        onEditingComplete: () {
+          // Database(uid).getCommunityPost(filter, );
+        },
       ),
     );
   }

@@ -362,6 +362,7 @@ class _HashtagFieldState extends State<HashtagField> {
   Widget build(BuildContext context) {
     return TextField(
       controller: widget.hashtagController,
+      maxLength: 20,
       decoration: InputDecoration(hintText: 'Hashtag'),
       onChanged: (value) {},
     );

@@ -185,15 +185,26 @@ class Database {
 
     var batch = firestore.batch();
     var newPostDoc = firestore.collection('posts').doc();
-    await getCurrentUserData().then((value) {
-      var data = value.data()!;
+
+    if (visibility != 'Anonymous') {
+      await getCurrentUserData().then((value) {
+        var data = value.data()!;
+        var map = {
+          'email': data['email'],
+          'name': data['name'],
+          'age': data['age']
+        };
+        postData.addAll(map);
+      });
+    } else {
       var map = {
-        'email': data['email'],
-        'name': data['name'],
-        'age': data['age']
+        'email': 'anon@somewhere.com',
+        'name': 'Anonymous',
+        'age': '0'
       };
       postData.addAll(map);
-    });
+    }
+
     batch.set(newPostDoc, postData);
     batch.set(
         firestore.collection('users').doc(uid),
@@ -226,8 +237,10 @@ class Database {
 
     switch (filter) {
       case 'Everyone':
-        QuerySnapshot<Map<String, dynamic>> query =
-            await firestore.collection('posts').get();
+        QuerySnapshot<Map<String, dynamic>> query = await firestore
+            .collection('posts')
+            .where('uid', isNotEqualTo: uid)
+            .get();
         query.docs.forEach((doc) => results.add(doc.data()));
         return results;
       case 'Friends Only':
@@ -260,7 +273,12 @@ class Database {
         print(results);
         return results;
       case 'Anonymous':
-        break;
+        QuerySnapshot<Map<String, dynamic>> query = await firestore
+            .collection('posts')
+            .where('visibility', isEqualTo: filter)
+            .get();
+        query.docs.forEach((doc) => results.add(doc.data()));
+        return results;
     }
     return results;
   }
