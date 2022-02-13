@@ -54,6 +54,14 @@ class Database {
         .catchError((e) => print(e));
   }
 
+  //-----------------------------------------------------
+  //--------------     FRIENDS --------------------------
+  //-----------------------------------------------------
+  //
+  // KEY: 0 = Sent Request
+  //      1 = Received Request
+  //      2 = Accepted Friends
+
   Future<QuerySnapshot> getFriendSearch(email) {
     print("Firing getFriendSearch");
     return firestore
@@ -63,110 +71,208 @@ class Database {
         .get();
   }
 
-  //-----------------------------------------------------
-  //--------------     FRIENDS --------------------------
-  //-----------------------------------------------------
-  //
-  // KEY: 0 = Sent Request
-  //      1 = Received Request
-  //      2 = Accepted Friends
-
   Future<void> sendFriendReq(user) async {
     print("Firing sendFriendReq");
+
+    var userCollection = firestore.collection('users');
+
+    Map<String, dynamic> senderData = {'status': 1};
+    await getCurrentUserData()
+        .then((value) => senderData.addAll(value.data()!));
+
+    Map<String, dynamic> receiverData = {'status': 0};
+    await getUserProfileData(user)
+        .then((value) => receiverData.addAll(value.data()!));
+
     var batch = firestore.batch();
-    batch.update(firestore.collection('friends').doc(uid), {"$user": 0});
-    batch.update(firestore.collection('friends').doc(user), {"$uid": 1});
+    batch.set(
+        userCollection.doc(uid).collection('friends').doc(user), receiverData);
+    batch.set(
+        userCollection.doc(user).collection('friends').doc(uid), senderData);
     batch.commit();
   }
 
   Future<void> acceptFriendReq(user) async {
     print("Firing acceptFriendReq");
+
+    var userCollection = firestore.collection('users');
+
     var batch = firestore.batch();
-    batch.update(firestore.collection('friends').doc(user), {"$uid": 2});
-    batch.update(firestore.collection('friends').doc(uid), {"$user": 2});
+    batch.set(userCollection.doc(uid).collection('friends').doc(user),
+        {'status': 2}, SetOptions(merge: true));
+    batch.set(userCollection.doc(user).collection('friends').doc(uid),
+        {'status': 2}, SetOptions(merge: true));
     batch.commit();
   }
 
   Future<void> declineFriendReq(user) async {
     print("Firing declineFriendReq");
+
+    var userCollection = firestore.collection('users');
+
     var batch = firestore.batch();
-    batch.update(firestore.collection('friends').doc(user),
-        {"$uid": FieldValue.delete()});
-    batch.update(firestore.collection('friends').doc(uid),
-        {"$user": FieldValue.delete()});
+    batch.delete(userCollection.doc(user).collection('friends').doc(uid));
+    batch.delete(userCollection.doc(uid).collection('friends').doc(user));
     batch.commit();
   }
-
-  // Future<List<QuerySnapshot<Map<String, dynamic>>>> getProfileDetails(
-  //     chunks) async {
-  //   print("Firing getProfileDetails");
-  //   List<QuerySnapshot<Map<String, dynamic>>> profiles = [];
-  //   for (var i = 0; i < chunks.length; i++) {
-  //     profiles.add(await firestore
-  //         .collection('users')
-  //         .where(FieldPath.documentId, whereIn: chunks[i])
-  //         .get());
-  //   }
-  //   print("Test ${profiles.length}");
-  //   return profiles;
-  // }
 
   Future<Map<dynamic, dynamic>> friendsPageData() async {
     print("Firing friendsPageData");
 
+    var userCollection = firestore.collection('users');
+
     Map results = {
+      "sentRequests": [],
       "newRequests": [],
       "friendsList": [],
     };
 
-    var friendsFields = await firestore.collection('friends').doc(uid).get();
+    var friendsFields =
+        await userCollection.doc(uid).collection('friends').get();
 
-    if (!friendsFields.exists) {
+    if (friendsFields.docs.length < 1) {
+      return results;
+    }
+    var friendsMap = friendsFields.docs;
+
+    if (friendsMap.isEmpty) {
       return results;
     }
 
-    var friendsMap = friendsFields.data();
-
-    if (friendsMap!.isEmpty) {
-      return results;
-    }
-
-    List friendsList = friendsMap.keys.toList();
-    print(friendsList);
-
-    var profiles = await firestore
-        .collection('users')
-        .where(FieldPath.documentId, whereIn: friendsList)
-        .get();
-
-    profiles.docs.forEach((element) {
-      switch (friendsMap[element.id]) {
+    friendsMap.forEach((element) {
+      switch (element['status']) {
+        case 0:
+          results['sentRequests'].add(element);
+          break;
         case 1:
-          results["newRequests"].add(element);
+          results['newRequests'].add(element);
           break;
         case 2:
-          results["friendsList"].add(element);
+          results['friendsList'].add(element);
           break;
       }
     });
-    print(results);
+
     return results;
   }
 
-  Future<void> addNewPost(communityPost) async {
-    print("Firing addToDoTask");
-    await firestore
-        .collection('posts')
-        .add(communityPost.toJson())
-        .whenComplete(() => print("Done"))
-        .catchError((e) => print(e));
+  Future<List<String>> getAllFriendsID() async {
+    print("Firing getAllFriendsInList");
+    List<String> allFriends = [];
+
+    var userCollection = firestore.collection('users');
+
+    await userCollection.doc(uid).collection('friends').get().then((value) {
+      if (value.docs.length < 1) {
+        return allFriends;
+      }
+      value.docs.forEach((doc) {
+        if (doc['status'] == 2) {
+          allFriends.add(doc.id);
+        }
+      });
+    });
+    return allFriends;
   }
 
-  Future<QuerySnapshot> getCommunityPost(filter) {
+  //-----------------------------------------------------
+  //--------------  COMMUNITY  --------------------------
+  //-----------------------------------------------------
+  //
+
+  Future<void> addNewPost(Map<String, dynamic> postData, visibility) async {
+    print("Firing addNewPost");
+
+    var batch = firestore.batch();
+    var newPostDoc = firestore.collection('posts').doc();
+    await getCurrentUserData().then((value) {
+      var data = value.data()!;
+      var map = {
+        'email': data['email'],
+        'name': data['name'],
+        'age': data['age']
+      };
+      postData.addAll(map);
+    });
+    batch.set(newPostDoc, postData);
+    batch.set(
+        firestore.collection('users').doc(uid),
+        {
+          'posts': FieldValue.arrayUnion([newPostDoc.id])
+        },
+        SetOptions(merge: true));
+
+    if (visibility != 'Anonymous') {
+      List<String> friendsList = await getAllFriendsID();
+      friendsList.forEach((e) {
+        batch.set(
+            firestore.collection('users').doc(e),
+            {
+              'friendFeed': FieldValue.arrayUnion([newPostDoc.id])
+            },
+            SetOptions(merge: true));
+      });
+    }
+
+    batch.commit();
+  }
+
+  Future<List<Map<String, dynamic>>> getCommunityPost(filter) async {
+    // Can add parameter for lazy loading, count number of reloads then
+    //postIds sublist accordingly
     print("Firing getCommunityPost");
-    return firestore
-        .collection('posts')
-        .where('visibility', isEqualTo: filter)
-        .get();
+
+    List<Map<String, dynamic>> results = [];
+
+    switch (filter) {
+      case 'Everyone':
+        QuerySnapshot<Map<String, dynamic>> query =
+            await firestore.collection('posts').get();
+        query.docs.forEach((doc) => results.add(doc.data()));
+        return results;
+      case 'Friends Only':
+        var ids = await firestore
+            .collection('users')
+            .doc(uid)
+            .get()
+            .then((value) => value.data());
+        if (!ids!.containsKey('friendFeed')) return results;
+        var postIds = ids['friendFeed'];
+        var chunks = [];
+        for (var i = 0; i < postIds.length; i += 10) {
+          if (i + 10 > postIds.length) {
+            chunks.add(postIds.sublist(i));
+            break;
+          }
+          chunks.add(postIds.sublist(i, i + 10));
+        }
+
+        for (var element in chunks) {
+          var result = await firestore
+              .collection('posts')
+              .where(FieldPath.documentId, whereIn: element)
+              .get()
+              .then((value) {
+            value.docs.forEach((doc) => results.add(doc.data()));
+          });
+        }
+
+        print(results);
+        return results;
+      case 'Anonymous':
+        break;
+    }
+    return results;
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> getCurrentUserData() {
+    print("Firing getUserProfileData");
+    return firestore.collection('users').doc(uid).get();
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> getUserProfileData(
+      targetUserID) {
+    print("Firing getUserProfileData");
+    return firestore.collection('users').doc(targetUserID).get();
   }
 }

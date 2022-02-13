@@ -38,6 +38,7 @@ class _AddNewPostState extends State<AddNewPost> {
   @override
   void dispose() {
     super.dispose();
+    postDescController.dispose();
     hashtagController[0].dispose();
     hashtagController[1].dispose();
     hashtagController[2].dispose();
@@ -131,15 +132,15 @@ class _AddNewPostState extends State<AddNewPost> {
                             hashtagController[2].text,
                           ];
                           hashtags.removeWhere((item) => item == '');
-                          var newPost = CommunityPost(
+                          Map<String, dynamic> newPost = CommunityPost(
                             uid,
                             postDescController.text,
                             hashtags,
                             AddNewPost.visibilityValue,
-                          );
-                          print(newPost.toJson());
-                          await Database(uid).addNewPost(newPost);
-                          Navigator.of(context).pop();
+                          ).toJson();
+                          await Database(uid)
+                              .addNewPost(newPost, AddNewPost.visibilityValue)
+                              .then((value) => Navigator.of(context).pop());
                         },
                         isValid: isValid,
                       ),
@@ -304,7 +305,6 @@ class _PostDescFieldState extends State<PostDescField> {
   @override
   void dispose() {
     super.dispose();
-    widget.postDescController.dispose();
   }
 
   @override

@@ -115,14 +115,51 @@ class _CommunityPostListState extends State<CommunityPostList> {
           return ListView.builder(
               physics: BouncingScrollPhysics(),
               shrinkWrap: true,
-              itemCount: snapshot.data.docs.length,
+              itemCount: snapshot.data.length,
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: Text(snapshot.data.docs[index]["desc"]),
+                  child: PostListTile(postData: snapshot.data[index]),
                 );
               });
         });
+  }
+}
+
+class PostListTile extends StatelessWidget {
+  const PostListTile({Key? key, required this.postData}) : super(key: key);
+
+  final postData;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Placeholder(
+              fallbackWidth: 5.h,
+              fallbackHeight: 5.h,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(postData['name']),
+                  Text(postData['email']),
+                ],
+              ),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+          child: Text(postData['desc']),
+        ),
+      ],
+    );
   }
 }
 
