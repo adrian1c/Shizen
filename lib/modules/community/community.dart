@@ -52,7 +52,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       Row(
                         children: [
                           Icon(Icons.visibility),
-                          Text("Display"),
+                          Text("Display", style: TextStyle(fontSize: 15.sp)),
                           DropdownVisibility(
                             items: items,
                             visibilityValue: CommunityPage.visibilityValue,
@@ -62,7 +62,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       Row(
                         children: [
                           Icon(Icons.tag_rounded),
-                          Text("Hashtag"),
+                          Text("Hashtag", style: TextStyle(fontSize: 15.sp)),
                           HashtagFilter(hashtagController: hashtagController),
                         ],
                       ),
@@ -174,7 +174,8 @@ class PostListTile extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   itemCount: postData['hashtags'].length,
                   itemBuilder: (context, index) {
-                    return Text('#${postData['hashtags'][index]}   ');
+                    return Text('#${postData['hashtags'][index]}   ',
+                        style: TextStyle(fontSize: 13.sp));
                   },
                 ),
               )
@@ -208,7 +209,7 @@ class _DropdownVisibilityState extends State<DropdownVisibility> {
         width: 25.w,
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-        child: Text(value),
+        child: Text(value, style: TextStyle(fontSize: 13.sp)),
       ),
       toggledChild: Container(
         child: VisibilityItem(visibilityValue: widget.visibilityValue),
@@ -248,7 +249,8 @@ class VisibilityItemState extends State<VisibilityItem> {
           children: <Widget>[
             Flexible(
                 child: Text(CommunityPage.visibilityValue,
-                    overflow: TextOverflow.ellipsis)),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13.sp))),
             const SizedBox(
               width: 12,
               height: 17,

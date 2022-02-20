@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
 import 'package:shizen_app/models/todoTask.dart';
+import 'package:path/path.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 
 class Database {
   Database(this.uid);
@@ -292,5 +297,30 @@ class Database {
       targetUserID) {
     print("Firing getUserProfileData");
     return firestore.collection('users').doc(targetUserID).get();
+  }
+
+  Future uploadProfilePic(BuildContext context, image) async {
+    print("Firing uploadProfilePic");
+
+    context.loaderOverlay.show();
+
+    var userCollection = firestore.collection('users');
+
+    File imageFile = image;
+    FirebaseStorage storage = FirebaseStorage.instance;
+    final fileName = basename(imageFile.path);
+    final destination = 'files/$fileName';
+
+    try {
+      final ref = storage.ref(destination).child(uid);
+      await ref.putFile(imageFile);
+      await userCollection
+          .doc(uid)
+          .set({'image': await ref.getDownloadURL()}, SetOptions(merge: true));
+    } catch (e) {
+      print(e);
+    }
+
+    context.loaderOverlay.hide();
   }
 }

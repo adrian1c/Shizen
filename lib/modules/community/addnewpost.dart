@@ -1,53 +1,28 @@
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:menu_button/menu_button.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
 import 'package:shizen_app/models/communityPost.dart';
+export 'package:flutter_hooks/flutter_hooks.dart';
 
-class AddNewPost extends StatefulWidget {
-  AddNewPost({Key? key}) : super(key: key);
-
-  static String visibilityValue = 'Friends Only';
-
-  @override
-  _AddNewPostState createState() => _AddNewPostState();
-}
-
-class _AddNewPostState extends State<AddNewPost> {
-  List<String> items = [
+class AddNewPost extends HookWidget {
+  final List<String> items = [
     'Friends Only',
     'Everyone',
     'Anonymous',
   ];
 
-  final TextEditingController postDescController = TextEditingController();
-
-  final List<TextEditingController> hashtagController = [
-    TextEditingController(),
-    TextEditingController(),
-    TextEditingController(),
-  ];
-
-  final ValueNotifier isValid = ValueNotifier(false);
-
-  @override
-  void initState() {
-    super.initState();
-    AddNewPost.visibilityValue = 'Friends only';
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    postDescController.dispose();
-    hashtagController[0].dispose();
-    hashtagController[1].dispose();
-    hashtagController[2].dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
-
+    final ValueNotifier visibilityValue = useValueNotifier('Friends Only');
+    final ValueNotifier isValid = useValueNotifier(false);
+    final TextEditingController postDescController = useTextEditingController();
+    final List<TextEditingController> hashtagController = [
+      useTextEditingController(),
+      useTextEditingController(),
+      useTextEditingController(),
+    ];
+    final String uid = Provider.of<UserProvider>(context).uid;
     return Scaffold(
         appBar: AppBar(
           title: const Text("New Post"),
@@ -67,9 +42,13 @@ class _AddNewPostState extends State<AddNewPost> {
                       children: [
                         const Icon(Icons.visibility_sharp),
                         const Text("Visibility"),
-                        DropdownVisibility(
-                            items: items,
-                            visibilityValue: AddNewPost.visibilityValue),
+                        ValueListenableBuilder(
+                            valueListenable: visibilityValue,
+                            builder: (context, data, _) {
+                              return DropdownVisibility(
+                                  items: items,
+                                  visibilityValue: visibilityValue);
+                            }),
                       ],
                     ),
                   ],
@@ -90,7 +69,7 @@ class _AddNewPostState extends State<AddNewPost> {
                       ),
                     ),
                     onTap: () {
-                      showAttach();
+                      showAttach(context);
                     },
                   ),
                 ),
@@ -136,10 +115,10 @@ class _AddNewPostState extends State<AddNewPost> {
                             uid,
                             postDescController.text,
                             hashtags,
-                            AddNewPost.visibilityValue,
+                            visibilityValue.value,
                           ).toJson();
                           await Database(uid)
-                              .addNewPost(newPost, AddNewPost.visibilityValue)
+                              .addNewPost(newPost, visibilityValue.value)
                               .then((value) => Navigator.of(context).pop());
                         },
                         isValid: isValid,
@@ -154,7 +133,7 @@ class _AddNewPostState extends State<AddNewPost> {
         ));
   }
 
-  Future<dynamic> showAttach() {
+  Future<dynamic> showAttach(context) {
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -204,24 +183,19 @@ class _AddNewPostState extends State<AddNewPost> {
   }
 }
 
-class DropdownVisibility extends StatefulWidget {
-  DropdownVisibility(
+class DropdownVisibility extends StatelessWidget {
+  const DropdownVisibility(
       {Key? key, required this.items, required this.visibilityValue})
       : super(key: key);
 
   final List<String> items;
-  final String visibilityValue;
+  final ValueNotifier visibilityValue;
 
-  @override
-  _DropdownVisibilityState createState() => _DropdownVisibilityState();
-}
-
-class _DropdownVisibilityState extends State<DropdownVisibility> {
   @override
   Widget build(BuildContext context) {
     return MenuButton<String>(
-      child: VisibilityItem(visibilityValue: AddNewPost.visibilityValue),
-      items: widget.items,
+      child: VisibilityItem(visibilityValue: visibilityValue),
+      items: items,
       itemBuilder: (String value) => Container(
         height: 40,
         alignment: Alignment.centerLeft,
@@ -229,30 +203,21 @@ class _DropdownVisibilityState extends State<DropdownVisibility> {
         child: Text(value),
       ),
       toggledChild: Container(
-        child: VisibilityItem(visibilityValue: widget.visibilityValue),
+        child: VisibilityItem(visibilityValue: visibilityValue),
       ),
-      onItemSelected: (String value) {
-        setState(() {
-          AddNewPost.visibilityValue = value;
-        });
-      },
-      onMenuButtonToggle: (bool isToggle) {},
-      // showSelectedItemOnList: false,
+      onItemSelected: (String value) => visibilityValue.value = value,
+      selectedItem: visibilityValue.value,
+      showSelectedItemOnList: false,
     );
   }
 }
 
-class VisibilityItem extends StatefulWidget {
+class VisibilityItem extends StatelessWidget {
   const VisibilityItem({Key? key, required this.visibilityValue})
       : super(key: key);
 
-  final String visibilityValue;
+  final visibilityValue;
 
-  @override
-  VisibilityItemState createState() => VisibilityItemState();
-}
-
-class VisibilityItemState extends State<VisibilityItem> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -264,7 +229,7 @@ class VisibilityItemState extends State<VisibilityItem> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Flexible(
-                child: Text(AddNewPost.visibilityValue,
+                child: Text(visibilityValue.value,
                     overflow: TextOverflow.ellipsis)),
             const SizedBox(
               width: 12,
@@ -284,8 +249,8 @@ class VisibilityItemState extends State<VisibilityItem> {
   }
 }
 
-class PostDescField extends StatefulWidget {
-  PostDescField(
+class PostDescField extends StatelessWidget {
+  const PostDescField(
       {Key? key, required this.isValid, required this.postDescController})
       : super(key: key);
 
@@ -293,26 +258,11 @@ class PostDescField extends StatefulWidget {
   final TextEditingController postDescController;
 
   @override
-  _PostDescFieldState createState() => _PostDescFieldState();
-}
-
-class _PostDescFieldState extends State<PostDescField> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
       child: TextFormField(
-          controller: widget.postDescController,
+          controller: postDescController,
           style: TextStyle(color: Color(0xff58865C)),
           keyboardType: TextInputType.multiline,
           maxLines: 10,
@@ -326,19 +276,10 @@ class _PostDescFieldState extends State<PostDescField> {
               borderSide: new BorderSide(),
             ),
           ),
-          // The validator receives the text that the user has entered.
-          onChanged: (value) {
-            if (value != '') {
-              print("Not empty");
-              widget.isValid.value = true;
-            } else {
-              print("Empty");
-              widget.isValid.value = false;
-            }
-          },
+          onChanged: (value) =>
+              value != '' ? isValid.value = true : isValid.value = false,
           validator: (value) {
-            String valueString = value as String;
-            if (valueString.isEmpty) {
+            if (value == null) {
               return "You have not filled anything in";
             } else {
               return null;
@@ -348,20 +289,16 @@ class _PostDescFieldState extends State<PostDescField> {
   }
 }
 
-class HashtagField extends StatefulWidget {
-  HashtagField({Key? key, required this.hashtagController}) : super(key: key);
+class HashtagField extends StatelessWidget {
+  const HashtagField({Key? key, required this.hashtagController})
+      : super(key: key);
 
   final TextEditingController hashtagController;
 
   @override
-  _HashtagFieldState createState() => _HashtagFieldState();
-}
-
-class _HashtagFieldState extends State<HashtagField> {
-  @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: widget.hashtagController,
+      controller: hashtagController,
       maxLength: 20,
       decoration: InputDecoration(hintText: 'Hashtag'),
       onChanged: (value) {},
