@@ -1,12 +1,14 @@
 import 'dart:io';
 
+import 'package:shizen_app/utils/allUtils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shizen_app/models/todoTask.dart';
+import 'package:shizen_app/models/trackerTask.dart';
+
 import 'package:path/path.dart';
-import 'package:loader_overlay/loader_overlay.dart';
 
 class Database {
   Database(this.uid);
@@ -38,6 +40,9 @@ class Database {
 
   Future<void> addToDoTask(toDoTask) async {
     print("Firing addToDoTask");
+
+    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
+
     await firestore
         .collection('tasks')
         .doc(uid)
@@ -45,6 +50,8 @@ class Database {
         .add(toDoTask.toJson())
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
+
+    OneContext().hideProgressIndicator();
   }
 
   Future<void> deleteToDoTask(toDoTaskID) async {
@@ -188,6 +195,8 @@ class Database {
   Future<void> addNewPost(Map<String, dynamic> postData, visibility) async {
     print("Firing addNewPost");
 
+    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
+
     var batch = firestore.batch();
     var newPostDoc = firestore.collection('posts').doc();
 
@@ -197,7 +206,8 @@ class Database {
         var map = {
           'email': data['email'],
           'name': data['name'],
-          'age': data['age']
+          'age': data['age'],
+          'image': data['image']
         };
         postData.addAll(map);
       });
@@ -205,7 +215,8 @@ class Database {
       var map = {
         'email': 'anon@somewhere.com',
         'name': 'Anonymous',
-        'age': '0'
+        'age': '0',
+        'image': ''
       };
       postData.addAll(map);
     }
@@ -231,6 +242,8 @@ class Database {
     }
 
     batch.commit();
+
+    OneContext().hideProgressIndicator();
   }
 
   Future<List<Map<String, dynamic>>> getCommunityPost(filter) async {
@@ -299,10 +312,10 @@ class Database {
     return firestore.collection('users').doc(targetUserID).get();
   }
 
-  Future uploadProfilePic(BuildContext context, image) async {
+  Future uploadProfilePic(image) async {
     print("Firing uploadProfilePic");
 
-    context.loaderOverlay.show();
+    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
     var userCollection = firestore.collection('users');
 
@@ -321,6 +334,23 @@ class Database {
       print(e);
     }
 
-    context.loaderOverlay.hide();
+    OneContext().hideProgressIndicator();
+  }
+
+  //-----------------------------------------------------
+  //--------------  TRACKER TASK  -----------------------
+  //-----------------------------------------------------
+  //
+
+  Future addTrackerTask(TrackerTask tracker) async {
+    print("Firing addNewTracker");
+
+    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
+
+    var userCollection = firestore.collection('users');
+
+    await userCollection.doc(uid).collection('trackers').add(tracker.toJson());
+
+    OneContext().hideProgressIndicator();
   }
 }

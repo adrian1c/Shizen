@@ -2,8 +2,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:menu_button/menu_button.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
+import 'package:shizen_app/widgets/dropdown.dart';
 import 'package:shizen_app/models/communityPost.dart';
-export 'package:flutter_hooks/flutter_hooks.dart';
 
 class AddNewPost extends HookWidget {
   final List<String> items = [
@@ -29,7 +29,7 @@ class AddNewPost extends HookWidget {
           centerTitle: true,
         ),
         body: SafeArea(
-          minimum: const EdgeInsets.all(20),
+          minimum: const EdgeInsets.fromLTRB(20, 0, 20, 0),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,9 +45,11 @@ class AddNewPost extends HookWidget {
                         ValueListenableBuilder(
                             valueListenable: visibilityValue,
                             builder: (context, data, _) {
-                              return DropdownVisibility(
+                              return Dropdown(
                                   items: items,
-                                  visibilityValue: visibilityValue);
+                                  value: visibilityValue,
+                                  onItemSelected: (String value) =>
+                                      visibilityValue.value = value);
                             }),
                       ],
                     ),
@@ -69,7 +71,7 @@ class AddNewPost extends HookWidget {
                       ),
                     ),
                     onTap: () {
-                      showAttach(context);
+                      showAttach();
                     },
                   ),
                 ),
@@ -133,119 +135,51 @@ class AddNewPost extends HookWidget {
         ));
   }
 
-  Future<dynamic> showAttach(context) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Search Results"),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Divider(),
-                  SizedBox(
-                    width: 300,
-                    height: 60,
-                    child: Container(
-                      decoration: BoxDecoration(border: Border.all(width: 1)),
-                      child: InkWell(
-                        child: Center(child: Text("Image")),
-                        onTap: () {},
-                      ),
-                    ),
+  Future<dynamic> showAttach() {
+    return OneContext().showDialog(builder: (_) {
+      return AlertDialog(
+        title: Text("Search Results"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(),
+              SizedBox(
+                width: 300,
+                height: 60,
+                child: Container(
+                  decoration: BoxDecoration(border: Border.all(width: 1)),
+                  child: InkWell(
+                    child: Center(child: Text("Image")),
+                    onTap: () {},
                   ),
-                  Divider(
-                    color: Colors.transparent,
-                  ),
-                  SizedBox(
-                    width: 300,
-                    height: 60,
-                    child: Container(
-                      decoration: BoxDecoration(border: Border.all(width: 1)),
-                      child: InkWell(
-                          child: Center(child: Text("Task")), onTap: () {}),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("Cancel"),
-              ),
-            ],
-          );
-        });
-  }
-}
-
-class DropdownVisibility extends StatelessWidget {
-  const DropdownVisibility(
-      {Key? key, required this.items, required this.visibilityValue})
-      : super(key: key);
-
-  final List<String> items;
-  final ValueNotifier visibilityValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return MenuButton<String>(
-      child: VisibilityItem(visibilityValue: visibilityValue),
-      items: items,
-      itemBuilder: (String value) => Container(
-        height: 40,
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16),
-        child: Text(value),
-      ),
-      toggledChild: Container(
-        child: VisibilityItem(visibilityValue: visibilityValue),
-      ),
-      onItemSelected: (String value) => visibilityValue.value = value,
-      selectedItem: visibilityValue.value,
-      showSelectedItemOnList: false,
-    );
-  }
-}
-
-class VisibilityItem extends StatelessWidget {
-  const VisibilityItem({Key? key, required this.visibilityValue})
-      : super(key: key);
-
-  final visibilityValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 125,
-      height: 40,
-      child: Padding(
-        padding: const EdgeInsets.only(left: 5, right: 5),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Flexible(
-                child: Text(visibilityValue.value,
-                    overflow: TextOverflow.ellipsis)),
-            const SizedBox(
-              width: 12,
-              height: 17,
-              child: FittedBox(
-                fit: BoxFit.fill,
-                child: Icon(
-                  Icons.arrow_drop_down,
-                  color: Colors.grey,
                 ),
               ),
-            ),
-          ],
+              Divider(
+                color: Colors.transparent,
+              ),
+              SizedBox(
+                width: 300,
+                height: 60,
+                child: Container(
+                  decoration: BoxDecoration(border: Border.all(width: 1)),
+                  child:
+                      InkWell(child: Center(child: Text("Task")), onTap: () {}),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+        actions: [
+          TextButton(
+            onPressed: () {
+              OneContext().popDialog();
+            },
+            child: Text("Cancel"),
+          ),
+        ],
+      );
+    });
   }
 }
 

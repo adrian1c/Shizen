@@ -1,5 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:loader_overlay/loader_overlay.dart';
 
 import 'package:shizen_app/utils/allUtils.dart';
 
@@ -34,26 +33,14 @@ class MyApp extends StatelessWidget {
             child: Sizer(
               builder: (context, orientation, deviceType) {
                 return MaterialApp(
+                  builder: OneContext().builder,
+                  navigatorKey: OneContext().key,
                   debugShowCheckedModeBanner: false,
                   title: 'Shizen',
                   theme: CustomTheme.lightTheme,
                   home: Provider.of<UserProvider>(context).checkLoggedIn()
-                      ? LoaderOverlay(
-                          useDefaultLoading: false,
-                          overlayOpacity: 0.7,
-                          overlayWidget: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SpinKitWave(color: Colors.blue, size: 50.0),
-                              Text('Please wait politely... I\'m working hard',
-                                  style: CustomTheme
-                                      .lightTheme.textTheme.bodyText1),
-                            ],
-                          ),
-                          child: MainScaffoldStack(
-                              uid: Provider.of<UserProvider>(context).uid),
-                        )
-                      : LoaderOverlay(child: WelcomePage()),
+                      ? MainScaffoldStack()
+                      : WelcomePage(),
                 );
               },
             ),

@@ -153,61 +153,55 @@ class UserProfileData extends StatelessWidget {
   }
 
   changeProfilePic(context, bool existingPic) async {
-    await showDialog(
-        context: context,
-        builder: (BuildContext dialogContext1) {
-          return AlertDialog(
-            title: Text(existingPic
-                ? "Change Profile Picture"
-                : 'Upload Profile Picture'),
-            content: Text(existingPic
-                ? 'Do you want to change your profile picture to a new one?'
-                : 'Do you want to upload a profile picture?'),
-            actions: [
-              TextButton(
-                  onPressed: () async {
-                    var image = await pickImage();
-                    if (image != null) {
-                      Navigator.of(dialogContext1).pop();
-                      image = await cropImage(image);
-                      if (image == null) return;
-                      await showDialog(
-                          context: context,
-                          builder: (BuildContext dialogContext2) {
-                            return AlertDialog(
-                              title: Text("Upload Profile Picture"),
-                              content: Image(image: FileImage(image)),
-                              actions: [
-                                TextButton(
-                                    onPressed: () async {
-                                      Navigator.of(dialogContext2).pop();
-                                      await Database(uid)
-                                          .uploadProfilePic(context, image);
-                                      ProfilePage.isLoading.value = true;
-                                      ProfilePage.isLoading.value = false;
-                                    },
-                                    child: Text("Upload")),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(dialogContext2).pop();
-                                  },
-                                  child: Text("Cancel"),
-                                ),
-                              ],
-                            );
-                          });
-                    }
-                  },
-                  child: Text("Change")),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext1).pop();
-                },
-                child: Text("Cancel"),
-              ),
-            ],
-          );
-        });
+    OneContext().showDialog(builder: (_) {
+      return AlertDialog(
+        title: Text(
+            existingPic ? "Change Profile Picture" : 'Upload Profile Picture'),
+        content: Text(existingPic
+            ? 'Do you want to change your profile picture to a new one?'
+            : 'Do you want to upload a profile picture?'),
+        actions: [
+          TextButton(
+              onPressed: () async {
+                var image = await pickImage();
+                if (image != null) {
+                  OneContext().popDialog();
+                  image = await cropImage(image);
+                  if (image == null) return;
+                  OneContext().showDialog(builder: (_) {
+                    return AlertDialog(
+                      title: Text("Upload Profile Picture"),
+                      content: Image(image: FileImage(image)),
+                      actions: [
+                        TextButton(
+                            onPressed: () async {
+                              OneContext().popDialog();
+                              await Database(uid).uploadProfilePic(image);
+                              ProfilePage.isLoading.value = true;
+                              ProfilePage.isLoading.value = false;
+                            },
+                            child: Text("Upload")),
+                        TextButton(
+                          onPressed: () {
+                            OneContext().popDialog();
+                          },
+                          child: Text("Cancel"),
+                        ),
+                      ],
+                    );
+                  });
+                }
+              },
+              child: Text("Change")),
+          TextButton(
+            onPressed: () {
+              OneContext().popDialog();
+            },
+            child: Text("Cancel"),
+          ),
+        ],
+      );
+    });
   }
 }
 

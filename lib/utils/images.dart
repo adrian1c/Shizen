@@ -5,4 +5,6 @@ class Images {
       width: double.infinity, fit: BoxFit.fitHeight);
   static Image login = Image.asset('assets/images/login.png',
       width: double.infinity, fit: BoxFit.fitHeight);
+  static Image defaultPic = Image.asset('assets/images/defaultpic.png',
+      width: double.infinity, fit: BoxFit.fitHeight);
 }

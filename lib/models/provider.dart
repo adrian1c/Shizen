@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shizen_app/main.dart';
 import 'package:shizen_app/mainscaffoldstack.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 class UserProvider extends ChangeNotifier {
   String uid = '';
@@ -20,23 +21,21 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> logInToDb(
-    TextEditingController emailController,
-    TextEditingController passwordController,
+    String email,
+    String password,
     BuildContext context,
   ) async {
     final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
 
     await firebaseAuth
-        .signInWithEmailAndPassword(
-            email: emailController.text, password: passwordController.text)
+        .signInWithEmailAndPassword(email: email, password: password)
         .then((result) {
       this.uid = result.user!.uid;
       print("Nice ${this.uid}");
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (BuildContext context) =>
-              MainScaffoldStack(uid: result.user!.uid),
+          builder: (BuildContext context) => MainScaffoldStack(),
         ),
         (route) => false,
       );
@@ -66,7 +65,7 @@ class UserProvider extends ChangeNotifier {
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => WelcomePage()),
-          (route) => false);
+          (route) => route is WelcomePage);
     }).catchError((err) {
       showDialog(
           context: context,

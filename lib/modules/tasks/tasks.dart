@@ -1,56 +1,29 @@
-import 'package:shizen_app/widgets/button.dart';
-
+import 'package:flutter_hooks/flutter_hooks.dart';
 import './addtodo.dart';
 import './addtracker.dart';
 import '../../utils/allUtils.dart';
 import 'package:flutter_colorful_tab/flutter_colorful_tab.dart';
 
-class TaskPage extends StatefulWidget {
-  const TaskPage({Key? key}) : super(key: key);
-
-  @override
-  _TaskPageState createState() => _TaskPageState();
-}
-
-class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
-  late TabController _tabController;
-  ValueNotifier _isSwitching = ValueNotifier(true);
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: 0,
-    );
-    _tabController.addListener(_handleTabSelection);
-    _tabController.animation!.addListener(_handleTabAnimation);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _tabController.dispose();
-  }
-
-  void _handleTabAnimation() {
-    _tabController.animation!.value < 0.5
-        ? _isSwitching.value = true
-        : _isSwitching.value = false;
-  }
-
-  void _handleTabSelection() {
-    if (_tabController.index == 0) {
-      print(_tabController.index);
-      _isSwitching.value = true;
-    } else {
-      _isSwitching.value = false;
-    }
-  }
-
+class TaskPage extends HookWidget {
   @override
   Widget build(BuildContext context) {
+    ValueNotifier isSwitching = useValueNotifier(true);
+    var tabController = useTabController(
+      initialLength: 2,
+      initialIndex: 0,
+    );
+    tabController.addListener(() {
+      if (tabController.index == 0) {
+        isSwitching.value = true;
+      } else {
+        isSwitching.value = false;
+      }
+    });
+    tabController.animation!.addListener(() {
+      tabController.animation!.value < 0.5
+          ? isSwitching.value = true
+          : isSwitching.value = false;
+    });
     String uid = Provider.of<UserProvider>(context).uid;
     return SafeArea(
       minimum: EdgeInsets.fromLTRB(8, 10, 8, 0),
@@ -65,11 +38,11 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
                     TabItem(color: Colors.red, title: Text('To Do')),
                     TabItem(color: Colors.green, title: Text('Habit Tracker')),
                   ],
-                  controller: _tabController,
+                  controller: tabController,
                 ),
                 Expanded(
                   child:
-                      TabBarView(controller: _tabController, children: <Widget>[
+                      TabBarView(controller: tabController, children: <Widget>[
                     toDoTask(uid),
                     trackerTask(uid),
                   ]),
@@ -83,12 +56,12 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => _isSwitching.value
+                          builder: (context) => isSwitching.value
                               ? AddToDoTask()
                               : AddTrackerTask()));
                 },
                 child: ValueListenableBuilder(
-                    valueListenable: _isSwitching,
+                    valueListenable: isSwitching,
                     builder: (context, data, _) {
                       if (data == true) {
                         return Text("Add To Do Task");
@@ -115,7 +88,7 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
               physics: BouncingScrollPhysics(),
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
-                return toDoListTile(snapshot.data.docs, index, uid);
+                return toDoListTile(snapshot.data.docs, index, uid, context);
               },
             ),
           );
@@ -134,7 +107,7 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
         });
   }
 
-  Widget toDoListTile(task, index, uid) {
+  Widget toDoListTile(task, index, uid, context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
       child: ListTile(
@@ -182,28 +155,25 @@ class _TaskPageState extends State<TaskPage> with TickerProviderStateMixin {
           print("${task[index].id}");
         },
         onLongPress: () {
-          showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Delete"),
-                  content: Text("Do you want to delete this task?"),
-                  actions: [
-                    TextButton(
-                      child: Text("Yes"),
-                      onPressed: () {
-                        Database(uid).deleteToDoTask(task[index].id);
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    TextButton(
-                        child: Text("Cancel"),
+          OneContext().showDialog(
+              builder: (_) => AlertDialog(
+                    title: Text("Delete"),
+                    content: Text("Do you want to delete this task?"),
+                    actions: [
+                      TextButton(
+                        child: Text("Yes"),
                         onPressed: () {
-                          Navigator.of(context).pop();
-                        })
-                  ],
-                );
-              });
+                          Database(uid).deleteToDoTask(task[index].id);
+                          OneContext().popDialog();
+                        },
+                      ),
+                      TextButton(
+                          child: Text("Cancel"),
+                          onPressed: () {
+                            OneContext().popDialog();
+                          })
+                    ],
+                  ));
         },
         trailing: Container(
             decoration: BoxDecoration(

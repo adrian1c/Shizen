@@ -134,61 +134,57 @@ class _AddToDoTaskState extends State<AddToDoTask> {
                             }
                           },
                           () {
-                            showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                      title: Text("Recurring Days"),
-                                      content: Container(
-                                        child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: recurListKey.length,
-                                            itemBuilder: (BuildContext context,
-                                                int index) {
-                                              return StatefulBuilder(
-                                                builder: (context, _setState) =>
-                                                    new CheckboxListTile(
-                                                  title: new Text(
-                                                      recurListKey[index]),
-                                                  value: recurListValue[index],
-                                                  onChanged: (value) {
-                                                    print(value);
-                                                    _setState(() {
-                                                      setState(() {
-                                                        recurListValue[index] =
-                                                            value ?? false;
-                                                      });
+                            OneContext().showDialog(builder: (_) {
+                              return AlertDialog(
+                                  title: Text("Recurring Days"),
+                                  content: Container(
+                                    child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: recurListKey.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return StatefulBuilder(
+                                            builder: (context, _setState) =>
+                                                new CheckboxListTile(
+                                              title:
+                                                  new Text(recurListKey[index]),
+                                              value: recurListValue[index],
+                                              onChanged: (value) {
+                                                print(value);
+                                                _setState(() {
+                                                  setState(() {
+                                                    recurListValue[index] =
+                                                        value ?? false;
+                                                  });
 
-                                                      if (recurListValue
-                                                          .contains(true)) {
-                                                        validateFields[
-                                                                "recurValid"] =
-                                                            true;
-                                                        isValid.value =
-                                                            checkValidity(
-                                                                validateFields);
-                                                      } else {
-                                                        validateFields[
-                                                                "recurValid"] =
-                                                            false;
-                                                        isValid.value =
-                                                            checkValidity(
-                                                                validateFields);
-                                                      }
-                                                    });
-                                                  },
-                                                ),
-                                              );
-                                            }),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                            child: Text("OK"),
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            }),
-                                      ]);
-                                });
+                                                  if (recurListValue
+                                                      .contains(true)) {
+                                                    validateFields[
+                                                        "recurValid"] = true;
+                                                    isValid.value =
+                                                        checkValidity(
+                                                            validateFields);
+                                                  } else {
+                                                    validateFields[
+                                                        "recurValid"] = false;
+                                                    isValid.value =
+                                                        checkValidity(
+                                                            validateFields);
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          );
+                                        }),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                        child: Text("OK"),
+                                        onPressed: () {
+                                          OneContext().popDialog();
+                                        }),
+                                  ]);
+                            });
                           },
                           returnString(recurListValue),
                         ),
