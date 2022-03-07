@@ -9,6 +9,8 @@ import 'package:shizen_app/models/todoTask.dart';
 import 'package:shizen_app/models/trackerTask.dart';
 
 import 'package:path/path.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 class Database {
   Database(this.uid);
@@ -80,6 +82,17 @@ class Database {
         .delete()
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
+  }
+
+  Future<void> completeTask(tid) async {
+    print("Firing completeTask");
+
+    await firestore
+        .collection('users')
+        .doc(uid)
+        .collection('todo')
+        .doc(tid)
+        .update({'isComplete': true});
   }
 
   //-----------------------------------------------------

@@ -3,11 +3,12 @@ import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/dropdown.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shizen_app/widgets/field.dart';
+import 'package:sticky_headers/sticky_headers.dart';
 
 import './addnewpost.dart';
 
 class CommunityPage extends HookWidget {
-  List<String> items = [
+  final List<String> items = [
     'Friends Only',
     'Everyone',
     'Anonymous',
@@ -26,19 +27,26 @@ class CommunityPage extends HookWidget {
       }
     });
 
-    return SafeArea(
-      minimum: EdgeInsets.fromLTRB(8, 10, 8, 0),
-      child: Stack(
-          fit: StackFit.expand,
-          alignment: Alignment.topCenter,
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  flex: 1,
+    return Stack(
+        fit: StackFit.expand,
+        alignment: Alignment.topCenter,
+        children: [
+          CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                pinned: false,
+                snap: false,
+                floating: true,
+                expandedHeight: 11.h,
+                collapsedHeight: 11.h,
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    padding: const EdgeInsets.all(10),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
@@ -77,29 +85,25 @@ class CommunityPage extends HookWidget {
                     ),
                   ),
                 ),
-                Expanded(
-                  flex: 8,
-                  child: SingleChildScrollView(
-                    physics: ScrollPhysics(),
-                    child: CommunityPostList(
-                        visibilityValue: visibilityValue,
-                        hashtag: hashtagValue),
-                  ),
-                ),
-              ],
-            ),
-            Positioned(
-              bottom: 30,
-              child: ElevatedButton(
-                child: Text("New Post"),
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AddNewPost()));
-                },
               ),
+              SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                return CommunityPostList(
+                    visibilityValue: visibilityValue, hashtag: hashtagValue);
+              }, childCount: 1))
+            ],
+          ),
+          Positioned(
+            bottom: 30,
+            child: ElevatedButton(
+              child: Text("New Post"),
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => AddNewPost()));
+              },
             ),
-          ]),
-    );
+          ),
+        ]);
   }
 }
 

@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import './addtodo.dart';
 import './addtracker.dart';
 import '../../utils/allUtils.dart';
@@ -156,8 +158,12 @@ class TaskPage extends HookWidget {
             : null,
         leading: Checkbox(
           value: false,
-          onChanged: (value) {
-            print(value);
+          onChanged: (value) async {
+            await Database(uid).completeTask(task.id);
+            showTopSnackBar(
+                context,
+                CustomSnackBar.success(
+                    message: 'Congratulations! I\'m proud of you'));
           },
         ),
         onTap: () {
