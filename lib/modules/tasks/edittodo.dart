@@ -5,7 +5,11 @@ import 'package:shizen_app/widgets/button.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:intl/intl.dart';
 
-class AddToDoTask extends HookWidget {
+class EditToDoTask extends HookWidget {
+  EditToDoTask({Key? key, required this.todoTask}) : super(key: key);
+
+  final todoTask;
+
   static final List recurListKey = [
     'Monday',
     'Tuesday',
@@ -22,7 +26,7 @@ class AddToDoTask extends HookWidget {
     String output = '';
     values.asMap().forEach((index, element) {
       if (element) {
-        output += AddToDoTask.recurListKey[index] + '\n';
+        output += EditToDoTask.recurListKey[index] + '\n';
       }
     });
     return output;
@@ -40,27 +44,42 @@ class AddToDoTask extends HookWidget {
   Widget build(BuildContext context) {
     print("Built AddToDoTask");
     String uid = Provider.of<UserProvider>(context).uid;
+    final tid = todoTask.id;
+    final TextEditingController titleController =
+        useTextEditingController(text: todoTask['title']);
+    final TextEditingController descController =
+        useTextEditingController(text: todoTask['desc']);
 
-    final TextEditingController titleController = useTextEditingController();
-    final TextEditingController descController = useTextEditingController();
-
-    final ValueNotifier isRecur = useValueNotifier(false);
-    final ValueNotifier isReminder = useValueNotifier(false);
-    final ValueNotifier isDeadline = useValueNotifier(false);
-    final ValueNotifier isValid = useValueNotifier(false);
-
-    final ValueNotifier reminderTime = useValueNotifier(null);
-    final ValueNotifier deadlineDate = useValueNotifier(null);
+    final ValueNotifier isRecur = useValueNotifier(
+        todoTask['settings']['recur'].contains(true) ? true : false);
+    final ValueNotifier isReminder = useValueNotifier(
+        todoTask['settings']['reminder'] == null ? false : true);
+    final ValueNotifier isDeadline = useValueNotifier(
+        todoTask['settings']['deadline'] == null ? false : true);
+    final ValueNotifier isValid = useValueNotifier(true);
 
     final ValueNotifier recurListValue =
-        useState([false, false, false, false, false, false, false]);
+        useState(todoTask['settings']['recur']);
+    final ValueNotifier reminderTime =
+        useValueNotifier(todoTask['settings']['reminder']);
+    final ValueNotifier deadlineDate =
+        useValueNotifier(todoTask['settings']['deadline']);
 
-    final ValueNotifier displayText1 = useState('');
-    final ValueNotifier displayText2 = useState('');
-    final ValueNotifier displayText3 = useState('');
+    final ValueNotifier displayText1 =
+        useState(EditToDoTask.returnString(todoTask['settings']['recur']));
+    final ValueNotifier displayText2 = useState(todoTask['settings']
+                ['reminder'] !=
+            null
+        ? '${DateFormat('dd MMM yy hh:mm a').format(todoTask['settings']['reminder'].toDate())}'
+        : '');
+    final ValueNotifier displayText3 = useState(todoTask['settings']
+                ['deadline'] !=
+            null
+        ? '${DateFormat('dd MMM yy hh:mm a').format(todoTask['settings']['deadline'].toDate())}'
+        : '');
 
     final ValueNotifier validateFields = useState({
-      "titleValid": false,
+      "titleValid": true,
       "recurValid": true,
       "reminderValid": true,
       "deadlineValid": true,
@@ -129,23 +148,24 @@ class AddToDoTask extends HookWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         CreateButton(
-                          onPressed: !validateFields.value.containsValue(false)
-                              ? () async {
-                                  validateFields.value["title"] = false;
-                                  isValid.value =
-                                      checkValidity(validateFields.value);
-                                  var newTask = ToDoTask(titleController.text,
-                                      descController.text, {
-                                    "recur": recurListValue.value,
-                                    "reminder": reminderTime.value,
-                                    "deadline": deadlineDate.value,
-                                  });
-                                  await Database(uid).addToDoTask(newTask);
-                                  Navigator.of(context).pop();
-                                }
-                              : () {},
-                          isValid: isValid,
-                        ),
+                            onPressed:
+                                !validateFields.value.containsValue(false)
+                                    ? () async {
+                                        validateFields.value["title"] = false;
+                                        isValid.value =
+                                            checkValidity(validateFields.value);
+                                        await Database(uid).editToDoTask(tid, {
+                                          'title': titleController.text,
+                                          'desc': descController.text,
+                                          'recur': recurListValue.value,
+                                          'reminder': reminderTime.value,
+                                          'deadline': deadlineDate.value,
+                                        });
+                                        Navigator.of(context).pop();
+                                      }
+                                    : () {},
+                            isValid: isValid,
+                            buttonLabel: "Save"),
                         const CancelButton(),
                       ],
                     ),
@@ -201,13 +221,13 @@ class ToggleEditButton1 extends StatelessWidget {
                             ];
                             displayText.value = '';
                             validateFields.value["recurValid"] = true;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
+                            isValid.value = EditToDoTask.checkValidity(
+                                validateFields.value);
                           } else {
                             isValue.value = value;
                             validateFields.value["recurValid"] = false;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
+                            isValid.value = EditToDoTask.checkValidity(
+                                validateFields.value);
                           }
                         },
                         activeTrackColor: Colors.lightGreenAccent,
@@ -222,14 +242,14 @@ class ToggleEditButton1 extends StatelessWidget {
                                       content: Container(
                                         child: ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount:
-                                                AddToDoTask.recurListKey.length,
+                                            itemCount: EditToDoTask
+                                                .recurListKey.length,
                                             itemBuilder: (BuildContext context,
                                                 int index) {
                                               return StatefulBuilder(
                                                 builder: (context, _) =>
                                                     CheckboxListTile(
-                                                  title: new Text(AddToDoTask
+                                                  title: new Text(EditToDoTask
                                                       .recurListKey[index]),
                                                   value: recurListValue
                                                       .value[index],
@@ -238,7 +258,7 @@ class ToggleEditButton1 extends StatelessWidget {
                                                             .value[index] =
                                                         value ?? false);
                                                     displayText.value =
-                                                        AddToDoTask
+                                                        EditToDoTask
                                                             .returnString(
                                                                 recurListValue
                                                                     .value);
@@ -247,7 +267,7 @@ class ToggleEditButton1 extends StatelessWidget {
                                                       validateFields.value[
                                                           "recurValid"] = true;
                                                       isValid.value =
-                                                          AddToDoTask
+                                                          EditToDoTask
                                                               .checkValidity(
                                                                   validateFields
                                                                       .value);
@@ -255,7 +275,7 @@ class ToggleEditButton1 extends StatelessWidget {
                                                       validateFields.value[
                                                           "recurValid"] = false;
                                                       isValid.value =
-                                                          AddToDoTask
+                                                          EditToDoTask
                                                               .checkValidity(
                                                                   validateFields
                                                                       .value);
@@ -329,13 +349,13 @@ class ToggleEditButton2 extends StatelessWidget {
                             reminderTime.value = null;
                             displayText.value = '';
                             validateFields.value["reminderValid"] = true;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
+                            isValid.value = EditToDoTask.checkValidity(
+                                validateFields.value);
                           } else {
                             switchValue.value = value;
                             validateFields.value["reminderValid"] = false;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
+                            isValid.value = EditToDoTask.checkValidity(
+                                validateFields.value);
                           }
                         },
                         activeTrackColor: Colors.lightGreenAccent,
@@ -353,7 +373,7 @@ class ToggleEditButton2 extends StatelessWidget {
                                         '${DateFormat('dd MMM yy hh:mm a').format(time)}';
                                     validateFields.value["reminderValid"] =
                                         true;
-                                    isValid.value = AddToDoTask.checkValidity(
+                                    isValid.value = EditToDoTask.checkValidity(
                                         validateFields.value);
                                   },
                                 );
@@ -420,13 +440,13 @@ class ToggleEditButton3 extends StatelessWidget {
                             deadlineDate.value = null;
                             displayText.value = '';
                             validateFields.value["deadlineValid"] = true;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
+                            isValid.value = EditToDoTask.checkValidity(
+                                validateFields.value);
                           } else {
                             switchValue.value = value;
                             validateFields.value["deadlineValid"] = false;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
+                            isValid.value = EditToDoTask.checkValidity(
+                                validateFields.value);
                           }
                         },
                         activeTrackColor: Colors.lightGreenAccent,
@@ -441,7 +461,7 @@ class ToggleEditButton3 extends StatelessWidget {
                                   displayText.value =
                                       '${DateFormat('dd MMM yy hh:mm a').format(date)}';
                                   validateFields.value["deadlineValid"] = true;
-                                  isValid.value = AddToDoTask.checkValidity(
+                                  isValid.value = EditToDoTask.checkValidity(
                                       validateFields.value);
                                 });
                               },
@@ -494,10 +514,10 @@ class TitleTextField extends StatelessWidget {
         onChanged: (value) {
           if (value.isNotEmpty) {
             validateFields.value["titleValid"] = true;
-            isValid.value = AddToDoTask.checkValidity(validateFields.value);
+            isValid.value = EditToDoTask.checkValidity(validateFields.value);
           } else {
             validateFields.value["titleValid"] = false;
-            isValid.value = AddToDoTask.checkValidity(validateFields.value);
+            isValid.value = EditToDoTask.checkValidity(validateFields.value);
           }
         },
         validator: (value) {

@@ -21,11 +21,16 @@ class CancelButton extends StatelessWidget {
 }
 
 class CreateButton extends StatelessWidget {
-  const CreateButton({Key? key, required this.onPressed, required this.isValid})
+  const CreateButton(
+      {Key? key,
+      required this.onPressed,
+      required this.isValid,
+      this.buttonLabel})
       : super(key: key);
 
   final Function()? onPressed;
   final ValueNotifier isValid;
+  final String? buttonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +50,8 @@ class CreateButton extends StatelessWidget {
                 : () {
                     print("Not valid");
                   },
-            child: Text("Create", style: Theme.of(context).textTheme.bodyText1),
+            child: Text(buttonLabel != null ? buttonLabel! : "Create",
+                style: Theme.of(context).textTheme.bodyText1),
           );
         });
   }

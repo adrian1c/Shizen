@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import './addtodo.dart';
 import './addtracker.dart';
 import '../../utils/allUtils.dart';
 import 'package:flutter_colorful_tab/flutter_colorful_tab.dart';
+import 'package:shizen_app/modules/tasks/edittodo.dart';
 
 class TaskPage extends HookWidget {
   @override
@@ -88,7 +90,7 @@ class TaskPage extends HookWidget {
               physics: BouncingScrollPhysics(),
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
-                return toDoListTile(snapshot.data.docs, index, uid, context);
+                return toDoListTile(snapshot.data.docs[index], uid, context);
               },
             ),
           );
@@ -97,48 +99,55 @@ class TaskPage extends HookWidget {
 
   Widget trackerTask(uid) {
     return StreamBuilder(
-        stream: Database(uid).getToDoTasks(),
-        builder: (context, snapshot) {
+        stream: Database(uid).getTrackerTasks(),
+        builder: (context, AsyncSnapshot snapshot) {
           if (!snapshot.hasData) return const Text("Loading...");
 
-          return Container(
-              child:
-                  Text(Provider.of<UserProvider>(context, listen: false).uid));
+          return Material(
+            child: ListView.builder(
+              physics: BouncingScrollPhysics(),
+              itemCount: snapshot.data.docs.length,
+              itemBuilder: (context, index) {
+                return TrackerTile(tracker: snapshot.data.docs[index]);
+              },
+            ),
+          );
+          ;
         });
   }
 
-  Widget toDoListTile(task, index, uid, context) {
+  Widget toDoListTile(task, uid, context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
       child: ListTile(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(task[index]["title"]),
+            Text(task["title"]),
             Row(
               children: [
-                task[index]["settings"]["recur"].contains(true)
+                task["settings"]["recur"].contains(true)
                     ? Icon(Icons.repeat, color: Colors.blue, size: 20)
                     : Icon(Icons.repeat, color: Colors.black26, size: 20),
-                task[index]["settings"]["reminder"] != null
+                task["settings"]["reminder"] != null
                     ? Icon(Icons.notifications_active,
                         color: Colors.blue, size: 20)
                     : Icon(Icons.notifications_active,
                         color: Colors.black26, size: 20),
-                task[index]["settings"]["deadline"] != null
+                task["settings"]["deadline"] != null
                     ? Icon(Icons.alarm, color: Colors.blue, size: 20)
                     : Icon(Icons.alarm, color: Colors.black26, size: 20)
               ],
             ),
           ],
         ),
-        subtitle: task[index]["desc"] != ""
+        subtitle: task["desc"] != ""
             ? Container(
                 decoration: BoxDecoration(
                     border: Border(
                         top: BorderSide(color: Colors.grey[600]!, width: 1))),
                 child: Text(
-                  task[index]["desc"],
+                  task["desc"],
                   maxLines: 2,
                   overflow: TextOverflow.fade,
                   softWrap: true,
@@ -152,7 +161,13 @@ class TaskPage extends HookWidget {
           },
         ),
         onTap: () {
-          print("${task[index].id}");
+          print("${task.id}");
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => EditToDoTask(
+                        todoTask: task,
+                      )));
         },
         onLongPress: () {
           OneContext().showDialog(
@@ -163,7 +178,7 @@ class TaskPage extends HookWidget {
                       TextButton(
                         child: Text("Yes"),
                         onPressed: () {
-                          Database(uid).deleteToDoTask(task[index].id);
+                          Database(uid).deleteToDoTask(task.id);
                           OneContext().popDialog();
                         },
                       ),
@@ -185,6 +200,106 @@ class TaskPage extends HookWidget {
         contentPadding: EdgeInsets.all(0),
         tileColor: Colors.amberAccent[200],
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+class TrackerTile extends StatelessWidget {
+  const TrackerTile({Key? key, required this.tracker}) : super(key: key);
+
+  final tracker;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Expanded(
+            flex: 10,
+            child: Container(
+                padding: const EdgeInsets.all(20.0),
+                height: 35.h,
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blueGrey, width: 5),
+                    borderRadius: BorderRadius.circular(10)),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(tracker['title']),
+                        Row(
+                          children: [
+                            Text(
+                                'Day ${DateTime.now().difference((tracker['startDate'] as Timestamp).toDate()).inDays}'),
+                            Icon(Icons.brush)
+                          ],
+                        )
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Next Milestone'),
+                          Text(
+                              'Day ${tracker['milestones'].firstWhere((milestone) => milestone['isComplete'] == false, orElse: () => 'No milestone')['day'].toString()}'),
+                          Text(tracker['milestones']
+                              .firstWhere(
+                                  (milestone) =>
+                                      milestone['isComplete'] == false,
+                                  orElse: () => 'No milestone')['reward']
+                              .toString())
+                        ],
+                      ),
+                    ),
+                  ],
+                )),
+          ),
+          Expanded(
+            flex: 2,
+            child: Container(
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: Icon(Icons.flag),
+                    style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(), primary: Colors.amber),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: Icon(Icons.restart_alt_outlined),
+                    style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(), primary: Colors.red),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: Icon(Icons.share),
+                    style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(), primary: Colors.blue),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: Icon(Icons.edit),
+                    style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(), primary: Colors.grey),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: Icon(Icons.delete),
+                    style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(), primary: Colors.orange),
+                  ),
+                ],
+              ),
+            ),
+          )
+        ],
       ),
     );
   }

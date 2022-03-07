@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:menu_button/menu_button.dart';
 import 'package:shizen_app/utils/allUtils.dart';
@@ -235,6 +236,9 @@ class HashtagField extends StatelessWidget {
       controller: hashtagController,
       maxLength: 20,
       decoration: InputDecoration(hintText: 'Hashtag'),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z]"))
+      ],
       onChanged: (value) {},
     );
   }

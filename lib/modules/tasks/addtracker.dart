@@ -4,7 +4,7 @@ import 'package:shizen_app/models/trackerTask.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:shizen_app/widgets/button.dart';
-import 'package:shizen_app/widgets/dropdown.dart';
+import 'package:shizen_app/widgets/field.dart';
 import 'package:intl/intl.dart';
 
 class AddTrackerTask extends HookWidget {
@@ -78,40 +78,90 @@ class AddTrackerTask extends HookWidget {
                                   Text('Starting Date'),
                                   Ink(
                                     child: InkWell(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Container(
-                                            width: 35.w,
-                                            height: 4.h,
-                                            decoration: BoxDecoration(
-                                              color: Colors.lightBlue,
-                                              border: Border.all(
-                                                  color: Colors.blueGrey),
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                            ),
-                                            child: Center(
-                                                child: Text(
-                                                    DateFormat('dd MMM yy')
-                                                                .format(startDate
-                                                                    .value) ==
-                                                            DateFormat(
-                                                                    'dd MMM yy')
-                                                                .format(DateTime
-                                                                    .now())
-                                                        ? 'Today'
-                                                        : '${DateFormat('dd MMM yy').format(startDate.value)}',
-                                                    style: TextStyle(
-                                                        color: Colors.white)))),
-                                      ),
+                                      child: StyledContainerField(
+                                          child: Center(
+                                              child: Text(
+                                                  DateFormat('dd MMM yy')
+                                                              .format(startDate
+                                                                  .value) ==
+                                                          DateFormat(
+                                                                  'dd MMM yy')
+                                                              .format(DateTime
+                                                                  .now())
+                                                      ? 'Today'
+                                                      : '${DateFormat('dd MMM yy').format(startDate.value)}',
+                                                  style: TextStyle(
+                                                      color: Theme.of(context)
+                                                          .primaryColor)))),
                                       onTap: () {
                                         DatePicker.showDatePicker(context,
                                             currentTime: startDate.value,
                                             minTime: DateTime(
                                                 DateTime.now().year - 3),
                                             maxTime: DateTime.now(),
-                                            onConfirm: (value) =>
-                                                startDate.value = value);
+                                            onConfirm: (value) {
+                                          bool hasOverlapMilestone = false;
+                                          for (var i = 0;
+                                              i < milestones.value.length;
+                                              i++) {
+                                            if (milestones.value[i]['day'] <=
+                                                DateTime.now()
+                                                    .difference(value)
+                                                    .inDays) {
+                                              hasOverlapMilestone = true;
+                                              break;
+                                            }
+                                          }
+                                          if (hasOverlapMilestone) {
+                                            OneContext().showDialog(
+                                                builder: (_) => AlertDialog(
+                                                      title: Text(
+                                                          'Remove Invalid Milestones?'),
+                                                      content: Text(
+                                                          'If you change the starting date, some milestones will be invalid. Do you want to automatically remove the invalid milestones?'),
+                                                      actions: [
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              for (var i = 0;
+                                                                  i <
+                                                                      milestones
+                                                                          .value
+                                                                          .length;
+                                                                  i++) {
+                                                                if (milestones
+                                                                            .value[i]
+                                                                        [
+                                                                        'day'] <=
+                                                                    DateTime.now()
+                                                                        .difference(
+                                                                            value)
+                                                                        .inDays) {
+                                                                  milestones
+                                                                      .value
+                                                                      .removeAt(
+                                                                          i);
+                                                                  i--;
+                                                                }
+                                                              }
+                                                              startDate.value =
+                                                                  value;
+                                                              OneContext()
+                                                                  .popDialog();
+                                                            },
+                                                            child: Text('Yes')),
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            OneContext()
+                                                                .popDialog();
+                                                          },
+                                                          child: Text('Cancel'),
+                                                        ),
+                                                      ],
+                                                    ));
+                                          } else {
+                                            startDate.value = value;
+                                          }
+                                        });
                                       },
                                     ),
                                   ),
@@ -265,12 +315,18 @@ class MilestoneList extends HookWidget {
                             onPressed: () {
                               if (_formKey2.currentState!.validate()) {
                                 milestones.value.add({
-                                  'day': dayController.text,
-                                  'reward': rewardController.text
+                                  'day': int.parse(dayController.text),
+                                  'reward': rewardController.text,
+                                  'isComplete': false,
                                 });
                                 milestones.value =
                                     List<Map<String, dynamic>>.from(
                                         milestones.value);
+                                List<Map<String, dynamic>> tempList =
+                                    milestones.value.toList();
+                                tempList.sort(
+                                    (a, b) => a['day'].compareTo(b['day']));
+                                milestones.value = tempList.toList();
                                 dayController.clear();
                                 rewardController.clear();
                                 OneContext().popDialog();
@@ -381,7 +437,7 @@ class MilestoneTile extends StatelessWidget {
           ],
         ),
         onTap: () {
-          dayController.text = milestones['day'];
+          dayController.text = milestones['day'].toString();
           rewardController.text = milestones['reward'];
           OneContext().showDialog(
               barrierDismissible: false,
@@ -425,12 +481,17 @@ class MilestoneTile extends StatelessWidget {
                         onPressed: () {
                           if (_formKey3.currentState!.validate()) {
                             milestonesList.value[index]['day'] =
-                                dayController.text;
+                                int.parse(dayController.text);
                             milestonesList.value[index]['reward'] =
                                 rewardController.text;
                             milestonesList.value =
                                 List<Map<String, dynamic>>.from(
                                     milestonesList.value);
+                            List<Map<String, dynamic>> tempList =
+                                milestonesList.value.toList();
+                            tempList
+                                .sort((a, b) => a['day'].compareTo(b['day']));
+                            milestonesList.value = tempList.toList();
                             dayController.clear();
                             rewardController.clear();
                             OneContext().popDialog();

@@ -21,7 +21,7 @@ class Database {
   Stream getToDoTasks() {
     print("Firing getToDoTasks");
     return firestore
-        .collection('tasks')
+        .collection('users')
         .doc(uid)
         .collection('todo')
         .where("isComplete", isEqualTo: false)
@@ -31,11 +31,10 @@ class Database {
 
   Stream getTrackerTasks() {
     print("Firing getTrackerTasks");
-    return firestore
-        .collection('tasks')
-        .doc(uid)
-        .collection('tracker')
-        .snapshots();
+
+    var userCollection = firestore.collection('users');
+
+    return userCollection.doc(uid).collection('trackers').snapshots();
   }
 
   Future<void> addToDoTask(toDoTask) async {
@@ -44,7 +43,7 @@ class Database {
     OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
     await firestore
-        .collection('tasks')
+        .collection('users')
         .doc(uid)
         .collection('todo')
         .add(toDoTask.toJson())
@@ -54,10 +53,27 @@ class Database {
     OneContext().hideProgressIndicator();
   }
 
+  Future<void> editToDoTask(tid, toDoTask) async {
+    print("Firing editToDoTask");
+
+    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
+
+    await firestore
+        .collection('users')
+        .doc(uid)
+        .collection('todo')
+        .doc(tid)
+        .set(toDoTask, SetOptions(merge: true))
+        .whenComplete(() => print("Done"))
+        .catchError((e) => print(e));
+
+    OneContext().hideProgressIndicator();
+  }
+
   Future<void> deleteToDoTask(toDoTaskID) async {
     print("Firing deleteToDoTask");
     await firestore
-        .collection('tasks')
+        .collection('users')
         .doc(uid)
         .collection('todo')
         .doc(toDoTaskID)
@@ -74,13 +90,22 @@ class Database {
   //      1 = Received Request
   //      2 = Accepted Friends
 
-  Future<QuerySnapshot> getFriendSearch(email) {
+  Future<List<QuerySnapshot>> getFriendSearch(email) async {
     print("Firing getFriendSearch");
-    return firestore
+
+    List<QuerySnapshot> results = [];
+    results.add(await firestore
         .collection('users')
         .where('email', isEqualTo: email)
         .where(FieldPath.documentId, isNotEqualTo: uid)
-        .get();
+        .get());
+    print(results);
+    results.add(await firestore
+        .collection('users')
+        .doc(uid)
+        .collection('friends')
+        .get());
+    return results;
   }
 
   Future<void> sendFriendReq(user) async {
@@ -101,7 +126,8 @@ class Database {
         userCollection.doc(uid).collection('friends').doc(user), receiverData);
     batch.set(
         userCollection.doc(user).collection('friends').doc(uid), senderData);
-    batch.commit();
+    await batch.commit();
+    return;
   }
 
   Future<void> acceptFriendReq(user) async {
@@ -114,7 +140,8 @@ class Database {
         {'status': 2}, SetOptions(merge: true));
     batch.set(userCollection.doc(user).collection('friends').doc(uid),
         {'status': 2}, SetOptions(merge: true));
-    batch.commit();
+    await batch.commit();
+    return;
   }
 
   Future<void> declineFriendReq(user) async {
@@ -125,7 +152,8 @@ class Database {
     var batch = firestore.batch();
     batch.delete(userCollection.doc(user).collection('friends').doc(uid));
     batch.delete(userCollection.doc(uid).collection('friends').doc(user));
-    batch.commit();
+    await batch.commit();
+    return;
   }
 
   Future<Map<dynamic, dynamic>> friendsPageData() async {
@@ -216,7 +244,7 @@ class Database {
         'email': 'anon@somewhere.com',
         'name': 'Anonymous',
         'age': '0',
-        'image': ''
+        'image': '',
       };
       postData.addAll(map);
     }
@@ -241,12 +269,14 @@ class Database {
       });
     }
 
-    batch.commit();
+    await batch.commit();
 
     OneContext().hideProgressIndicator();
+
+    return;
   }
 
-  Future<List<Map<String, dynamic>>> getCommunityPost(filter) async {
+  Future<List<Map<String, dynamic>>> getCommunityPost(filter, hashtag) async {
     // Can add parameter for lazy loading, count number of reloads then
     //postIds sublist accordingly
     print("Firing getCommunityPost");
@@ -255,11 +285,20 @@ class Database {
 
     switch (filter) {
       case 'Everyone':
-        QuerySnapshot<Map<String, dynamic>> query = await firestore
-            .collection('posts')
-            .where('uid', isNotEqualTo: uid)
-            .get();
-        query.docs.forEach((doc) => results.add(doc.data()));
+        if (hashtag != '') {
+          QuerySnapshot<Map<String, dynamic>> query = await firestore
+              .collection('posts')
+              .where('uid', isNotEqualTo: uid)
+              .where('hashtags', arrayContains: hashtag)
+              .get();
+          query.docs.forEach((doc) => results.add(doc.data()));
+        } else {
+          QuerySnapshot<Map<String, dynamic>> query = await firestore
+              .collection('posts')
+              .where('uid', isNotEqualTo: uid)
+              .get();
+          query.docs.forEach((doc) => results.add(doc.data()));
+        }
         return results;
       case 'Friends Only':
         var ids = await firestore
@@ -279,23 +318,43 @@ class Database {
         }
 
         for (var element in chunks) {
-          var result = await firestore
-              .collection('posts')
-              .where(FieldPath.documentId, whereIn: element)
-              .get()
-              .then((value) {
-            value.docs.forEach((doc) => results.add(doc.data()));
-          });
+          if (hashtag != '') {
+            await firestore
+                .collection('posts')
+                .where(FieldPath.documentId, whereIn: element)
+                .where('hashtags', arrayContains: hashtag)
+                .get()
+                .then((value) {
+              value.docs.forEach((doc) => results.add(doc.data()));
+            });
+          } else {
+            await firestore
+                .collection('posts')
+                .where(FieldPath.documentId, whereIn: element)
+                .get()
+                .then((value) {
+              value.docs.forEach((doc) => results.add(doc.data()));
+            });
+          }
         }
-
-        print(results);
         return results;
       case 'Anonymous':
-        QuerySnapshot<Map<String, dynamic>> query = await firestore
-            .collection('posts')
-            .where('visibility', isEqualTo: filter)
-            .get();
-        query.docs.forEach((doc) => results.add(doc.data()));
+        if (hashtag != '') {
+          QuerySnapshot<Map<String, dynamic>> query = await firestore
+              .collection('posts')
+              .where('uid', isNotEqualTo: uid)
+              .where('visibility', isEqualTo: filter)
+              .where('hashtags', arrayContains: hashtag)
+              .get();
+          query.docs.forEach((doc) => results.add(doc.data()));
+        } else {
+          QuerySnapshot<Map<String, dynamic>> query = await firestore
+              .collection('posts')
+              .where('uid', isNotEqualTo: uid)
+              .where('visibility', isEqualTo: filter)
+              .get();
+          query.docs.forEach((doc) => results.add(doc.data()));
+        }
         return results;
     }
     return results;

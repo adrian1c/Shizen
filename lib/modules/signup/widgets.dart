@@ -125,6 +125,7 @@ Future<void> registerToDb(
       'email': emailController.text,
       'age': ageController.text,
       'name': nameController.text,
+      'image': '',
     }).then((res) {
       Navigator.pushReplacement(
         context,

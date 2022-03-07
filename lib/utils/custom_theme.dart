@@ -8,6 +8,7 @@ class CustomTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       primaryColor: Color(0xff4B7586),
+      backgroundColor: Color(0xffFFFFFF),
       scaffoldBackgroundColor: Color(0xffF3F7F9),
       fontFamily: GoogleFonts.sourceSansPro().fontFamily,
       textTheme: TextTheme(

@@ -1,6 +1,8 @@
+import 'package:flutter/services.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/dropdown.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:shizen_app/widgets/field.dart';
 
 import './addnewpost.dart';
 
@@ -16,6 +18,13 @@ class CommunityPage extends HookWidget {
     String uid = Provider.of<UserProvider>(context).uid;
     final hashtagController = useTextEditingController();
     final visibilityValue = useState('Friends Only');
+    final hashtagValue = useState('');
+    final isFocus = useFocusNode();
+    isFocus.addListener(() {
+      if (isFocus.hasFocus != true) {
+        hashtagValue.value = hashtagController.text;
+      }
+    });
 
     return SafeArea(
       minimum: EdgeInsets.fromLTRB(8, 10, 8, 0),
@@ -27,36 +36,54 @@ class CommunityPage extends HookWidget {
               children: [
                 Expanded(
                   flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.visibility),
-                          Text("Display", style: TextStyle(fontSize: 15.sp)),
-                          Dropdown(
-                              items: items,
-                              value: visibilityValue,
-                              onItemSelected: (String value) {
-                                visibilityValue.value = value;
-                              }),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Icon(Icons.tag_rounded),
-                          Text("Hashtag", style: TextStyle(fontSize: 15.sp)),
-                          HashtagFilter(hashtagController: hashtagController),
-                        ],
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.visibility),
+                                Text("Display",
+                                    style: TextStyle(fontSize: 15.sp)),
+                              ],
+                            ),
+                            Dropdown(
+                                items: items,
+                                value: visibilityValue,
+                                onItemSelected: (String value) {
+                                  visibilityValue.value = value;
+                                }),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.tag_rounded),
+                                Text("Hashtag",
+                                    style: TextStyle(fontSize: 15.sp)),
+                              ],
+                            ),
+                            HashtagFilter(
+                                hashtagController: hashtagController,
+                                hashtagValue: hashtagValue,
+                                isFocus: isFocus),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Expanded(
-                  flex: 9,
+                  flex: 8,
                   child: SingleChildScrollView(
                     physics: ScrollPhysics(),
-                    child: CommunityPostList(visibilityValue: visibilityValue),
+                    child: CommunityPostList(
+                        visibilityValue: visibilityValue,
+                        hashtag: hashtagValue),
                   ),
                 ),
               ],
@@ -77,17 +104,20 @@ class CommunityPage extends HookWidget {
 }
 
 class CommunityPostList extends HookWidget {
-  CommunityPostList({Key? key, required this.visibilityValue})
+  CommunityPostList(
+      {Key? key, required this.visibilityValue, required this.hashtag})
       : super(key: key);
 
   final visibilityValue;
+  final hashtag;
 
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).uid;
     final future = useMemoized(
-        () => Database(uid).getCommunityPost(visibilityValue.value),
-        [visibilityValue.value]);
+        () => Database(uid)
+            .getCommunityPost(visibilityValue.value, hashtag.value),
+        [visibilityValue.value, hashtag.value]);
     final snapshot = useFuture(future);
     return Container(
         child: !snapshot.hasData
@@ -123,7 +153,7 @@ class PostListTile extends StatelessWidget {
             Container(
                 width: 5.h,
                 height: 5.h,
-                child: postData.containsKey('image')
+                child: postData['image'] != ''
                     ? InkWell(
                         child: Container(
                             decoration: BoxDecoration(
@@ -177,33 +207,32 @@ class PostListTile extends StatelessWidget {
   }
 }
 
-class HashtagFilter extends StatefulWidget {
-  HashtagFilter({Key? key, required this.hashtagController}) : super(key: key);
+class HashtagFilter extends StatelessWidget {
+  const HashtagFilter(
+      {Key? key,
+      required this.hashtagController,
+      required this.hashtagValue,
+      required this.isFocus})
+      : super(key: key);
 
   final TextEditingController hashtagController;
+  final hashtagValue;
+  final isFocus;
 
-  @override
-  _HashtagFilterState createState() => _HashtagFilterState();
-}
-
-class _HashtagFilterState extends State<HashtagFilter> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 25.w,
-      child: TextField(
-        controller: widget.hashtagController,
-        maxLength: 20,
-        decoration: InputDecoration(
-          hintText: 'Hashtag',
-          contentPadding: EdgeInsets.all(5),
-          border: OutlineInputBorder(
-            borderRadius: new BorderRadius.circular(5.0),
-            borderSide: new BorderSide(),
-          ),
-        ),
-        onEditingComplete: () {
-          // Database(uid).getCommunityPost(filter, );
+      width: 40.w,
+      child: TextFormField(
+        controller: hashtagController,
+        focusNode: isFocus,
+        inputFormatters: [
+          LengthLimitingTextInputFormatter(20),
+        ],
+        decoration: StyledInputField(hintText: 'Search by hashtag...')
+            .inputDecoration(),
+        onFieldSubmitted: (value) {
+          hashtagValue.value = value;
         },
       ),
     );

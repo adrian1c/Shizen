@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:shizen_app/widgets/field.dart';
 
 import '../../utils/allUtils.dart';
 import './functions.dart';
@@ -111,17 +112,10 @@ class _FriendsPageState extends State<FriendsPage> {
   Widget searchField(uid) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
         child: TextFormField(
-          decoration: InputDecoration(
-            hintText: "Enter email address...",
-            contentPadding:
-                EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 0),
-            border: OutlineInputBorder(
-              borderRadius: new BorderRadius.circular(10.0),
-              borderSide: new BorderSide(),
-            ),
-          ),
+          decoration: StyledInputField(hintText: 'Enter email address...')
+              .inputDecoration(),
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.search,
           inputFormatters: [
@@ -146,22 +140,34 @@ class _FriendsPageState extends State<FriendsPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Divider(),
-                      FutureBuilder<QuerySnapshot>(
+                      FutureBuilder<List<QuerySnapshot>>(
                           future: Database(uid).getFriendSearch(value),
                           builder: (context, snapshot) {
                             if (!snapshot.hasData)
                               return const Text("Loading...");
 
-                            final results = snapshot.data!.docs;
+                            final results = snapshot.data![0].docs;
+                            final currentFriends = snapshot.data![1].docs;
                             if (results.length == 0) {
                               return Text("No results found");
                             }
+
                             return Material(
                               child: ListView.builder(
                                 shrinkWrap: true,
                                 itemCount: results.length,
                                 itemBuilder: (context, index) {
-                                  return searchListTile(results[index], uid);
+                                  var status = 3;
+                                  for (var i = 0;
+                                      i < currentFriends.length;
+                                      i++) {
+                                    if (currentFriends[i]['email'] ==
+                                        results[index]['email']) {
+                                      status = currentFriends[i]['status'];
+                                    }
+                                  }
+                                  return searchListTile(
+                                      results[index], status, uid);
                                 },
                               ),
                             );
@@ -342,7 +348,7 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-  Widget searchListTile(user, uid) {
+  Widget searchListTile(user, status, uid) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
       child: Material(
@@ -353,13 +359,19 @@ class _FriendsPageState extends State<FriendsPage> {
             user["email"],
             overflow: TextOverflow.ellipsis,
           ),
-          trailing: IconButton(
-            onPressed: () {
-              Database(uid).sendFriendReq(user.id);
-              Navigator.of(context).pop();
-            },
-            icon: Icon(Icons.person_add),
-          ),
+          trailing: status == 0
+              ? IconButton(onPressed: () {}, icon: Icon(Icons.pending))
+              : status == 2
+                  ? IconButton(onPressed: () {}, icon: Icon(Icons.check))
+                  : status == 1
+                      ? null
+                      : IconButton(
+                          onPressed: () {
+                            Database(uid).sendFriendReq(user.id);
+                            Navigator.of(context).pop();
+                          },
+                          icon: Icon(Icons.person_add),
+                        ),
           horizontalTitleGap: 0,
           tileColor: Colors.amberAccent[700],
           shape:
