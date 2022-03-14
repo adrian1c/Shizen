@@ -457,6 +457,26 @@ class Database {
     OneContext().hideProgressIndicator();
   }
 
+  Future getUserPosts(uid) async {
+    print("Firing getUserPosts");
+
+    var results = [];
+    var userCollection = firestore.collection('users');
+
+    var userDoc = await userCollection.doc(uid).get();
+
+    if (userDoc.data()!.containsKey('posts')) {
+      var postList = userDoc.data()!['posts'];
+      for (var i = 0; i < postList.length; i++) {
+        var postData =
+            await firestore.collection('posts').doc(postList[i]).get();
+        results.add(postData.data());
+      }
+    }
+
+    return results;
+  }
+
   //-----------------------------------------------------
   //--------------  TRACKER TASK  -----------------------
   //-----------------------------------------------------

@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:shizen_app/modules/community/community.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shizen_app/widgets/field.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ProfilePage extends HookWidget {
   @override
@@ -15,34 +17,103 @@ class ProfilePage extends HookWidget {
     final ValueNotifier<int> isLoading = useState(0);
     final TextEditingController nameController = useTextEditingController();
     final ValueNotifier isValid = useValueNotifier(true);
-    final future = useMemoized(
+    final futureUserProfileData = useMemoized(
         () => Database(uid).getCurrentUserData(), [isLoading.value]);
-    final snapshot = useFuture(future);
+    final snapshotUserProfileData = useFuture(futureUserProfileData);
+    final futureUserPosts =
+        useMemoized(() => Database(uid).getUserPosts(uid), [isLoading.value]);
+    final snapshotUserPosts = useFuture(futureUserPosts);
     return SingleChildScrollView(
       child: Column(
         children: [
           Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.only(bottom: 20),
               width: double.infinity,
               height: 15.h,
-              color: Color(0xff297ca6),
-              child: Row(
-                children: [Text('Hey', style: TextStyle(color: Colors.white))],
-              )),
+              color: Color(0xff80ceff),
+              child: snapshotUserProfileData.hasData
+                  ? UserProfileData(
+                      data: snapshotUserProfileData.data,
+                      uid: uid,
+                      isLoading: isLoading,
+                      nameController: nameController,
+                      isValid: isValid,
+                    )
+                  : Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 25.w,
+                            height: 25.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(width: 1),
+                              color: Colors.white,
+                            ),
+                          ),
+                          Padding(
+                              padding: const EdgeInsets.only(left: 20),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 50.w,
+                                      height: 14.sp,
+                                      color: Colors.white,
+                                    ),
+                                    Spacer(),
+                                    Container(
+                                      width: 50.w,
+                                      height: 14.sp,
+                                      color: Colors.white,
+                                    ),
+                                    Spacer(),
+                                    Container(
+                                      width: 50.w,
+                                      height: 14.sp,
+                                      color: Colors.white,
+                                    ),
+                                  ])),
+                        ],
+                      ),
+                    )),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Align(alignment: Alignment.topLeft, child: Text('Posts')),
+          ),
+          snapshotUserPosts.hasData
+              ? ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: snapshotUserPosts.data!.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                      child: PostListTile(
+                          postData: snapshotUserPosts.data![index]),
+                    );
+                  })
+              : Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: ListView.builder(
+                      physics: BouncingScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: 10,
+                      itemBuilder: (context, index) {
+                        return Container(
+                            margin: const EdgeInsets.all(8),
+                            width: 80.w,
+                            height: 20.h,
+                            color: Colors.white);
+                      }),
+                ),
         ],
       ),
     );
-    // return Container(
-    //   child: !snapshot.hasData
-    //       ? const Text('Loading')
-    //       : UserProfileData(
-    //           data: snapshot.data,
-    //           uid: uid,
-    //           isLoading: isLoading,
-    //           nameController: nameController,
-    //           isValid: isValid,
-    //         ),
-    // );
   }
 }
 
@@ -65,125 +136,94 @@ class UserProfileData extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _form = GlobalKey<FormState>();
-    return Column(
+    return Row(
       children: [
-        Expanded(
-          flex: 1,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              Container(
-                decoration: BoxDecoration(color: Colors.redAccent),
-              ),
-              SingleChildScrollView(
-                physics: NeverScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Container(
-                        width: 25.w,
-                        height: 25.w,
-                        child: data.data().containsKey('image')
-                            ? InkWell(
-                                child: Container(
-                                    decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(width: 1),
-                                  color: Colors.grey,
-                                  image: DecorationImage(
-                                      image:
-                                          Image.network(data!['image']).image),
-                                )),
-                                onTap: () async => await changeProfilePic(
-                                    context, true, isLoading),
-                              )
-                            : InkWell(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(width: 1),
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                onTap: () async {
-                                  await changeProfilePic(
-                                      context, false, isLoading);
-                                },
-                              ),
-                      ),
+        Container(
+          width: 25.w,
+          height: 25.w,
+          child: data.data().containsKey('image')
+              ? InkWell(
+                  child: Container(
+                      decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(width: 1),
+                    color: Colors.grey,
+                    image: DecorationImage(
+                        image: Image.network(data!['image']).image),
+                  )),
+                  onTap: () async =>
+                      await changeProfilePic(context, true, isLoading),
+                )
+              : InkWell(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(width: 1),
+                      color: Colors.grey,
                     ),
-                    InkWell(
-                        onTap: () {
-                          nameController.text = data!['name'];
-                          StyledPopup(
-                                  title: 'Change Name?',
-                                  children: [
-                                    Form(
-                                      key: _form,
-                                      child: TextFormField(
-                                        controller: nameController,
-                                        decoration: InputDecoration(
-                                          labelText: 'Enter the Value',
-                                        ),
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.deny(
-                                              RegExp('[ ]')),
-                                        ],
-                                        validator: (value) {
-                                          if (value!.isEmpty) {
-                                            return 'Name cannot be empty';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                  textButton: TextButton(
-                                      onPressed: () async {
-                                        if (_form.currentState!.validate()) {
-                                          var newName = nameController.text;
-                                          OneContext().popDialog();
-                                          await Database(uid)
-                                              .editUserName(newName);
-                                          isLoading.value += 1;
-                                          print(isLoading.value);
-                                          StyledSnackbar(
-                                                  message:
-                                                      'Your display name has been changed!')
-                                              .showSuccess();
-                                        }
-                                      },
-                                      child: Text('Save')))
-                              .showPopup();
-                        },
-                        child: Text(data!['name'],
-                            style: TextStyle(fontSize: 25.sp))),
-                    Text(data!['email'], style: TextStyle(fontSize: 15.sp)),
-                  ],
+                  ),
+                  onTap: () async {
+                    await changeProfilePic(context, false, isLoading);
+                  },
                 ),
-              ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                  onTap: () {
+                    nameController.text = data!['name'];
+                    StyledPopup(
+                            title: 'Change Name?',
+                            children: [
+                              Form(
+                                key: _form,
+                                child: TextFormField(
+                                  controller: nameController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Enter the Value',
+                                  ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.deny(
+                                        RegExp('[ ]')),
+                                  ],
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return 'Name cannot be empty';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                            textButton: TextButton(
+                                onPressed: () async {
+                                  if (_form.currentState!.validate()) {
+                                    var newName = nameController.text;
+                                    OneContext().popDialog();
+                                    await Database(uid).editUserName(newName);
+                                    isLoading.value += 1;
+                                    print(isLoading.value);
+                                    StyledSnackbar(
+                                            message:
+                                                'Your display name has been changed!')
+                                        .showSuccess();
+                                  }
+                                },
+                                child: Text('Save')))
+                        .showPopup();
+                  },
+                  child:
+                      Text(data!['name'], style: TextStyle(fontSize: 25.sp))),
+              Text(data!['email'], style: TextStyle(fontSize: 15.sp)),
+              Text(data.data().containsKey('bio')
+                  ? "Nice"
+                  : "I do not have a bio..."),
             ],
           ),
         ),
-        Expanded(
-          flex: 2,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              Padding(
-                padding: EdgeInsets.all(20),
-                child: Text(data.data().containsKey('bio')
-                    ? "Nice"
-                    : "I do not have a bio..."),
-              ),
-              Logout(
-                uid: uid,
-                isLoading: isLoading,
-              ),
-            ],
-          ),
-        )
       ],
     );
   }
@@ -279,14 +319,5 @@ class Logout extends StatelessWidget {
         isLoading: isLoading,
       ),
     );
-  }
-}
-
-class PostList extends StatelessWidget {
-  const PostList({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container();
   }
 }
