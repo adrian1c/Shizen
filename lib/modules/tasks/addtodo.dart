@@ -4,6 +4,7 @@ import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shizen_app/widgets/field.dart';
 
 class AddToDoTask extends HookWidget {
   static final List recurListKey = [
@@ -129,21 +130,21 @@ class AddToDoTask extends HookWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         CreateButton(
-                          onPressed: !validateFields.value.containsValue(false)
-                              ? () async {
-                                  validateFields.value["title"] = false;
-                                  isValid.value =
-                                      checkValidity(validateFields.value);
-                                  var newTask = ToDoTask(titleController.text,
-                                      descController.text, {
-                                    "recur": recurListValue.value,
-                                    "reminder": reminderTime.value,
-                                    "deadline": deadlineDate.value,
-                                  });
-                                  await Database(uid).addToDoTask(newTask);
-                                  Navigator.of(context).pop();
-                                }
-                              : () {},
+                          onPressed: () async {
+                            if (!validateFields.value.containsValue(false)) {
+                              var newTask = ToDoTask(
+                                  titleController.text, descController.text, {
+                                "recur": recurListValue.value,
+                                "reminder": reminderTime.value,
+                                "deadline": deadlineDate.value,
+                              });
+                              await Database(uid).addToDoTask(newTask);
+                              Navigator.of(context).pop();
+                            } else {
+                              print('Faile');
+                              print(validateFields.value);
+                            }
+                          },
                           isValid: isValid,
                         ),
                         const CancelButton(),
@@ -216,63 +217,61 @@ class ToggleEditButton1 extends StatelessWidget {
                       value == true
                           ? IconButton(
                               onPressed: () {
-                                OneContext().showDialog(builder: (_) {
-                                  return AlertDialog(
-                                      title: Text("Recurring Days"),
-                                      content: Container(
-                                        child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount:
-                                                AddToDoTask.recurListKey.length,
-                                            itemBuilder: (BuildContext context,
-                                                int index) {
-                                              return StatefulBuilder(
-                                                builder: (context, _) =>
-                                                    CheckboxListTile(
-                                                  title: new Text(AddToDoTask
-                                                      .recurListKey[index]),
-                                                  value: recurListValue
-                                                      .value[index],
-                                                  onChanged: (value) {
-                                                    _(() => recurListValue
-                                                            .value[index] =
-                                                        value ?? false);
-                                                    displayText.value =
-                                                        AddToDoTask
-                                                            .returnString(
-                                                                recurListValue
-                                                                    .value);
-                                                    if (recurListValue.value
-                                                        .contains(true)) {
-                                                      validateFields.value[
-                                                          "recurValid"] = true;
-                                                      isValid.value =
+                                StyledPopup(
+                                        title: 'Recurring Days',
+                                        children: [
+                                          Container(
+                                            child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: AddToDoTask
+                                                    .recurListKey.length,
+                                                itemBuilder:
+                                                    (BuildContext context,
+                                                        int index) {
+                                                  return StatefulBuilder(
+                                                    builder: (context, _) =>
+                                                        CheckboxListTile(
+                                                      title: new Text(
                                                           AddToDoTask
+                                                                  .recurListKey[
+                                                              index]),
+                                                      value: recurListValue
+                                                          .value[index],
+                                                      onChanged: (value) {
+                                                        _(() => recurListValue
+                                                                .value[index] =
+                                                            value ?? false);
+                                                        displayText.value =
+                                                            AddToDoTask
+                                                                .returnString(
+                                                                    recurListValue
+                                                                        .value);
+                                                        if (recurListValue.value
+                                                            .contains(true)) {
+                                                          validateFields.value[
+                                                                  "recurValid"] =
+                                                              true;
+                                                          isValid.value = AddToDoTask
                                                               .checkValidity(
                                                                   validateFields
                                                                       .value);
-                                                    } else {
-                                                      validateFields.value[
-                                                          "recurValid"] = false;
-                                                      isValid.value =
-                                                          AddToDoTask
+                                                        } else {
+                                                          validateFields.value[
+                                                                  "recurValid"] =
+                                                              false;
+                                                          isValid.value = AddToDoTask
                                                               .checkValidity(
                                                                   validateFields
                                                                       .value);
-                                                    }
-                                                  },
-                                                ),
-                                              );
-                                            }),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                            child: Text("OK"),
-                                            onPressed: () {
-                                              OneContext().popDialog();
-                                            }),
-                                      ]);
-                                });
+                                                        }
+                                                      },
+                                                    ),
+                                                  );
+                                                }),
+                                          ),
+                                        ],
+                                        cancelText: 'Done')
+                                    .showPopup();
                               },
                               icon: Icon(Icons.edit))
                           : Container(),

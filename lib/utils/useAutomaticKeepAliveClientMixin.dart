@@ -1,68 +1,28 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter/material.dart';
 
-void useAutomaticKeepAlive({
-  bool? wantKeepAlive,
-}) =>
-    use(
-      _AutomaticKeepAliveHook(
-        wantKeepAlive: wantKeepAlive ?? true,
-      ),
-    );
+class KeepAlivePage extends StatefulWidget {
+  KeepAlivePage({
+    Key? key,
+    required this.child,
+  }) : super(key: key);
 
-class _AutomaticKeepAliveHook extends Hook<void> {
-  final bool wantKeepAlive;
-
-  const _AutomaticKeepAliveHook({required this.wantKeepAlive});
+  final Widget child;
 
   @override
-  HookState<void, _AutomaticKeepAliveHook> createState() =>
-      _AutomaticKeepAliveHookState();
+  _KeepAlivePageState createState() => _KeepAlivePageState();
 }
 
-class _AutomaticKeepAliveHookState
-    extends HookState<void, _AutomaticKeepAliveHook> {
-  KeepAliveHandle? _keepAliveHandle;
+class _KeepAlivePageState extends State<KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  Widget build(BuildContext context) {
+    /// Dont't forget this
+    super.build(context);
 
-  void _ensureKeepAlive() {
-    _keepAliveHandle = KeepAliveHandle();
-    KeepAliveNotification(_keepAliveHandle!).dispatch(context);
-  }
-
-  void _releaseKeepAlive() {
-    _keepAliveHandle!.release();
-    _keepAliveHandle = null;
-  }
-
-  void updateKeepAlive() {
-    if (hook.wantKeepAlive) {
-      if (_keepAliveHandle == null) _ensureKeepAlive();
-    } else {
-      if (_keepAliveHandle != null) _releaseKeepAlive();
-    }
+    return widget.child;
   }
 
   @override
-  void initHook() {
-    super.initHook();
-    if (hook.wantKeepAlive) _ensureKeepAlive();
-  }
-
-  @override
-  void build(BuildContext context) {
-    if (hook.wantKeepAlive && _keepAliveHandle == null) _ensureKeepAlive();
-    return;
-  }
-
-  @override
-  void deactivate() {
-    if (_keepAliveHandle != null) _releaseKeepAlive();
-    super.deactivate();
-  }
-
-  @override
-  Object get debugValue => _keepAliveHandle!;
-
-  @override
-  String get debugLabel => 'useAutomaticKeepAlive';
+  // TODO: implement wantKeepAlive
+  bool get wantKeepAlive => true;
 }

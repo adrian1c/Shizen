@@ -1,58 +1,70 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shizen_app/widgets/field.dart';
 
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
-
-  static ValueNotifier isLoading = ValueNotifier(false);
-
-  @override
-  _ProfilePageState createState() => _ProfilePageState();
-}
-
-class _ProfilePageState extends State<ProfilePage> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
+class ProfilePage extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
-    return ValueListenableBuilder(
-        valueListenable: ProfilePage.isLoading,
-        builder: (context, data, _) {
-          if (data != false) return Text('Loading');
-
-          return FutureBuilder(
-              future: Database(uid).getCurrentUserData(),
-              builder: (context, AsyncSnapshot snapshot) {
-                if (!snapshot.hasData) return const Text("Loading");
-                return UserProfileData(data: snapshot.data, uid: uid);
-              });
-        });
+    final String uid = Provider.of<UserProvider>(context).uid;
+    final ValueNotifier<int> isLoading = useState(0);
+    final TextEditingController nameController = useTextEditingController();
+    final ValueNotifier isValid = useValueNotifier(true);
+    final future = useMemoized(
+        () => Database(uid).getCurrentUserData(), [isLoading.value]);
+    final snapshot = useFuture(future);
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Container(
+              padding: EdgeInsets.all(20),
+              width: double.infinity,
+              height: 15.h,
+              color: Color(0xff297ca6),
+              child: Row(
+                children: [Text('Hey', style: TextStyle(color: Colors.white))],
+              )),
+        ],
+      ),
+    );
+    // return Container(
+    //   child: !snapshot.hasData
+    //       ? const Text('Loading')
+    //       : UserProfileData(
+    //           data: snapshot.data,
+    //           uid: uid,
+    //           isLoading: isLoading,
+    //           nameController: nameController,
+    //           isValid: isValid,
+    //         ),
+    // );
   }
 }
 
 class UserProfileData extends StatelessWidget {
-  const UserProfileData({Key? key, required this.data, required this.uid})
+  const UserProfileData(
+      {Key? key,
+      required this.data,
+      required this.uid,
+      required this.isLoading,
+      required this.nameController,
+      required this.isValid})
       : super(key: key);
 
   final data;
   final String uid;
+  final isLoading;
+  final nameController;
+  final isValid;
 
   @override
   Widget build(BuildContext context) {
+    final _form = GlobalKey<FormState>();
     return Column(
       children: [
         Expanded(
@@ -63,43 +75,93 @@ class UserProfileData extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(color: Colors.redAccent),
               ),
-              Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Container(
-                      width: 25.w,
-                      height: 25.w,
-                      child: data.data().containsKey('image')
-                          ? InkWell(
-                              child: Container(
-                                  decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(width: 1),
-                                color: Colors.grey,
-                                image: DecorationImage(
-                                    image: Image.network(data!['image']).image),
-                              )),
-                              onTap: () async =>
-                                  await changeProfilePic(context, true),
-                            )
-                          : InkWell(
-                              child: Container(
-                                decoration: BoxDecoration(
+              SingleChildScrollView(
+                physics: NeverScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Container(
+                        width: 25.w,
+                        height: 25.w,
+                        child: data.data().containsKey('image')
+                            ? InkWell(
+                                child: Container(
+                                    decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(width: 1),
                                   color: Colors.grey,
+                                  image: DecorationImage(
+                                      image:
+                                          Image.network(data!['image']).image),
+                                )),
+                                onTap: () async => await changeProfilePic(
+                                    context, true, isLoading),
+                              )
+                            : InkWell(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(width: 1),
+                                    color: Colors.grey,
+                                  ),
                                 ),
+                                onTap: () async {
+                                  await changeProfilePic(
+                                      context, false, isLoading);
+                                },
                               ),
-                              onTap: () async {
-                                await changeProfilePic(context, false);
-                              },
-                            ),
+                      ),
                     ),
-                  ),
-                  Text(data!['name'], style: TextStyle(fontSize: 25.sp)),
-                  Text(data!['email'], style: TextStyle(fontSize: 15.sp)),
-                ],
+                    InkWell(
+                        onTap: () {
+                          nameController.text = data!['name'];
+                          StyledPopup(
+                                  title: 'Change Name?',
+                                  children: [
+                                    Form(
+                                      key: _form,
+                                      child: TextFormField(
+                                        controller: nameController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Enter the Value',
+                                        ),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.deny(
+                                              RegExp('[ ]')),
+                                        ],
+                                        validator: (value) {
+                                          if (value!.isEmpty) {
+                                            return 'Name cannot be empty';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                  textButton: TextButton(
+                                      onPressed: () async {
+                                        if (_form.currentState!.validate()) {
+                                          var newName = nameController.text;
+                                          OneContext().popDialog();
+                                          await Database(uid)
+                                              .editUserName(newName);
+                                          isLoading.value += 1;
+                                          print(isLoading.value);
+                                          StyledSnackbar(
+                                                  message:
+                                                      'Your display name has been changed!')
+                                              .showSuccess();
+                                        }
+                                      },
+                                      child: Text('Save')))
+                              .showPopup();
+                        },
+                        child: Text(data!['name'],
+                            style: TextStyle(fontSize: 25.sp))),
+                    Text(data!['email'], style: TextStyle(fontSize: 15.sp)),
+                  ],
+                ),
               ),
             ],
           ),
@@ -115,7 +177,10 @@ class UserProfileData extends StatelessWidget {
                     ? "Nice"
                     : "I do not have a bio..."),
               ),
-              Logout(uid: uid),
+              Logout(
+                uid: uid,
+                isLoading: isLoading,
+              ),
             ],
           ),
         )
@@ -152,63 +217,57 @@ class UserProfileData extends StatelessWidget {
     return imageFile;
   }
 
-  changeProfilePic(context, bool existingPic) async {
-    OneContext().showDialog(builder: (_) {
-      return AlertDialog(
-        title: Text(
-            existingPic ? "Change Profile Picture" : 'Upload Profile Picture'),
-        content: Text(existingPic
-            ? 'Do you want to change your profile picture to a new one?'
-            : 'Do you want to upload a profile picture?'),
-        actions: [
-          TextButton(
-              onPressed: () async {
-                var image = await pickImage();
-                if (image != null) {
-                  OneContext().popDialog();
-                  image = await cropImage(image);
-                  if (image == null) return;
-                  OneContext().showDialog(builder: (_) {
-                    return AlertDialog(
-                      title: Text("Upload Profile Picture"),
-                      content: Image(image: FileImage(image)),
-                      actions: [
-                        TextButton(
-                            onPressed: () async {
+  changeProfilePic(context, bool existingPic, isLoading) async {
+    StyledPopup(
+            title: existingPic
+                ? 'Change Profile Picture'
+                : 'Upload Profile Picture',
+            children: [
+              Text(existingPic
+                  ? 'Do you want to change your profile picture to a new one?'
+                  : 'Do you want to upload a profile picture?')
+            ],
+            textButton: TextButton(
+                onPressed: () async {
+                  var image = await pickImage();
+                  if (image != null) {
+                    OneContext().popDialog();
+                    image = await cropImage(image);
+                    if (image == null) return;
+                    OneContext().showDialog(builder: (_) {
+                      return AlertDialog(
+                        title: Text("Upload Profile Picture"),
+                        content: Image(image: FileImage(image)),
+                        actions: [
+                          TextButton(
+                              onPressed: () async {
+                                OneContext().popDialog();
+                                await Database(uid).uploadProfilePic(image);
+                                isLoading.value += 1;
+                              },
+                              child: Text("Upload")),
+                          TextButton(
+                            onPressed: () {
                               OneContext().popDialog();
-                              await Database(uid).uploadProfilePic(image);
-                              ProfilePage.isLoading.value = true;
-                              ProfilePage.isLoading.value = false;
                             },
-                            child: Text("Upload")),
-                        TextButton(
-                          onPressed: () {
-                            OneContext().popDialog();
-                          },
-                          child: Text("Cancel"),
-                        ),
-                      ],
-                    );
-                  });
-                }
-              },
-              child: Text("Change")),
-          TextButton(
-            onPressed: () {
-              OneContext().popDialog();
-            },
-            child: Text("Cancel"),
-          ),
-        ],
-      );
-    });
+                            child: Text("Cancel"),
+                          ),
+                        ],
+                      );
+                    });
+                  }
+                },
+                child: Text("Change")))
+        .showPopup();
   }
 }
 
 class Logout extends StatelessWidget {
-  const Logout({Key? key, required this.uid}) : super(key: key);
+  const Logout({Key? key, required this.uid, required this.isLoading})
+      : super(key: key);
 
   final String uid;
+  final isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -217,8 +276,17 @@ class Logout extends StatelessWidget {
       child: LogoutButton(
         uid: uid,
         context: context,
-        isLoading: ProfilePage.isLoading,
+        isLoading: isLoading,
       ),
     );
+  }
+}
+
+class PostList extends StatelessWidget {
+  const PostList({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }

@@ -132,59 +132,40 @@ class _FriendsPageState extends State<FriendsPage> {
             }
           },
           onFieldSubmitted: (value) {
-            OneContext().showDialog(builder: (_) {
-              return AlertDialog(
-                title: Text("Search Results"),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Divider(),
-                      FutureBuilder<List<QuerySnapshot>>(
-                          future: Database(uid).getFriendSearch(value),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData)
-                              return const Text("Loading...");
+            StyledPopup(
+              children: [
+                FutureBuilder<List<QuerySnapshot>>(
+                    future: Database(uid).getFriendSearch(value),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const Text("Loading...");
 
-                            final results = snapshot.data![0].docs;
-                            final currentFriends = snapshot.data![1].docs;
-                            if (results.length == 0) {
-                              return Text("No results found");
+                      final results = snapshot.data![0].docs;
+                      final currentFriends = snapshot.data![1].docs;
+                      if (results.length == 0) {
+                        return Text("No results found");
+                      }
+
+                      return Material(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: results.length,
+                          itemBuilder: (context, index) {
+                            var status = 3;
+                            for (var i = 0; i < currentFriends.length; i++) {
+                              if (currentFriends[i]['email'] ==
+                                  results[index]['email']) {
+                                status = currentFriends[i]['status'];
+                              }
                             }
-
-                            return Material(
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: results.length,
-                                itemBuilder: (context, index) {
-                                  var status = 3;
-                                  for (var i = 0;
-                                      i < currentFriends.length;
-                                      i++) {
-                                    if (currentFriends[i]['email'] ==
-                                        results[index]['email']) {
-                                      status = currentFriends[i]['status'];
-                                    }
-                                  }
-                                  return searchListTile(
-                                      results[index], status, uid);
-                                },
-                              ),
-                            );
-                          }),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      OneContext().popDialog();
-                    },
-                    child: Text("Done"),
-                  ),
-                ],
-              );
-            });
+                            return searchListTile(results[index], status, uid);
+                          },
+                        ),
+                      );
+                    }),
+              ],
+              title: 'Search Results',
+              cancelText: 'Done',
+            ).showPopup();
           },
         ),
       ),
@@ -303,39 +284,30 @@ class _FriendsPageState extends State<FriendsPage> {
           ),
           trailing: IconButton(
             onPressed: () {
-              OneContext().showDialog(builder: (_) {
-                return AlertDialog(
-                    title: Text("Actions"),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Divider(),
-                        TextButton(
-                            onPressed: () {
-                              print("View Profile");
-                            },
-                            child: Text("View Profile")),
-                        TextButton(
-                            onPressed: () async {
-                              print("Remove");
-                              await Database(uid)
-                                  .declineFriendReq(itemList[index].id)
-                                  .then((value) =>
-                                      setState(() => itemList.removeAt(index)));
-                              print(itemList);
+              StyledPopup(
+                title: 'Actions',
+                children: [
+                  Divider(),
+                  TextButton(
+                      onPressed: () {
+                        print("View Profile");
+                      },
+                      child: Text("View Profile")),
+                  TextButton(
+                      onPressed: () async {
+                        print("Remove");
+                        await Database(uid)
+                            .declineFriendReq(itemList[index].id)
+                            .then((value) =>
+                                setState(() => itemList.removeAt(index)));
+                        print(itemList);
 
-                              OneContext().popDialog();
-                            },
-                            child: Text("Remove Friend")),
-                        TextButton(
-                          onPressed: () {
-                            OneContext().popDialog();
-                          },
-                          child: Text("Cancel"),
-                        ),
-                      ],
-                    ));
-              });
+                        OneContext().popDialog();
+                      },
+                      child: Text("Remove Friend")),
+                ],
+                cancelText: 'Done',
+              ).showPopup();
             },
             icon: Icon(Icons.more_horiz),
           ),

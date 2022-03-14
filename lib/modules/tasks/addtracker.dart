@@ -113,51 +113,40 @@ class AddTrackerTask extends HookWidget {
                                             }
                                           }
                                           if (hasOverlapMilestone) {
-                                            OneContext().showDialog(
-                                                builder: (_) => AlertDialog(
-                                                      title: Text(
-                                                          'Remove Invalid Milestones?'),
-                                                      content: Text(
-                                                          'If you change the starting date, some milestones will be invalid. Do you want to automatically remove the invalid milestones?'),
-                                                      actions: [
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              for (var i = 0;
-                                                                  i <
-                                                                      milestones
-                                                                          .value
-                                                                          .length;
-                                                                  i++) {
-                                                                if (milestones
-                                                                            .value[i]
-                                                                        [
-                                                                        'day'] <=
-                                                                    DateTime.now()
-                                                                        .difference(
-                                                                            value)
-                                                                        .inDays) {
+                                            StyledPopup(
+                                                    children: [
+                                                  Text(
+                                                      'If you change the starting date, some milestones will be invalid. Do you want to automatically remove the invalid milestones?')
+                                                ],
+                                                    title:
+                                                        'Remove Invalid Milestones?',
+                                                    textButton: TextButton(
+                                                        onPressed: () {
+                                                          for (var i = 0;
+                                                              i <
                                                                   milestones
                                                                       .value
-                                                                      .removeAt(
-                                                                          i);
-                                                                  i--;
-                                                                }
-                                                              }
-                                                              startDate.value =
-                                                                  value;
-                                                              OneContext()
-                                                                  .popDialog();
-                                                            },
-                                                            child: Text('Yes')),
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            OneContext()
-                                                                .popDialog();
-                                                          },
-                                                          child: Text('Cancel'),
-                                                        ),
-                                                      ],
-                                                    ));
+                                                                      .length;
+                                                              i++) {
+                                                            if (milestones
+                                                                        .value[
+                                                                    i]['day'] <=
+                                                                DateTime.now()
+                                                                    .difference(
+                                                                        value)
+                                                                    .inDays) {
+                                                              milestones.value
+                                                                  .removeAt(i);
+                                                              i--;
+                                                            }
+                                                          }
+                                                          startDate.value =
+                                                              value;
+                                                          OneContext()
+                                                              .popDialog();
+                                                        },
+                                                        child: Text('Yes')))
+                                                .showPopup();
                                           } else {
                                             startDate.value = value;
                                           }
@@ -393,26 +382,19 @@ class MilestoneTile extends StatelessWidget {
                     child: Icon(Icons.delete),
                   ),
                   onTap: () {
-                    OneContext().showDialog(
-                        builder: (_) => AlertDialog(
-                              title: Text('Delete Milestone?'),
-                              actions: [
-                                TextButton(
-                                    child: Text('Delete'),
-                                    onPressed: () {
-                                      milestonesList.value.removeAt(index);
-                                      milestonesList.value =
-                                          List<Map<String, dynamic>>.from(
-                                              milestonesList.value);
-                                      OneContext().popDialog();
-                                    }),
-                                TextButton(
-                                    child: Text('Cancel'),
-                                    onPressed: () {
-                                      OneContext().popDialog();
-                                    }),
-                              ],
-                            ));
+                    StyledPopup(
+                      title: 'Delete Milestone?',
+                      children: [],
+                      textButton: TextButton(
+                          child: Text('Delete'),
+                          onPressed: () {
+                            milestonesList.value.removeAt(index);
+                            milestonesList.value =
+                                List<Map<String, dynamic>>.from(
+                                    milestonesList.value);
+                            OneContext().popDialog();
+                          }),
+                    ).showPopup();
                   },
                 ),
               ],

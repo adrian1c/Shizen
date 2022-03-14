@@ -1,6 +1,7 @@
 import 'package:provider/provider.dart';
 import 'package:shizen_app/modules/community/addnewpost.dart';
 import 'package:shizen_app/utils/allUtils.dart';
+import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import './modules/tasks/tasks.dart';
 import './modules/friends/friends.dart';
 import './modules/community/community.dart';
@@ -75,11 +76,11 @@ class MainScaffoldStack extends HookWidget {
             controller: pageController,
             physics: NeverScrollableScrollPhysics(),
             children: <Widget>[
-              TaskPage(),
-              FriendsPage(),
-              CommunityPage(),
-              ProgressPage(),
-              ProfilePage(),
+              KeepAlivePage(child: TaskPage()),
+              KeepAlivePage(child: FriendsPage()),
+              KeepAlivePage(child: CommunityPage()),
+              KeepAlivePage(child: ProgressPage()),
+              KeepAlivePage(child: ProfilePage()),
             ]));
   }
 }

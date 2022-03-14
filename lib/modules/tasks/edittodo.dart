@@ -4,6 +4,7 @@ import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/button.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shizen_app/widgets/field.dart';
 
 class EditToDoTask extends HookWidget {
   EditToDoTask({Key? key, required this.todoTask}) : super(key: key);
@@ -151,9 +152,6 @@ class EditToDoTask extends HookWidget {
                             onPressed:
                                 !validateFields.value.containsValue(false)
                                     ? () async {
-                                        validateFields.value["title"] = false;
-                                        isValid.value =
-                                            checkValidity(validateFields.value);
                                         await Database(uid).editToDoTask(tid, {
                                           'title': titleController.text,
                                           'desc': descController.text,
@@ -236,63 +234,61 @@ class ToggleEditButton1 extends StatelessWidget {
                       value == true
                           ? IconButton(
                               onPressed: () {
-                                OneContext().showDialog(builder: (_) {
-                                  return AlertDialog(
-                                      title: Text("Recurring Days"),
-                                      content: Container(
-                                        child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: EditToDoTask
-                                                .recurListKey.length,
-                                            itemBuilder: (BuildContext context,
-                                                int index) {
-                                              return StatefulBuilder(
-                                                builder: (context, _) =>
-                                                    CheckboxListTile(
-                                                  title: new Text(EditToDoTask
-                                                      .recurListKey[index]),
-                                                  value: recurListValue
-                                                      .value[index],
-                                                  onChanged: (value) {
-                                                    _(() => recurListValue
-                                                            .value[index] =
-                                                        value ?? false);
-                                                    displayText.value =
-                                                        EditToDoTask
-                                                            .returnString(
-                                                                recurListValue
-                                                                    .value);
-                                                    if (recurListValue.value
-                                                        .contains(true)) {
-                                                      validateFields.value[
-                                                          "recurValid"] = true;
-                                                      isValid.value =
+                                StyledPopup(
+                                        title: 'Recurring Days',
+                                        children: [
+                                          Container(
+                                            child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: EditToDoTask
+                                                    .recurListKey.length,
+                                                itemBuilder:
+                                                    (BuildContext context,
+                                                        int index) {
+                                                  return StatefulBuilder(
+                                                    builder: (context, _) =>
+                                                        CheckboxListTile(
+                                                      title: new Text(
                                                           EditToDoTask
+                                                                  .recurListKey[
+                                                              index]),
+                                                      value: recurListValue
+                                                          .value[index],
+                                                      onChanged: (value) {
+                                                        _(() => recurListValue
+                                                                .value[index] =
+                                                            value ?? false);
+                                                        displayText.value =
+                                                            EditToDoTask
+                                                                .returnString(
+                                                                    recurListValue
+                                                                        .value);
+                                                        if (recurListValue.value
+                                                            .contains(true)) {
+                                                          validateFields.value[
+                                                                  "recurValid"] =
+                                                              true;
+                                                          isValid.value = EditToDoTask
                                                               .checkValidity(
                                                                   validateFields
                                                                       .value);
-                                                    } else {
-                                                      validateFields.value[
-                                                          "recurValid"] = false;
-                                                      isValid.value =
-                                                          EditToDoTask
+                                                        } else {
+                                                          validateFields.value[
+                                                                  "recurValid"] =
+                                                              false;
+                                                          isValid.value = EditToDoTask
                                                               .checkValidity(
                                                                   validateFields
                                                                       .value);
-                                                    }
-                                                  },
-                                                ),
-                                              );
-                                            }),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                            child: Text("OK"),
-                                            onPressed: () {
-                                              OneContext().popDialog();
-                                            }),
-                                      ]);
-                                });
+                                                        }
+                                                      },
+                                                    ),
+                                                  );
+                                                }),
+                                          )
+                                        ],
+                                        cancelText: 'Done')
+                                    .showPopup();
                               },
                               icon: Icon(Icons.edit))
                           : Container(),

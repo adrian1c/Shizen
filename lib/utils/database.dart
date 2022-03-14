@@ -9,8 +9,6 @@ import 'package:shizen_app/models/todoTask.dart';
 import 'package:shizen_app/models/trackerTask.dart';
 
 import 'package:path/path.dart';
-import 'package:top_snackbar_flutter/custom_snack_bar.dart';
-import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 class Database {
   Database(this.uid);
@@ -72,13 +70,25 @@ class Database {
     OneContext().hideProgressIndicator();
   }
 
-  Future<void> deleteToDoTask(toDoTaskID) async {
+  Future<void> deleteToDoTask(tid) async {
     print("Firing deleteToDoTask");
     await firestore
         .collection('users')
         .doc(uid)
         .collection('todo')
-        .doc(toDoTaskID)
+        .doc(tid)
+        .delete()
+        .whenComplete(() => print("Done"))
+        .catchError((e) => print(e));
+  }
+
+  Future<void> deleteTrackerTask(tid) async {
+    print("Firing deleteTrackerTask");
+    await firestore
+        .collection('users')
+        .doc(uid)
+        .collection('trackers')
+        .doc(tid)
         .delete()
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
@@ -405,6 +415,44 @@ class Database {
     } catch (e) {
       print(e);
     }
+
+    OneContext().hideProgressIndicator();
+  }
+
+  Future editUserName(newName) async {
+    print("Firing editUserName");
+
+    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
+
+    var batch = firestore.batch();
+    var userCollection = firestore.collection('users');
+    batch.update(userCollection.doc(uid), {'name': newName});
+
+    var userDoc =
+        await userCollection.doc(uid).get().then((value) => value.data());
+
+    if (userDoc!.containsKey('posts')) {
+      var postList = userDoc['posts'];
+      for (var i = 0; i < postList.length; i++) {
+        batch.update(
+            firestore.collection('posts').doc(postList[i]), {'name': newName});
+      }
+    }
+
+    var userFriends = await userCollection.doc(uid).collection('friends').get();
+
+    if (userFriends.size != 0) {
+      for (var i = 0; i < userFriends.size; i++) {
+        batch.update(
+            userCollection
+                .doc(userFriends.docs[i].id)
+                .collection('friends')
+                .doc(uid),
+            {'name': newName});
+      }
+    }
+
+    await batch.commit();
 
     OneContext().hideProgressIndicator();
   }

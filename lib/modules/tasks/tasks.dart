@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:top_snackbar_flutter/custom_snack_bar.dart';
-import 'package:top_snackbar_flutter/top_snack_bar.dart';
+import 'package:shizen_app/widgets/field.dart';
 import './addtodo.dart';
 import './addtracker.dart';
 import '../../utils/allUtils.dart';
@@ -29,6 +29,9 @@ class TaskPage extends HookWidget {
           : isSwitching.value = false;
     });
     String uid = Provider.of<UserProvider>(context).uid;
+
+    final dayController = useTextEditingController();
+    final rewardController = useTextEditingController();
     return SafeArea(
       minimum: EdgeInsets.fromLTRB(8, 10, 8, 0),
       child: Center(
@@ -48,7 +51,7 @@ class TaskPage extends HookWidget {
                   child:
                       TabBarView(controller: tabController, children: <Widget>[
                     toDoTask(uid),
-                    trackerTask(uid),
+                    trackerTask(uid, dayController, rewardController),
                   ]),
                 ),
               ],
@@ -99,7 +102,7 @@ class TaskPage extends HookWidget {
         });
   }
 
-  Widget trackerTask(uid) {
+  Widget trackerTask(uid, dayController, rewardController) {
     return StreamBuilder(
         stream: Database(uid).getTrackerTasks(),
         builder: (context, AsyncSnapshot snapshot) {
@@ -110,7 +113,12 @@ class TaskPage extends HookWidget {
               physics: BouncingScrollPhysics(),
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, index) {
-                return TrackerTile(tracker: snapshot.data.docs[index]);
+                return TrackerTile(
+                  tracker: snapshot.data.docs[index],
+                  uid: uid,
+                  dayController: dayController,
+                  rewardController: rewardController,
+                );
               },
             ),
           );
@@ -160,10 +168,8 @@ class TaskPage extends HookWidget {
           value: false,
           onChanged: (value) async {
             await Database(uid).completeTask(task.id);
-            showTopSnackBar(
-                context,
-                CustomSnackBar.success(
-                    message: 'Congratulations! I\'m proud of you'));
+            StyledSnackbar(message: 'Congratulations! I\'m proud of you')
+                .showSuccess();
           },
         ),
         onTap: () {
@@ -176,25 +182,19 @@ class TaskPage extends HookWidget {
                       )));
         },
         onLongPress: () {
-          OneContext().showDialog(
-              builder: (_) => AlertDialog(
-                    title: Text("Delete"),
-                    content: Text("Do you want to delete this task?"),
-                    actions: [
-                      TextButton(
-                        child: Text("Yes"),
-                        onPressed: () {
-                          Database(uid).deleteToDoTask(task.id);
-                          OneContext().popDialog();
-                        },
-                      ),
-                      TextButton(
-                          child: Text("Cancel"),
-                          onPressed: () {
-                            OneContext().popDialog();
-                          })
-                    ],
-                  ));
+          StyledPopup(
+            title: 'Delete task?',
+            children: [Text("Do you want to delete this task?")],
+            textButton: TextButton(
+              child: Text("Yes"),
+              onPressed: () {
+                Database(uid).deleteToDoTask(task.id);
+                OneContext().popDialog();
+                StyledSnackbar(message: 'The task has been deleted.')
+                    .showSuccess();
+              },
+            ),
+          ).showPopup();
         },
         trailing: Container(
             decoration: BoxDecoration(
@@ -212,9 +212,18 @@ class TaskPage extends HookWidget {
 }
 
 class TrackerTile extends StatelessWidget {
-  const TrackerTile({Key? key, required this.tracker}) : super(key: key);
+  const TrackerTile(
+      {Key? key,
+      required this.tracker,
+      required this.uid,
+      required this.dayController,
+      required this.rewardController})
+      : super(key: key);
 
   final tracker;
+  final uid;
+  final dayController;
+  final rewardController;
 
   @override
   Widget build(BuildContext context) {
@@ -272,31 +281,187 @@ class TrackerTile extends StatelessWidget {
               child: Column(
                 children: [
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      StyledPopup(
+                        title: 'Milestones',
+                        children: [
+                          Align(
+                              alignment: Alignment.topLeft,
+                              child: Text('Milestones')),
+                          ListView.builder(
+                              physics: NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: tracker['milestones'].length,
+                              itemBuilder: (context, index) {
+                                return MilestoneTile(
+                                  milestones: tracker['milestones'][index],
+                                  milestonesList: tracker['milestones'],
+                                  index: index,
+                                  dayController: dayController,
+                                  rewardController: rewardController,
+                                  minDay: DateTime.now()
+                                      .difference(
+                                          (tracker['startDate'] as Timestamp)
+                                              .toDate())
+                                      .inDays,
+                                );
+                              }),
+                          IconButton(
+                              onPressed: () {
+                                OneContext().showDialog(
+                                    barrierDismissible: false,
+                                    builder: (_) {
+                                      final _formKey2 = GlobalKey<FormState>();
+                                      return AlertDialog(
+                                        title: Text('Add New Milestone'),
+                                        content: Form(
+                                          key: _formKey2,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text('Day'),
+                                              TextFormField(
+                                                controller: dayController,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                inputFormatters: [
+                                                  FilteringTextInputFormatter
+                                                      .digitsOnly,
+                                                  FilteringTextInputFormatter
+                                                      .deny(RegExp(r'^0+')),
+                                                ],
+                                                validator: (value) {
+                                                  String valueString =
+                                                      value as String;
+                                                  if (valueString.isEmpty) {
+                                                    return "Enter a day";
+                                                  } else if (int.parse(
+                                                              valueString) <
+                                                          DateTime.now()
+                                                              .difference((tracker[
+                                                                          'startDate']
+                                                                      as Timestamp)
+                                                                  .toDate())
+                                                              .inDays ||
+                                                      !MilestoneList
+                                                          .checkDuplicate(
+                                                              tracker[
+                                                                  'milestones'],
+                                                              valueString)) {
+                                                    return "The milestone must be higher than the current streak or must contain no duplicates";
+                                                  }
+                                                },
+                                              ),
+                                              Text('Text'),
+                                              TextFormField(
+                                                controller: rewardController,
+                                                maxLength: 100,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                              child: Text('Add'),
+                                              onPressed: () {
+                                                if (_formKey2.currentState!
+                                                    .validate()) {
+                                                  tracker['milestones'].add({
+                                                    'day': int.parse(
+                                                        dayController.text),
+                                                    'reward':
+                                                        rewardController.text,
+                                                    'isComplete': false,
+                                                  });
+                                                  tracker['milestones'] = List<
+                                                          Map<String,
+                                                              dynamic>>.from(
+                                                      tracker['milestones']);
+                                                  List<Map<String, dynamic>>
+                                                      tempList =
+                                                      tracker['milestones']
+                                                          .toList();
+                                                  tempList.sort((a, b) =>
+                                                      a['day']
+                                                          .compareTo(b['day']));
+                                                  tracker['milestones'] =
+                                                      tempList.toList();
+                                                  dayController.clear();
+                                                  rewardController.clear();
+                                                  OneContext().popDialog();
+                                                }
+                                              }),
+                                          TextButton(
+                                              child: Text('Cancel'),
+                                              onPressed: () {
+                                                dayController.clear();
+                                                rewardController.clear();
+                                                OneContext().popDialog();
+                                              }),
+                                        ],
+                                      );
+                                    });
+                              },
+                              icon: Icon(Icons.add))
+                        ],
+                      ).showPopup();
+                    },
                     child: Icon(Icons.flag),
                     style: ElevatedButton.styleFrom(
                         shape: CircleBorder(), primary: Colors.amber),
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      StyledPopup(
+                        title: 'Milestones',
+                        children: [],
+                      ).showPopup();
+                    },
                     child: Icon(Icons.restart_alt_outlined),
                     style: ElevatedButton.styleFrom(
                         shape: CircleBorder(), primary: Colors.red),
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      StyledPopup(
+                        title: 'Milestones',
+                        children: [],
+                      ).showPopup();
+                    },
                     child: Icon(Icons.share),
                     style: ElevatedButton.styleFrom(
                         shape: CircleBorder(), primary: Colors.blue),
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      StyledPopup(
+                        title: 'Milestones',
+                        children: [],
+                      ).showPopup();
+                    },
                     child: Icon(Icons.edit),
                     style: ElevatedButton.styleFrom(
                         shape: CircleBorder(), primary: Colors.grey),
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      StyledPopup(
+                          title: 'Delete Tracker?',
+                          children: [
+                            Text(
+                                'This tracker and all of its data will be permanently deleted. Are you sure?')
+                          ],
+                          textButton: TextButton(
+                            onPressed: () async {
+                              await Database(uid).deleteTrackerTask(tracker.id);
+                              OneContext().popDialog();
+                              StyledSnackbar(
+                                      message: 'The task has been deleted.')
+                                  .showSuccess();
+                            },
+                            child: Text('Delete'),
+                          )).showPopup();
+                    },
                     child: Icon(Icons.delete),
                     style: ElevatedButton.styleFrom(
                         shape: CircleBorder(), primary: Colors.orange),
