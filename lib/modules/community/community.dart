@@ -117,7 +117,7 @@ class CommunityPostList extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).uid;
     final future = useMemoized(
         () => Database(uid)
             .getCommunityPost(visibilityValue.value, hashtag.value),

@@ -8,7 +8,10 @@ import 'package:shizen_app/widgets/field.dart';
 import 'package:intl/intl.dart';
 
 class AddTrackerTask extends HookWidget {
-  const AddTrackerTask({Key? key}) : super(key: key);
+  const AddTrackerTask({Key? key, required this.trackerChanged})
+      : super(key: key);
+
+  final trackerChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +200,7 @@ class AddTrackerTask extends HookWidget {
                                   milestones.value,
                                   startDate.value);
                               await Database(uid).addTrackerTask(tracker);
+                              trackerChanged.value += 1;
                               Navigator.of(context).pop();
                             },
                             isValid: isValid),
@@ -226,15 +230,15 @@ class MilestoneList extends HookWidget {
   final minDay;
   final startDate;
 
-  static checkDuplicate(List<Map<String, dynamic>> milestoneList, value) {
+  static bool checkDuplicate(List milestoneList, value) {
     var isValid = true;
-
+    print(milestoneList);
     for (var i = 0; i < milestoneList.length; i++) {
-      if (milestoneList[i]['day'] == value) {
+      if (milestoneList[i]['day'].toString() == value) {
         isValid = false;
       }
     }
-
+    print(isValid);
     return isValid;
   }
 
@@ -283,8 +287,8 @@ class MilestoneList extends HookWidget {
                                 String valueString = value as String;
                                 if (valueString.isEmpty) {
                                   return "Enter a day";
-                                } else if (int.parse(valueString) < minDay ||
-                                    !checkDuplicate(
+                                } else if (int.parse(valueString) <= minDay ||
+                                    !MilestoneList.checkDuplicate(
                                         milestones.value, valueString)) {
                                   return "The milestone must be higher than the current streak or must contain no duplicates";
                                 }

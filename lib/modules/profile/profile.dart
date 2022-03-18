@@ -5,7 +5,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:shizen_app/modules/community/community.dart';
 import 'package:shizen_app/utils/allUtils.dart';
-import 'package:shizen_app/widgets/button.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shizen_app/widgets/field.dart';
 import 'package:shimmer/shimmer.dart';
@@ -85,17 +84,19 @@ class ProfilePage extends HookWidget {
             child: Align(alignment: Alignment.topLeft, child: Text('Posts')),
           ),
           snapshotUserPosts.hasData
-              ? ListView.builder(
-                  physics: BouncingScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: snapshotUserPosts.data!.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                      child: PostListTile(
-                          postData: snapshotUserPosts.data![index]),
-                    );
-                  })
+              ? snapshotUserPosts.data!.length > 0
+                  ? ListView.builder(
+                      physics: BouncingScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: snapshotUserPosts.data!.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                          child: PostListTile(
+                              postData: snapshotUserPosts.data![index]),
+                        );
+                      })
+                  : Text('You don\'t have any posts.')
               : Shimmer.fromColors(
                   baseColor: Colors.grey[300]!,
                   highlightColor: Colors.grey[100]!,
@@ -141,7 +142,7 @@ class UserProfileData extends StatelessWidget {
         Container(
           width: 25.w,
           height: 25.w,
-          child: data.data().containsKey('image')
+          child: data.data()['image'] != ''
               ? InkWell(
                   child: Container(
                       decoration: BoxDecoration(
@@ -155,12 +156,10 @@ class UserProfileData extends StatelessWidget {
                       await changeProfilePic(context, true, isLoading),
                 )
               : InkWell(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(width: 1),
-                      color: Colors.grey,
-                    ),
+                  child: CircleAvatar(
+                    foregroundImage: Images.defaultPic.image,
+                    backgroundColor: Colors.grey,
+                    radius: 3.h,
                   ),
                   onTap: () async {
                     await changeProfilePic(context, false, isLoading);
@@ -259,15 +258,12 @@ class UserProfileData extends StatelessWidget {
 
   changeProfilePic(context, bool existingPic, isLoading) async {
     StyledPopup(
-            title: existingPic
-                ? 'Change Profile Picture'
-                : 'Upload Profile Picture',
-            children: [
-              Text(existingPic
-                  ? 'Do you want to change your profile picture to a new one?'
-                  : 'Do you want to upload a profile picture?')
-            ],
-            textButton: TextButton(
+      title: existingPic ? 'Change Profile Picture' : 'Upload Profile Picture',
+      children: existingPic
+          ? [
+              Text('Do you want to change your profile picture to a new one?'),
+              ElevatedButton(
+                child: Text('Change Profile Picture'),
                 onPressed: () async {
                   var image = await pickImage();
                   if (image != null) {
@@ -297,27 +293,61 @@ class UserProfileData extends StatelessWidget {
                     });
                   }
                 },
-                child: Text("Change")))
-        .showPopup();
-  }
-}
-
-class Logout extends StatelessWidget {
-  const Logout({Key? key, required this.uid, required this.isLoading})
-      : super(key: key);
-
-  final String uid;
-  final isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 20,
-      child: LogoutButton(
-        uid: uid,
-        context: context,
-        isLoading: isLoading,
-      ),
-    );
+              ),
+              TextButton(
+                child: Text('Remove Profile Picture'),
+                onPressed: () {
+                  StyledPopup(
+                          title: 'Are you sure?',
+                          children: [
+                            Text('Your profile picture will be removed.')
+                          ],
+                          textButton: TextButton(
+                              onPressed: () async {
+                                await Database(uid).removeProfilePic();
+                                isLoading.value += 1;
+                                OneContext().popAllDialogs();
+                              },
+                              child: Text('Yes')))
+                      .showPopup();
+                },
+              )
+            ]
+          : [
+              Text('Do you want to upload a profile picture?'),
+              ElevatedButton(
+                child: Text('Upload Profile Picture'),
+                onPressed: () async {
+                  var image = await pickImage();
+                  if (image != null) {
+                    OneContext().popDialog();
+                    image = await cropImage(image);
+                    if (image == null) return;
+                    OneContext().showDialog(builder: (_) {
+                      return AlertDialog(
+                        title: Text("Upload Profile Picture"),
+                        content: Image(image: FileImage(image)),
+                        actions: [
+                          TextButton(
+                              onPressed: () async {
+                                OneContext().popDialog();
+                                await Database(uid).uploadProfilePic(image);
+                                isLoading.value += 1;
+                              },
+                              child: Text("Upload")),
+                          TextButton(
+                            onPressed: () {
+                              OneContext().popDialog();
+                            },
+                            child: Text("Cancel"),
+                          ),
+                        ],
+                      );
+                    });
+                  }
+                },
+              ),
+            ],
+    ).showPopup();
   }
 }

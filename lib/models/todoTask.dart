@@ -1,24 +1,23 @@
 class ToDoTask {
   String? key;
   String title = '';
-  String desc = '';
+  List desc = [];
   DateTime dateCreated = DateTime.now();
-  Map<String, dynamic> settings = {
-    "recur": [],
-    "reminder": null,
-    "deadline": null,
-  };
-  bool isComplete = false;
+  List<bool> recur = [false, false, false, false, false, false, false];
+  DateTime? reminder;
+  bool allComplete = false;
+  List? descEdit;
 
-  ToDoTask(this.title, this.desc, this.settings);
+  ToDoTask(this.title, this.desc, this.recur, this.reminder);
 
   toJson() {
     return {
       'dateCreated': dateCreated,
       'title': title,
       'desc': desc,
-      'settings': settings,
-      'isComplete': isComplete,
+      'recur': recur,
+      'reminder': reminder,
+      'allComplete': allComplete,
     };
   }
 }

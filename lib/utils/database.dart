@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,23 +19,29 @@ class Database {
 
   final String uid;
 
-  Stream getToDoTasks() {
+  final CollectionReference<Map<String, dynamic>> userCol =
+      FirebaseFirestore.instance.collection('users');
+  final CollectionReference<Map<String, dynamic>> postCol =
+      FirebaseFirestore.instance.collection('posts');
+  late DocumentReference<Map<String, dynamic>> userDoc =
+      FirebaseFirestore.instance.collection('users').doc(uid);
+
+  Future getToDoTasks() {
     print("Firing getToDoTasks");
-    return firestore
-        .collection('users')
-        .doc(uid)
+    return userDoc
         .collection('todo')
-        .where("isComplete", isEqualTo: false)
+        .where("allComplete", isEqualTo: false)
         .orderBy("dateCreated", descending: true)
-        .snapshots();
+        .get();
   }
 
-  Stream getTrackerTasks() {
+  Future getTrackerTasks() {
     print("Firing getTrackerTasks");
 
-    var userCollection = firestore.collection('users');
-
-    return userCollection.doc(uid).collection('trackers').snapshots();
+    return userDoc
+        .collection('trackers')
+        .orderBy('dateCreated', descending: true)
+        .get();
   }
 
   Future<void> addToDoTask(toDoTask) async {
@@ -42,9 +49,7 @@ class Database {
 
     OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
-    await firestore
-        .collection('users')
-        .doc(uid)
+    await userDoc
         .collection('todo')
         .add(toDoTask.toJson())
         .whenComplete(() => print("Done"))
@@ -58,12 +63,10 @@ class Database {
 
     OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
-    await firestore
-        .collection('users')
-        .doc(uid)
+    await userDoc
         .collection('todo')
         .doc(tid)
-        .set(toDoTask, SetOptions(merge: true))
+        .update(toDoTask.toJson())
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
 
@@ -72,9 +75,7 @@ class Database {
 
   Future<void> deleteToDoTask(tid) async {
     print("Firing deleteToDoTask");
-    await firestore
-        .collection('users')
-        .doc(uid)
+    await userDoc
         .collection('todo')
         .doc(tid)
         .delete()
@@ -84,9 +85,7 @@ class Database {
 
   Future<void> deleteTrackerTask(tid) async {
     print("Firing deleteTrackerTask");
-    await firestore
-        .collection('users')
-        .doc(uid)
+    await userDoc
         .collection('trackers')
         .doc(tid)
         .delete()
@@ -94,15 +93,28 @@ class Database {
         .catchError((e) => print(e));
   }
 
-  Future<void> completeTask(tid) async {
+  Future<void> completeTask(tid, newDesc) async {
     print("Firing completeTask");
 
-    await firestore
-        .collection('users')
-        .doc(uid)
+    await userDoc.collection('todo').doc(tid).update({'desc': newDesc});
+  }
+
+  Future<void> completeTaskAll(tid, newDesc) async {
+    print("Firing completeTaskAll");
+
+    await userDoc
         .collection('todo')
         .doc(tid)
-        .update({'isComplete': true});
+        .update({'desc': newDesc, 'allComplete': true});
+  }
+
+  Future editMilestones(tid, milestoneList) async {
+    print("Firing editMilestones");
+
+    await userDoc
+        .collection('trackers')
+        .doc(tid)
+        .update({'milestones': milestoneList});
   }
 
   //-----------------------------------------------------
@@ -117,24 +129,17 @@ class Database {
     print("Firing getFriendSearch");
 
     List<QuerySnapshot> results = [];
-    results.add(await firestore
-        .collection('users')
+    results.add(await userCol
         .where('email', isEqualTo: email)
         .where(FieldPath.documentId, isNotEqualTo: uid)
         .get());
     print(results);
-    results.add(await firestore
-        .collection('users')
-        .doc(uid)
-        .collection('friends')
-        .get());
+    results.add(await userDoc.collection('friends').get());
     return results;
   }
 
   Future<void> sendFriendReq(user) async {
     print("Firing sendFriendReq");
-
-    var userCollection = firestore.collection('users');
 
     Map<String, dynamic> senderData = {'status': 1};
     await getCurrentUserData()
@@ -145,10 +150,8 @@ class Database {
         .then((value) => receiverData.addAll(value.data()!));
 
     var batch = firestore.batch();
-    batch.set(
-        userCollection.doc(uid).collection('friends').doc(user), receiverData);
-    batch.set(
-        userCollection.doc(user).collection('friends').doc(uid), senderData);
+    batch.set(userDoc.collection('friends').doc(user), receiverData);
+    batch.set(userCol.doc(user).collection('friends').doc(uid), senderData);
     await batch.commit();
     return;
   }
@@ -156,13 +159,11 @@ class Database {
   Future<void> acceptFriendReq(user) async {
     print("Firing acceptFriendReq");
 
-    var userCollection = firestore.collection('users');
-
     var batch = firestore.batch();
-    batch.set(userCollection.doc(uid).collection('friends').doc(user),
-        {'status': 2}, SetOptions(merge: true));
-    batch.set(userCollection.doc(user).collection('friends').doc(uid),
-        {'status': 2}, SetOptions(merge: true));
+    batch.set(userDoc.collection('friends').doc(user), {'status': 2},
+        SetOptions(merge: true));
+    batch.set(userCol.doc(user).collection('friends').doc(uid), {'status': 2},
+        SetOptions(merge: true));
     await batch.commit();
     return;
   }
@@ -170,11 +171,9 @@ class Database {
   Future<void> declineFriendReq(user) async {
     print("Firing declineFriendReq");
 
-    var userCollection = firestore.collection('users');
-
     var batch = firestore.batch();
-    batch.delete(userCollection.doc(user).collection('friends').doc(uid));
-    batch.delete(userCollection.doc(uid).collection('friends').doc(user));
+    batch.delete(userCol.doc(user).collection('friends').doc(uid));
+    batch.delete(userDoc.collection('friends').doc(user));
     await batch.commit();
     return;
   }
@@ -182,16 +181,13 @@ class Database {
   Future<Map<dynamic, dynamic>> friendsPageData() async {
     print("Firing friendsPageData");
 
-    var userCollection = firestore.collection('users');
-
     Map results = {
       "sentRequests": [],
       "newRequests": [],
       "friendsList": [],
     };
 
-    var friendsFields =
-        await userCollection.doc(uid).collection('friends').get();
+    var friendsFields = await userDoc.collection('friends').get();
 
     if (friendsFields.docs.length < 1) {
       return results;
@@ -221,11 +217,10 @@ class Database {
 
   Future<List<String>> getAllFriendsID() async {
     print("Firing getAllFriendsInList");
+
     List<String> allFriends = [];
 
-    var userCollection = firestore.collection('users');
-
-    await userCollection.doc(uid).collection('friends').get().then((value) {
+    await userDoc.collection('friends').get().then((value) {
       if (value.docs.length < 1) {
         return allFriends;
       }
@@ -274,7 +269,7 @@ class Database {
 
     batch.set(newPostDoc, postData);
     batch.set(
-        firestore.collection('users').doc(uid),
+        userDoc,
         {
           'posts': FieldValue.arrayUnion([newPostDoc.id])
         },
@@ -284,7 +279,7 @@ class Database {
       List<String> friendsList = await getAllFriendsID();
       friendsList.forEach((e) {
         batch.set(
-            firestore.collection('users').doc(e),
+            userCol.doc(e),
             {
               'friendFeed': FieldValue.arrayUnion([newPostDoc.id])
             },
@@ -309,26 +304,19 @@ class Database {
     switch (filter) {
       case 'Everyone':
         if (hashtag != '') {
-          QuerySnapshot<Map<String, dynamic>> query = await firestore
-              .collection('posts')
+          QuerySnapshot<Map<String, dynamic>> query = await postCol
               .where('uid', isNotEqualTo: uid)
               .where('hashtags', arrayContains: hashtag)
               .get();
           query.docs.forEach((doc) => results.add(doc.data()));
         } else {
-          QuerySnapshot<Map<String, dynamic>> query = await firestore
-              .collection('posts')
-              .where('uid', isNotEqualTo: uid)
-              .get();
+          QuerySnapshot<Map<String, dynamic>> query =
+              await postCol.where('uid', isNotEqualTo: uid).get();
           query.docs.forEach((doc) => results.add(doc.data()));
         }
         return results;
       case 'Friends Only':
-        var ids = await firestore
-            .collection('users')
-            .doc(uid)
-            .get()
-            .then((value) => value.data());
+        var ids = await userDoc.get().then((value) => value.data());
         if (!ids!.containsKey('friendFeed')) return results;
         var postIds = ids['friendFeed'];
         var chunks = [];
@@ -342,8 +330,7 @@ class Database {
 
         for (var element in chunks) {
           if (hashtag != '') {
-            await firestore
-                .collection('posts')
+            await postCol
                 .where(FieldPath.documentId, whereIn: element)
                 .where('hashtags', arrayContains: hashtag)
                 .get()
@@ -351,8 +338,7 @@ class Database {
               value.docs.forEach((doc) => results.add(doc.data()));
             });
           } else {
-            await firestore
-                .collection('posts')
+            await postCol
                 .where(FieldPath.documentId, whereIn: element)
                 .get()
                 .then((value) {
@@ -363,16 +349,14 @@ class Database {
         return results;
       case 'Anonymous':
         if (hashtag != '') {
-          QuerySnapshot<Map<String, dynamic>> query = await firestore
-              .collection('posts')
+          QuerySnapshot<Map<String, dynamic>> query = await postCol
               .where('uid', isNotEqualTo: uid)
               .where('visibility', isEqualTo: filter)
               .where('hashtags', arrayContains: hashtag)
               .get();
           query.docs.forEach((doc) => results.add(doc.data()));
         } else {
-          QuerySnapshot<Map<String, dynamic>> query = await firestore
-              .collection('posts')
+          QuerySnapshot<Map<String, dynamic>> query = await postCol
               .where('uid', isNotEqualTo: uid)
               .where('visibility', isEqualTo: filter)
               .get();
@@ -385,13 +369,13 @@ class Database {
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getCurrentUserData() {
     print("Firing getUserProfileData");
-    return firestore.collection('users').doc(uid).get();
+    return userDoc.get();
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getUserProfileData(
       targetUserID) {
     print("Firing getUserProfileData");
-    return firestore.collection('users').doc(targetUserID).get();
+    return userCol.doc(targetUserID).get();
   }
 
   Future uploadProfilePic(image) async {
@@ -399,22 +383,77 @@ class Database {
 
     OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
-    var userCollection = firestore.collection('users');
-
     File imageFile = image;
     FirebaseStorage storage = FirebaseStorage.instance;
     final fileName = basename(imageFile.path);
     final destination = 'files/$fileName';
 
+    var batch = firestore.batch();
+
     try {
       final ref = storage.ref(destination).child(uid);
       await ref.putFile(imageFile);
-      await userCollection
-          .doc(uid)
-          .set({'image': await ref.getDownloadURL()}, SetOptions(merge: true));
+      var downloadURL = await ref.getDownloadURL();
+      batch.update(userDoc, {'image': downloadURL});
+      var userDoc1 = await userDoc.get().then((value) => value.data());
+
+      if (userDoc1!.containsKey('posts')) {
+        var postList = userDoc1['posts'];
+        for (var i = 0; i < postList.length; i++) {
+          batch.update(firestore.collection('posts').doc(postList[i]),
+              {'image': downloadURL});
+        }
+      }
+
+      var userFriends = await userDoc.collection('friends').get();
+
+      if (userFriends.size != 0) {
+        for (var i = 0; i < userFriends.size; i++) {
+          batch.update(
+              userCol
+                  .doc(userFriends.docs[i].id)
+                  .collection('friends')
+                  .doc(uid),
+              {'image': downloadURL});
+        }
+      }
+      await batch.commit();
     } catch (e) {
       print(e);
     }
+
+    OneContext().hideProgressIndicator();
+  }
+
+  Future removeProfilePic() async {
+    print("Firing removeProfilePic");
+
+    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
+
+    var batch = firestore.batch();
+    batch.update(userDoc, {'image': ''});
+
+    var userDoc1 = await userDoc.get().then((value) => value.data());
+
+    if (userDoc1!.containsKey('posts')) {
+      var postList = userDoc1['posts'];
+      for (var i = 0; i < postList.length; i++) {
+        batch.update(
+            firestore.collection('posts').doc(postList[i]), {'image': ''});
+      }
+    }
+
+    var userFriends = await userDoc.collection('friends').get();
+
+    if (userFriends.size != 0) {
+      for (var i = 0; i < userFriends.size; i++) {
+        batch.update(
+            userCol.doc(userFriends.docs[i].id).collection('friends').doc(uid),
+            {'image': ''});
+      }
+    }
+
+    await batch.commit();
 
     OneContext().hideProgressIndicator();
   }
@@ -425,29 +464,24 @@ class Database {
     OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
     var batch = firestore.batch();
-    var userCollection = firestore.collection('users');
-    batch.update(userCollection.doc(uid), {'name': newName});
+    batch.update(userDoc, {'name': newName});
 
-    var userDoc =
-        await userCollection.doc(uid).get().then((value) => value.data());
+    var userDoc1 = await userDoc.get().then((value) => value.data());
 
-    if (userDoc!.containsKey('posts')) {
-      var postList = userDoc['posts'];
+    if (userDoc1!.containsKey('posts')) {
+      var postList = userDoc1['posts'];
       for (var i = 0; i < postList.length; i++) {
         batch.update(
             firestore.collection('posts').doc(postList[i]), {'name': newName});
       }
     }
 
-    var userFriends = await userCollection.doc(uid).collection('friends').get();
+    var userFriends = await userDoc.collection('friends').get();
 
     if (userFriends.size != 0) {
       for (var i = 0; i < userFriends.size; i++) {
         batch.update(
-            userCollection
-                .doc(userFriends.docs[i].id)
-                .collection('friends')
-                .doc(uid),
+            userCol.doc(userFriends.docs[i].id).collection('friends').doc(uid),
             {'name': newName});
       }
     }
@@ -461,15 +495,13 @@ class Database {
     print("Firing getUserPosts");
 
     var results = [];
-    var userCollection = firestore.collection('users');
 
-    var userDoc = await userCollection.doc(uid).get();
+    var userDoc1 = await userDoc.get();
 
-    if (userDoc.data()!.containsKey('posts')) {
-      var postList = userDoc.data()!['posts'];
+    if (userDoc1.data()!.containsKey('posts')) {
+      var postList = userDoc1.data()!['posts'];
       for (var i = 0; i < postList.length; i++) {
-        var postData =
-            await firestore.collection('posts').doc(postList[i]).get();
+        var postData = await postCol.doc(postList[i]).get();
         results.add(postData.data());
       }
     }
@@ -487,9 +519,7 @@ class Database {
 
     OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
-    var userCollection = firestore.collection('users');
-
-    await userCollection.doc(uid).collection('trackers').add(tracker.toJson());
+    await userDoc.collection('trackers').add(tracker.toJson());
 
     OneContext().hideProgressIndicator();
   }

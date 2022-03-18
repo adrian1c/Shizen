@@ -7,7 +7,339 @@ import 'package:intl/intl.dart';
 import 'package:shizen_app/widgets/field.dart';
 
 class AddToDoTask extends HookWidget {
-  static final List recurListKey = [
+  const AddToDoTask({Key? key, required this.todoChanged, this.editParams})
+      : super(key: key);
+
+  final todoChanged;
+  final editParams;
+
+  static checkTaskValid(
+      ValueNotifier<List> taskList, ValueNotifier<bool> isValid) {
+    isValid.value = taskList.value.length > 0 ? true : false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).uid;
+
+    final TextEditingController titleController = useTextEditingController();
+    final TextEditingController taskController = useTextEditingController();
+
+    final ValueNotifier<bool> isValid =
+        useState(editParams != null ? true : false);
+
+    final ValueNotifier<String> title =
+        useState(editParams != null ? editParams['title'] : '');
+    final ValueNotifier<List> taskList =
+        useState(editParams != null ? editParams['desc'] : []);
+
+    final ValueNotifier<List<bool>> recurValue = useState(editParams != null
+        ? editParams['recur']
+        : [false, false, false, false, false, false, false]);
+    final ValueNotifier<DateTime?> reminderValue =
+        useState(editParams != null ? editParams['reminder'] : null);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(editParams != null ? "Edit Task" : "Add Task"),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+          minimum: EdgeInsets.all(20),
+          child: SingleChildScrollView(
+              child: Column(
+            children: [
+              TodoTaskList(
+                  titleController: titleController,
+                  taskController: taskController,
+                  title: title,
+                  taskList: taskList,
+                  isValid: isValid,
+                  editParams: editParams),
+              RecurButton(
+                taskList: taskList,
+                recurValue: recurValue,
+                isValid: isValid,
+              ),
+              ReminderButton(taskList: taskList, reminderValue: reminderValue),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(50, 20, 50, 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CreateButton(
+                      onPressed: () async {
+                        if (isValid.value) {
+                          var newTask = editParams != null
+                              ? ToDoTask(
+                                  title.value,
+                                  taskList.value,
+                                  recurValue.value,
+                                  reminderValue.value,
+                                )
+                              : ToDoTask(title.value, taskList.value,
+                                  recurValue.value, reminderValue.value);
+                          editParams != null
+                              ? await Database(uid)
+                                  .editToDoTask(editParams['id'], newTask)
+                              : await Database(uid).addToDoTask(newTask);
+                          todoChanged.value += 1;
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      isValid: isValid,
+                      buttonLabel: editParams != null ? 'Save' : 'Create',
+                    ),
+                    const CancelButton(),
+                  ],
+                ),
+              ),
+            ],
+          ))),
+    );
+  }
+}
+
+class TodoTaskList extends HookWidget {
+  const TodoTaskList(
+      {Key? key,
+      required this.titleController,
+      required this.taskController,
+      required this.title,
+      required this.taskList,
+      required this.isValid,
+      this.editParams});
+
+  final TextEditingController titleController;
+  final TextEditingController taskController;
+  final ValueNotifier<String> title;
+  final ValueNotifier<List> taskList;
+  final ValueNotifier<bool> isValid;
+  final editParams;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () {
+              StyledPopup(
+                  title: 'Task Title',
+                  children: [
+                    TextFormField(
+                      controller: titleController,
+                      style: TextStyle(color: Color(0xff58865C)),
+                      maxLines: 1,
+                      maxLength: 20,
+                      decoration: InputDecoration(
+                        contentPadding: EdgeInsets.only(top: 0.0, left: 5.0),
+                        labelText: "Task Title",
+                        labelStyle: CustomTheme.lightTheme.textTheme.bodyText2,
+                        enabledBorder: UnderlineInputBorder(
+                            borderSide:
+                                const BorderSide(color: Color(0xff35566D))),
+                      ),
+                    )
+                  ],
+                  textButton: TextButton(
+                    onPressed: () {
+                      title.value = titleController.text;
+                      OneContext().popAllDialogs();
+                    },
+                    child: Text('Save'),
+                  )).showPopup();
+            },
+            child: Container(
+                width: 60.w,
+                height: 5.h,
+                decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15))),
+                child: Center(
+                    child:
+                        Text(title.value == '' ? 'Enter title' : title.value))),
+          ),
+          ConstrainedBox(
+              constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
+              child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.amber[200],
+                    border: Border.all(color: Colors.amber, width: 5),
+                    borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(5),
+                        bottomRight: Radius.circular(5),
+                        topRight: Radius.circular(5)),
+                  ),
+                  child: taskList.value.length == 0
+                      ? Container(
+                          decoration: BoxDecoration(color: Colors.grey[400]),
+                          height: 8.h,
+                          padding: EdgeInsets.only(top: 10, bottom: 10),
+                          alignment: Alignment.center,
+                          child: Text('Add a task',
+                              style: TextStyle(color: Colors.white)))
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: taskList.value.length,
+                          itemBuilder: (context, index) {
+                            return SizedBox(
+                              height: 8.h,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: taskList.value[index]['status']
+                                        ? Colors.lightGreen[400]
+                                        : null),
+                                child: ListTile(
+                                  leading: Text(taskList.value[index]['task'],
+                                      softWrap: false,
+                                      style: TextStyle(
+                                          decoration: taskList.value[index]
+                                                  ['status']
+                                              ? TextDecoration.lineThrough
+                                              : null)),
+                                  trailing: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: () {
+                                      StyledPopup(
+                                              title: 'Remove this task?',
+                                              children: [],
+                                              textButton: TextButton(
+                                                  onPressed: () {
+                                                    taskList.value = List.from(
+                                                        taskList.value)
+                                                      ..removeAt(index);
+                                                    AddToDoTask.checkTaskValid(
+                                                        taskList, isValid);
+                                                    OneContext()
+                                                        .popAllDialogs();
+                                                  },
+                                                  child: Text('Remove')))
+                                          .showPopup();
+                                    },
+                                    icon: Icon(Icons.delete),
+                                  ),
+                                  onTap: () {
+                                    taskController.text =
+                                        taskList.value[index]['task'];
+                                    TaskDescPopup(
+                                      taskController: taskController,
+                                      taskList: taskList,
+                                      isValid: isValid,
+                                      isEdit: true,
+                                      index: index,
+                                    ).showTaskDescPopup();
+                                  },
+                                ),
+                              ),
+                            );
+                          }))),
+          Align(
+              alignment: Alignment.center,
+              child: IconButton(
+                  onPressed: () {
+                    taskController.clear();
+                    TaskDescPopup(
+                      taskController: taskController,
+                      taskList: taskList,
+                      isValid: isValid,
+                      isEdit: false,
+                    ).showTaskDescPopup();
+                  },
+                  icon: Icon(Icons.add))),
+        ],
+      ),
+    );
+  }
+}
+
+class TaskDescPopup {
+  const TaskDescPopup(
+      {Key? key,
+      required this.taskController,
+      required this.taskList,
+      required this.isValid,
+      required this.isEdit,
+      this.index});
+
+  final TextEditingController taskController;
+  final ValueNotifier<List> taskList;
+  final ValueNotifier<bool> isValid;
+  final bool isEdit;
+  final index;
+
+  showTaskDescPopup() {
+    var _formKey = GlobalKey<FormState>();
+    StyledPopup(
+      title: 'Add Task',
+      children: [
+        Form(
+          key: _formKey,
+          child: TextFormField(
+              controller: taskController,
+              style: TextStyle(color: Color(0xff58865C)),
+              maxLines: 1,
+              maxLength: 30,
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.only(top: 0.0, left: 5.0),
+                labelText: "Task Description",
+                labelStyle: CustomTheme.lightTheme.textTheme.bodyText2,
+                enabledBorder: UnderlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xff35566D))),
+              ),
+              validator: (value) {
+                String valueString = value as String;
+                if (valueString.isEmpty) {
+                  return "You have not filled anything in";
+                } else {
+                  return null;
+                }
+              }),
+        )
+      ],
+      textButton: TextButton(
+        child: Text('Add'),
+        onPressed: () {
+          if (_formKey.currentState!.validate() && !isEdit) {
+            taskList.value = List.from(taskList.value)
+              ..add({'task': taskController.text, 'status': false});
+            AddToDoTask.checkTaskValid(taskList, isValid);
+            taskController.clear();
+            OneContext().popAllDialogs();
+          }
+          if (_formKey.currentState!.validate() && isEdit) {
+            taskList.value[index]['task'] = taskController.text;
+            taskList.value = List.from(taskList.value);
+            taskController.clear();
+            OneContext().popAllDialogs();
+          }
+        },
+      ),
+      cancelFunction: () {
+        taskController.clear();
+        OneContext().popAllDialogs();
+      },
+    ).showPopup();
+  }
+}
+
+class RecurButton extends HookWidget {
+  const RecurButton(
+      {Key? key,
+      required this.taskList,
+      required this.recurValue,
+      required this.isValid})
+      : super(key: key);
+
+  final taskList;
+  final recurValue;
+  final isValid;
+
+  final recurDay = const [
     'Monday',
     'Tuesday',
     'Wednesday',
@@ -17,526 +349,226 @@ class AddToDoTask extends HookWidget {
     'Sunday'
   ];
 
-  final _formKey = GlobalKey<FormState>();
-
-  static String returnString(values) {
-    String output = '';
-    values.asMap().forEach((index, element) {
-      if (element) {
-        output += AddToDoTask.recurListKey[index] + '\n';
-      }
-    });
-    return output;
-  }
-
-  static bool checkValidity(Map<String, bool> validateFields) {
-    bool isValid = false;
-    if (!validateFields.containsValue(false)) {
-      isValid = true;
-    }
-    return isValid;
-  }
-
   @override
   Widget build(BuildContext context) {
-    print("Built AddToDoTask");
-    String uid = Provider.of<UserProvider>(context).uid;
-
-    final TextEditingController titleController = useTextEditingController();
-    final TextEditingController descController = useTextEditingController();
-
-    final ValueNotifier isRecur = useValueNotifier(false);
-    final ValueNotifier isReminder = useValueNotifier(false);
-    final ValueNotifier isDeadline = useValueNotifier(false);
-    final ValueNotifier isValid = useValueNotifier(false);
-
-    final ValueNotifier reminderTime = useValueNotifier(null);
-    final ValueNotifier deadlineDate = useValueNotifier(null);
-
-    final ValueNotifier recurListValue =
-        useState([false, false, false, false, false, false, false]);
-
-    final ValueNotifier displayText1 = useState('');
-    final ValueNotifier displayText2 = useState('');
-    final ValueNotifier displayText3 = useState('');
-
-    final ValueNotifier validateFields = useState({
-      "titleValid": false,
-      "recurValid": true,
-      "reminderValid": true,
-      "deadlineValid": true,
-    });
-
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Add Task"),
-          centerTitle: true,
-        ),
-        body: SafeArea(
-            minimum: EdgeInsets.all(30),
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    width: 100.w,
-                    height: 30.h,
-                    color: Colors.amber,
-                    child: Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            TitleTextField(
-                              controller: titleController,
-                              validateFields: validateFields,
-                              isValid: isValid,
-                            ),
-                            DescTextField(controller: descController),
-                          ],
-                        )),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ToggleEditButton1(
-                          isRecur,
-                          recurListValue,
-                          validateFields,
-                          isValid,
-                          displayText1,
-                        ),
-                        ToggleEditButton2(
-                          switchValue: isReminder,
-                          reminderTime: reminderTime,
-                          validateFields: validateFields,
-                          isValid: isValid,
-                          displayText: displayText2,
-                        ),
-                        ToggleEditButton3(
-                          switchValue: isDeadline,
-                          deadlineDate: deadlineDate,
-                          validateFields: validateFields,
-                          isValid: isValid,
-                          displayText: displayText3,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(50, 20, 50, 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        CreateButton(
-                          onPressed: () async {
-                            if (!validateFields.value.containsValue(false)) {
-                              var newTask = ToDoTask(
-                                  titleController.text, descController.text, {
-                                "recur": recurListValue.value,
-                                "reminder": reminderTime.value,
-                                "deadline": deadlineDate.value,
-                              });
-                              await Database(uid).addToDoTask(newTask);
-                              Navigator.of(context).pop();
-                            } else {
-                              print('Faile');
-                              print(validateFields.value);
-                            }
-                          },
-                          isValid: isValid,
-                        ),
-                        const CancelButton(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            )));
-  }
-}
-
-class ToggleEditButton1 extends StatelessWidget {
-  const ToggleEditButton1(this.isValue, this.recurListValue,
-      this.validateFields, this.isValid, this.displayText);
-
-  final isValue;
-  final recurListValue;
-  final validateFields;
-  final isValid;
-  final displayText;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: isValue,
-        builder: (context, value, _) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 25.w,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.blue),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.repeat),
-                      Text("Recurring"),
-                      Switch(
-                        value: isValue.value,
-                        onChanged: (value) {
-                          if (!value) {
-                            isValue.value = value;
-                            recurListValue.value = [
-                              false,
-                              false,
-                              false,
-                              false,
-                              false,
-                              false,
-                              false
-                            ];
-                            displayText.value = '';
-                            validateFields.value["recurValid"] = true;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
-                          } else {
-                            isValue.value = value;
-                            validateFields.value["recurValid"] = false;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
-                          }
-                        },
-                        activeTrackColor: Colors.lightGreenAccent,
-                        activeColor: Colors.green,
-                      ),
-                      value == true
-                          ? IconButton(
-                              onPressed: () {
-                                StyledPopup(
-                                        title: 'Recurring Days',
-                                        children: [
-                                          Container(
-                                            child: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: AddToDoTask
-                                                    .recurListKey.length,
-                                                itemBuilder:
-                                                    (BuildContext context,
-                                                        int index) {
-                                                  return StatefulBuilder(
-                                                    builder: (context, _) =>
-                                                        CheckboxListTile(
-                                                      title: new Text(
-                                                          AddToDoTask
-                                                                  .recurListKey[
-                                                              index]),
-                                                      value: recurListValue
-                                                          .value[index],
-                                                      onChanged: (value) {
-                                                        _(() => recurListValue
-                                                                .value[index] =
-                                                            value ?? false);
-                                                        displayText.value =
-                                                            AddToDoTask
-                                                                .returnString(
-                                                                    recurListValue
-                                                                        .value);
-                                                        if (recurListValue.value
-                                                            .contains(true)) {
-                                                          validateFields.value[
-                                                                  "recurValid"] =
-                                                              true;
-                                                          isValid.value = AddToDoTask
-                                                              .checkValidity(
-                                                                  validateFields
-                                                                      .value);
-                                                        } else {
-                                                          validateFields.value[
-                                                                  "recurValid"] =
-                                                              false;
-                                                          isValid.value = AddToDoTask
-                                                              .checkValidity(
-                                                                  validateFields
-                                                                      .value);
-                                                        }
-                                                      },
-                                                    ),
-                                                  );
-                                                }),
-                                          ),
-                                        ],
-                                        cancelText: 'Done')
-                                    .showPopup();
-                              },
-                              icon: Icon(Icons.edit))
-                          : Container(),
-                      value == true ? Text(displayText.value) : Container(),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        });
-  }
-}
-
-class ToggleEditButton2 extends StatelessWidget {
-  const ToggleEditButton2(
-      {Key? key,
-      required this.switchValue,
-      required this.reminderTime,
-      required this.validateFields,
-      required this.isValid,
-      required this.displayText});
-
-  final switchValue;
-  final reminderTime;
-  final validateFields;
-  final isValid;
-  final displayText;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: switchValue,
-        builder: (context, value, _) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 25.w,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.blue),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.notifications_active),
-                      Text("Reminder"),
-                      Switch(
-                        value: switchValue.value,
-                        onChanged: (value) {
-                          if (!value) {
-                            switchValue.value = value;
-                            reminderTime.value = null;
-                            displayText.value = '';
-                            validateFields.value["reminderValid"] = true;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
-                          } else {
-                            switchValue.value = value;
-                            validateFields.value["reminderValid"] = false;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
-                          }
-                        },
-                        activeTrackColor: Colors.lightGreenAccent,
-                        activeColor: Colors.green,
-                      ),
-                      value == true
-                          ? IconButton(
-                              onPressed: () {
-                                DatePicker.showDateTimePicker(
-                                  context,
-                                  minTime: DateTime.now(),
-                                  onConfirm: (time) {
-                                    reminderTime.value = time;
-                                    displayText.value =
-                                        '${DateFormat('dd MMM yy hh:mm a').format(time)}';
-                                    validateFields.value["reminderValid"] =
-                                        true;
-                                    isValid.value = AddToDoTask.checkValidity(
-                                        validateFields.value);
+    final selectedValue = useState(recurValue.value.toList());
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Flexible(
+            child: InkWell(
+              onTap: taskList.value.length == 0
+                  ? () {}
+                  : () {
+                      OneContext().showDialog(
+                        barrierDismissible: false,
+                        builder: (_) {
+                          return AlertDialog(
+                            title: Text('Recurring Days'),
+                            content: SingleChildScrollView(
+                                child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                  Container(
+                                    child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: recurDay.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return StatefulBuilder(
+                                            builder: (context, _) =>
+                                                CheckboxListTile(
+                                              dense: true,
+                                              title: new Text(recurDay[index]),
+                                              value: selectedValue.value[index],
+                                              onChanged: (value) {
+                                                _(() =>
+                                                    selectedValue.value[index] =
+                                                        value ?? false);
+                                              },
+                                            ),
+                                          );
+                                        }),
+                                  )
+                                ])),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  recurValue.value =
+                                      selectedValue.value.toList();
+                                  OneContext().popDialog();
+                                },
+                                child: Text('Save'),
+                              ),
+                              TextButton(
+                                  onPressed: () {
+                                    selectedValue.value =
+                                        recurValue.value.toList();
+                                    OneContext().popDialog();
                                   },
-                                );
-                              },
-                              icon: Icon(Icons.edit))
-                          : Container(),
-                      value == true
-                          ? displayText.value != ''
-                              ? Text(
-                                  displayText.value,
-                                  textAlign: TextAlign.center,
-                                )
-                              : Text('No Time Selected')
-                          : Container(),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        });
-  }
-}
-
-class ToggleEditButton3 extends StatelessWidget {
-  const ToggleEditButton3(
-      {Key? key,
-      required this.switchValue,
-      required this.deadlineDate,
-      required this.validateFields,
-      required this.isValid,
-      required this.displayText});
-
-  final switchValue;
-  final deadlineDate;
-  final validateFields;
-  final isValid;
-  final displayText;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: switchValue,
-        builder: (context, value, _) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 25.w,
+                                  child: Text('Cancel'))
+                            ],
+                          );
+                        },
+                      );
+                    },
+              child: Container(
+                width: 100.w,
+                height: 7.h,
+                padding: EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: Colors.blue),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.timer),
-                      Text("Deadline"),
-                      Switch(
-                        value: switchValue.value,
-                        onChanged: (value) {
-                          if (!value) {
-                            switchValue.value = value;
-                            deadlineDate.value = null;
-                            displayText.value = '';
-                            validateFields.value["deadlineValid"] = true;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
-                          } else {
-                            switchValue.value = value;
-                            validateFields.value["deadlineValid"] = false;
-                            isValid.value =
-                                AddToDoTask.checkValidity(validateFields.value);
-                          }
-                        },
-                        activeTrackColor: Colors.lightGreenAccent,
-                        activeColor: Colors.green,
-                      ),
-                      value == true
-                          ? IconButton(
-                              onPressed: () {
-                                DatePicker.showDateTimePicker(context,
-                                    minTime: DateTime.now(), onConfirm: (date) {
-                                  deadlineDate.value = date;
-                                  displayText.value =
-                                      '${DateFormat('dd MMM yy hh:mm a').format(date)}';
-                                  validateFields.value["deadlineValid"] = true;
-                                  isValid.value = AddToDoTask.checkValidity(
-                                      validateFields.value);
-                                });
-                              },
-                              icon: Icon(Icons.edit))
-                          : Container(),
-                      value == true
-                          ? Text(
-                              displayText.value != ''
-                                  ? displayText.value
-                                  : 'No Time Selected',
-                              textAlign: TextAlign.center,
-                            )
-                          : Container(),
-                    ],
-                  ),
+                    color: taskList.value.length == 0
+                        ? Colors.grey[400]
+                        : Colors.blueGrey),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Recurring Days',
+                        style: TextStyle(color: Colors.white)),
+                    ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: recurValue.value.length,
+                      itemBuilder: (context, index) {
+                        return Align(
+                            alignment: Alignment.center,
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 3),
+                              child: Text(recurDay[index][0],
+                                  style: TextStyle(
+                                      color: recurValue.value[index]
+                                          ? Colors.lightGreenAccent[400]
+                                          : Colors.grey[400])),
+                            ));
+                      },
+                    )
+                  ],
                 ),
               ),
-            ],
-          );
-        });
+            ),
+          ),
+          SizedBox(
+              width: 5.h,
+              height: 5.h,
+              child: InkWell(
+                  onTap: recurValue.value.contains(true)
+                      ? () {
+                          StyledPopup(
+                                  title:
+                                      'Do you want to remove all existing recurring days?',
+                                  children: [],
+                                  textButton: TextButton(
+                                      onPressed: () {
+                                        selectedValue.value = [
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false
+                                        ];
+                                        recurValue.value = [
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false
+                                        ];
+                                        OneContext().popDialog();
+                                      },
+                                      child: Text('Remove')))
+                              .showPopup();
+                        }
+                      : () {},
+                  child: Icon(Icons.cancel_outlined)))
+        ],
+      ),
+    );
   }
 }
 
-class TitleTextField extends StatelessWidget {
-  const TitleTextField(
-      {Key? key,
-      required this.controller,
-      required this.validateFields,
-      required this.isValid})
+class ReminderButton extends HookWidget {
+  const ReminderButton(
+      {Key? key, required this.taskList, required this.reminderValue})
       : super(key: key);
 
-  final controller;
-  final validateFields;
-  final isValid;
+  final ValueNotifier<List> taskList;
+  final ValueNotifier<DateTime?> reminderValue;
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-        controller: controller,
-        style: TextStyle(color: Color(0xff58865C)),
-        maxLines: 1,
-        maxLength: 30,
-        decoration: InputDecoration(
-          contentPadding: EdgeInsets.only(top: 0.0, left: 5.0),
-          labelText: "Title",
-          labelStyle: CustomTheme.lightTheme.textTheme.bodyText2,
-          enabledBorder: UnderlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xff35566D))),
-        ),
-        onChanged: (value) {
-          if (value.isNotEmpty) {
-            validateFields.value["titleValid"] = true;
-            isValid.value = AddToDoTask.checkValidity(validateFields.value);
-          } else {
-            validateFields.value["titleValid"] = false;
-            isValid.value = AddToDoTask.checkValidity(validateFields.value);
-          }
-        },
-        validator: (value) {
-          String valueString = value as String;
-          if (valueString.isEmpty) {
-            return "You have not filled anything in";
-          } else {
-            return null;
-          }
-        });
-  }
-}
-
-class DescTextField extends StatelessWidget {
-  const DescTextField({Key? key, required this.controller}) : super(key: key);
-
-  final controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-        controller: controller,
-        style: TextStyle(color: Color(0xff58865C)),
-        keyboardType: TextInputType.multiline,
-        maxLines: 5,
-        maxLength: 300,
-        decoration: InputDecoration(
-          contentPadding: EdgeInsets.only(top: 0.0, left: 5.0),
-          labelText: "Description",
-          labelStyle: CustomTheme.lightTheme.textTheme.bodyText2,
-          enabledBorder: UnderlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xff35566D))),
-        ),
-        validator: (value) {
-          String valueString = value as String;
-          if (valueString.isEmpty) {
-            return "You have not filled anything in";
-          } else {
-            return null;
-          }
-        });
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Flexible(
+            child: InkWell(
+              onTap: taskList.value.length == 0
+                  ? () {}
+                  : () {
+                      DatePicker.showDateTimePicker(
+                        context,
+                        minTime: DateTime.now(),
+                        currentTime: reminderValue.value,
+                        onConfirm: (time) {
+                          reminderValue.value = time;
+                        },
+                      );
+                    },
+              child: Container(
+                width: 100.w,
+                height: 7.h,
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: taskList.value.length == 0
+                        ? Colors.grey[400]
+                        : Colors.blueGrey),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Reminder', style: TextStyle(color: Colors.white)),
+                    Text(
+                        reminderValue.value == null
+                            ? 'No Time Selected'
+                            : '${DateFormat('dd MMM yy hh:mm a').format(reminderValue.value!)}',
+                        style: TextStyle(
+                            color: reminderValue.value == null
+                                ? Colors.grey[400]
+                                : Colors.lightGreenAccent[400]))
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+              width: 5.h,
+              height: 5.h,
+              child: InkWell(
+                  onTap: reminderValue.value != null
+                      ? () {
+                          StyledPopup(
+                                  title: 'Do you want to remove this reminder?',
+                                  children: [],
+                                  textButton: TextButton(
+                                      onPressed: () {
+                                        reminderValue.value = null;
+                                        OneContext().popDialog();
+                                      },
+                                      child: Text('Remove')))
+                              .showPopup();
+                        }
+                      : () {},
+                  child: Icon(Icons.cancel_outlined)))
+        ],
+      ),
+    );
   }
 }

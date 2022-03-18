@@ -60,11 +60,13 @@ class StyledPopup {
       required this.title,
       required this.children,
       this.cancelText = 'Cancel',
+      this.cancelFunction,
       this.textButton});
 
   final String title;
   final List<Widget> children;
   final String cancelText;
+  final Function()? cancelFunction;
   final TextButton? textButton;
 
   showPopup() {
@@ -81,9 +83,11 @@ class StyledPopup {
             ? [
                 textButton!,
                 TextButton(
-                  onPressed: () {
-                    OneContext().popDialog();
-                  },
+                  onPressed: cancelFunction != null
+                      ? cancelFunction
+                      : () {
+                          OneContext().popDialog();
+                        },
                   child: Text(cancelText,
                       style: cancelText != 'Cancel'
                           ? null
@@ -92,9 +96,11 @@ class StyledPopup {
               ]
             : [
                 TextButton(
-                  onPressed: () {
-                    OneContext().popDialog();
-                  },
+                  onPressed: cancelFunction != null
+                      ? cancelFunction
+                      : () {
+                          OneContext().popDialog();
+                        },
                   child: Text(cancelText,
                       style: cancelText != 'Cancel'
                           ? null

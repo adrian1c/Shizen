@@ -7,9 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:shizen_app/widgets/field.dart';
 
 class EditToDoTask extends HookWidget {
-  EditToDoTask({Key? key, required this.todoTask}) : super(key: key);
+  const EditToDoTask(
+      {Key? key, required this.todoTask, required this.todoChanged})
+      : super(key: key);
 
   final todoTask;
+  final todoChanged;
 
   static final List recurListKey = [
     'Monday',
@@ -20,8 +23,6 @@ class EditToDoTask extends HookWidget {
     'Saturday',
     'Sunday'
   ];
-
-  final _formKey = GlobalKey<FormState>();
 
   static String returnString(values) {
     String output = '';
@@ -43,7 +44,7 @@ class EditToDoTask extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Built AddToDoTask");
+    final _formKey = GlobalKey<FormState>();
     String uid = Provider.of<UserProvider>(context).uid;
     final tid = todoTask.id;
     final TextEditingController titleController =
@@ -159,6 +160,7 @@ class EditToDoTask extends HookWidget {
                                           'reminder': reminderTime.value,
                                           'deadline': deadlineDate.value,
                                         });
+                                        todoChanged.value += 1;
                                         Navigator.of(context).pop();
                                       }
                                     : () {},
