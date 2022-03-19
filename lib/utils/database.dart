@@ -31,7 +31,7 @@ class Database {
     return userDoc
         .collection('todo')
         .where("allComplete", isEqualTo: false)
-        .orderBy("dateCreated", descending: true)
+        .orderBy("dateCreated", descending: false)
         .get();
   }
 
@@ -102,10 +102,9 @@ class Database {
   Future<void> completeTaskAll(tid, newDesc) async {
     print("Firing completeTaskAll");
 
-    await userDoc
-        .collection('todo')
-        .doc(tid)
-        .update({'desc': newDesc, 'allComplete': true});
+    await userDoc.collection('todo').doc(tid).set(
+        {'desc': newDesc, 'allComplete': true, 'dateCompleted': DateTime.now()},
+        SetOptions(merge: true));
   }
 
   Future editMilestones(tid, milestoneList) async {
@@ -129,10 +128,8 @@ class Database {
     print("Firing getFriendSearch");
 
     List<QuerySnapshot> results = [];
-    results.add(await userCol
-        .where('email', isEqualTo: email)
-        .where(FieldPath.documentId, isNotEqualTo: uid)
-        .get());
+    results
+        .add(await userCol.where('email', isGreaterThanOrEqualTo: email).get());
     print(results);
     results.add(await userDoc.collection('friends').get());
     return results;
@@ -306,7 +303,7 @@ class Database {
         if (hashtag != '') {
           QuerySnapshot<Map<String, dynamic>> query = await postCol
               .where('uid', isNotEqualTo: uid)
-              .where('hashtags', arrayContains: hashtag)
+              .where('hashtags', arrayContainsAny: hashtag)
               .get();
           query.docs.forEach((doc) => results.add(doc.data()));
         } else {
@@ -522,5 +519,20 @@ class Database {
     await userDoc.collection('trackers').add(tracker.toJson());
 
     OneContext().hideProgressIndicator();
+  }
+
+  //-----------------------------------------------------
+  //--------------  PROGRESS LIST  ----------------------
+  //-----------------------------------------------------
+  //
+
+  Future getProgressList(filter, search) async {
+    print("Firing getProgressList");
+
+    return userDoc
+        .collection('todo')
+        .where('allComplete', isEqualTo: true)
+        .orderBy('dateCompleted', descending: false)
+        .get();
   }
 }

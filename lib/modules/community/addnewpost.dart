@@ -139,7 +139,7 @@ class AddNewPost extends HookWidget {
   Future<dynamic> showAttach() {
     return OneContext().showDialog(builder: (_) {
       return AlertDialog(
-        title: Text("Search Results"),
+        title: Text("Add an attachment"),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

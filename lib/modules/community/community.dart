@@ -89,7 +89,10 @@ class CommunityPage extends HookWidget {
               SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                 return CommunityPostList(
-                    visibilityValue: visibilityValue, hashtag: hashtagValue);
+                  visibilityValue: visibilityValue,
+                  hashtag: hashtagValue,
+                  hashtagController: hashtagController,
+                );
               }, childCount: 1))
             ],
           ),
@@ -109,11 +112,15 @@ class CommunityPage extends HookWidget {
 
 class CommunityPostList extends HookWidget {
   CommunityPostList(
-      {Key? key, required this.visibilityValue, required this.hashtag})
+      {Key? key,
+      required this.visibilityValue,
+      this.hashtag,
+      this.hashtagController})
       : super(key: key);
 
   final visibilityValue;
   final hashtag;
+  final hashtagController;
 
   @override
   Widget build(BuildContext context) {
@@ -131,18 +138,23 @@ class CommunityPostList extends HookWidget {
                 shrinkWrap: true,
                 itemCount: snapshot.data!.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                    child: PostListTile(postData: snapshot.data![index]),
+                  return PostListTile(
+                    postData: snapshot.data![index],
+                    hashtag: hashtag,
+                    hashtagController: hashtagController,
                   );
                 }));
   }
 }
 
 class PostListTile extends StatelessWidget {
-  const PostListTile({Key? key, required this.postData}) : super(key: key);
+  const PostListTile(
+      {Key? key, required this.postData, this.hashtag, this.hashtagController})
+      : super(key: key);
 
   final postData;
+  final hashtag;
+  final hashtagController;
 
   @override
   Widget build(BuildContext context) {
@@ -150,61 +162,76 @@ class PostListTile extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-                width: 5.h,
-                height: 5.h,
-                child: postData['image'] != ''
-                    ? InkWell(
-                        child: Container(
-                            decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(width: 1),
-                          color: Colors.grey,
-                          image: DecorationImage(
-                              image: Image.network(postData!['image']).image),
-                        )),
-                        onTap: () => print('Nicer'),
-                      )
-                    : CircleAvatar(
-                        foregroundImage: Images.defaultPic.image,
-                        backgroundColor: Colors.grey,
-                        radius: 3.h,
-                      )),
-            Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        Container(
+          padding: const EdgeInsets.all(15),
+          constraints: BoxConstraints(minHeight: 30.h),
+          decoration: BoxDecoration(color: Colors.blueGrey[100]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text(postData['name']),
-                  Text(postData['email']),
+                  Container(
+                      width: 5.h,
+                      height: 5.h,
+                      child: postData['image'] != ''
+                          ? InkWell(
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(width: 1),
+                                color: Colors.grey,
+                                image: DecorationImage(
+                                    image: Image.network(postData!['image'])
+                                        .image),
+                              )),
+                              onTap: () => print('Nicer'),
+                            )
+                          : CircleAvatar(
+                              foregroundImage: Images.defaultPic.image,
+                              backgroundColor: Colors.grey,
+                              radius: 3.h,
+                            )),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(postData['name']),
+                        Text(postData['email']),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-          child: Text(postData['desc']),
-        ),
-        postData['hashtags'].length > 0
-            ? Container(
-                width: 100.w,
-                height: 30,
-                child: ListView.builder(
-                  physics: BouncingScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: postData['hashtags'].length,
-                  itemBuilder: (context, index) {
-                    return Text('#${postData['hashtags'][index]}   ',
-                        style: TextStyle(fontSize: 13.sp));
-                  },
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+                child: Text(postData['desc']),
+              ),
+              if (postData['hashtags'].length > 0)
+                Container(
+                  width: 100.w,
+                  height: 30,
+                  child: ListView.builder(
+                    physics: BouncingScrollPhysics(),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: postData['hashtags'].length,
+                    itemBuilder: (context, index) {
+                      return InkWell(
+                        onTap: () {
+                          hashtag.value = postData['hashtags'][index];
+                          hashtagController.text = postData['hashtags'][index];
+                        },
+                        child: Text('#${postData['hashtags'][index]}   ',
+                            style: TextStyle(fontSize: 13.sp)),
+                      );
+                    },
+                  ),
                 ),
-              )
-            : Container(),
+            ],
+          ),
+        ),
         Divider(),
       ],
     );
@@ -233,7 +260,8 @@ class HashtagFilter extends StatelessWidget {
         inputFormatters: [
           LengthLimitingTextInputFormatter(20),
         ],
-        decoration: StyledInputField(hintText: 'Search by hashtag...')
+        decoration: StyledInputField(
+                hintText: 'Search by hashtag...', controller: hashtagController)
             .inputDecoration(),
         onFieldSubmitted: (value) {
           hashtagValue.value = value;

@@ -96,7 +96,7 @@ class ToDoTask extends HookWidget {
   final String uid;
   final todoChanged;
 
-  DateTime? _convertTimestamp(Timestamp? _stamp) {
+  static DateTime? convertTimestamp(Timestamp? _stamp) {
     if (_stamp != null) {
       return Timestamp(_stamp.seconds, _stamp.nanoseconds).toDate();
     } else {
@@ -125,7 +125,7 @@ class ToDoTask extends HookWidget {
                           title: taskDoc['title'],
                           taskList: taskDoc['desc'],
                           recur: List<bool>.from(taskDoc['recur']),
-                          reminder: _convertTimestamp(taskDoc['reminder']));
+                          reminder: convertTimestamp(taskDoc['reminder']));
                     })));
   }
 }
@@ -155,105 +155,6 @@ class TrackerTask extends HookWidget {
                           task: snapshot.data.docs[index],
                           trackerChanged: trackerChanged);
                     })));
-  }
-}
-
-class ToDoListTile extends HookWidget {
-  const ToDoListTile({
-    Key? key,
-    required this.uid,
-    required this.task,
-    required this.todoChanged,
-  }) : super(key: key);
-
-  final String uid;
-  final task;
-  final todoChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
-      child: ListTile(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(task["title"]),
-            Row(
-              children: [
-                task["settings"]["recur"].contains(true)
-                    ? Icon(Icons.repeat, color: Colors.blue, size: 20)
-                    : Icon(Icons.repeat, color: Colors.black26, size: 20),
-                task["settings"]["reminder"] != null
-                    ? Icon(Icons.notifications_active,
-                        color: Colors.blue, size: 20)
-                    : Icon(Icons.notifications_active,
-                        color: Colors.black26, size: 20),
-                task["settings"]["deadline"] != null
-                    ? Icon(Icons.alarm, color: Colors.blue, size: 20)
-                    : Icon(Icons.alarm, color: Colors.black26, size: 20)
-              ],
-            ),
-          ],
-        ),
-        subtitle: task["desc"] != ""
-            ? Container(
-                decoration: BoxDecoration(
-                    border: Border(
-                        top: BorderSide(color: Colors.grey[600]!, width: 1))),
-                child: Text(
-                  task["desc"],
-                  maxLines: 2,
-                  overflow: TextOverflow.fade,
-                  softWrap: true,
-                ),
-              )
-            : null,
-        leading: Checkbox(
-          value: false,
-          onChanged: (value) async {
-            StyledSnackbar(message: 'Congratulations! I\'m proud of you')
-                .showSuccess();
-          },
-        ),
-        onTap: () {
-          print("${task.id}");
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => EditToDoTask(
-                        todoTask: task,
-                        todoChanged: todoChanged,
-                      )));
-        },
-        onLongPress: () {
-          StyledPopup(
-            title: 'Delete task?',
-            children: [Text("Do you want to delete this task?")],
-            textButton: TextButton(
-              child: Text("Yes"),
-              onPressed: () {
-                Database(uid).deleteToDoTask(task.id);
-                OneContext().popDialog();
-                StyledSnackbar(message: 'The task has been deleted.')
-                    .showSuccess();
-                todoChanged.value += 1;
-              },
-            ),
-          ).showPopup();
-        },
-        trailing: Container(
-            decoration: BoxDecoration(
-              border:
-                  Border(left: BorderSide(color: Colors.grey[600]!, width: 1)),
-            ),
-            child: IconButton(onPressed: () {}, icon: Icon(Icons.camera_alt))),
-        horizontalTitleGap: 0,
-        contentPadding: EdgeInsets.all(0),
-        tileColor: Colors.amberAccent[200],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 }
 
@@ -300,14 +201,18 @@ class TodoTaskDisplay extends HookWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                    width: 60.w,
+                    constraints: BoxConstraints(minWidth: 25.w),
                     height: 5.h,
                     decoration: BoxDecoration(
                         color: Colors.amber,
                         borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(15),
                             topRight: Radius.circular(15))),
-                    child: Center(child: Text(title))),
+                    child: Center(
+                        child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                      child: Text(title),
+                    ))),
                 Row(
                   children: [
                     recur.contains(true)

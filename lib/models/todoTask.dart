@@ -11,6 +11,10 @@ class ToDoTask {
   ToDoTask(this.title, this.desc, this.recur, this.reminder);
 
   toJson() {
+    if (title == '') {
+      title = 'Task';
+    }
+
     return {
       'dateCreated': dateCreated,
       'title': title,

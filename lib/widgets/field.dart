@@ -37,15 +37,21 @@ class StyledContainerField extends StatelessWidget {
 }
 
 class StyledInputField {
-  const StyledInputField({Key? key, required this.hintText});
+  const StyledInputField(
+      {Key? key, required this.hintText, required this.controller});
 
   final String hintText;
+  final TextEditingController controller;
 
   inputDecoration() {
     return InputDecoration(
       isDense: true,
       hintText: hintText,
       contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 0),
+      // suffixIcon: InkWell(
+      //   onTap: controller.clear,
+      //   child: Container(padding: const EdgeInsets.all(0), child: Text('X')),
+      // ),
       border: OutlineInputBorder(
         borderRadius: new BorderRadius.circular(5),
         borderSide: new BorderSide(),

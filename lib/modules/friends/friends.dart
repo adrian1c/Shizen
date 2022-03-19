@@ -114,7 +114,9 @@ class _FriendsPageState extends State<FriendsPage> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
         child: TextFormField(
-          decoration: StyledInputField(hintText: 'Enter email address...')
+          decoration: StyledInputField(
+                  hintText: 'Enter email address...',
+                  controller: searchController)
               .inputDecoration(),
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.search,
@@ -331,19 +333,21 @@ class _FriendsPageState extends State<FriendsPage> {
             user["email"],
             overflow: TextOverflow.ellipsis,
           ),
-          trailing: status == 0
-              ? IconButton(onPressed: () {}, icon: Icon(Icons.pending))
-              : status == 2
-                  ? IconButton(onPressed: () {}, icon: Icon(Icons.check))
-                  : status == 1
-                      ? null
-                      : IconButton(
-                          onPressed: () {
-                            Database(uid).sendFriendReq(user.id);
-                            Navigator.of(context).pop();
-                          },
-                          icon: Icon(Icons.person_add),
-                        ),
+          trailing: user.id == uid
+              ? null
+              : status == 0
+                  ? IconButton(onPressed: () {}, icon: Icon(Icons.pending))
+                  : status == 2
+                      ? IconButton(onPressed: () {}, icon: Icon(Icons.check))
+                      : status == 1
+                          ? null
+                          : IconButton(
+                              onPressed: () {
+                                Database(uid).sendFriendReq(user.id);
+                                Navigator.of(context).pop();
+                              },
+                              icon: Icon(Icons.person_add),
+                            ),
           horizontalTitleGap: 0,
           tileColor: Colors.amberAccent[700],
           shape:

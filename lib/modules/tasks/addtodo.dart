@@ -131,6 +131,7 @@ class TodoTaskList extends HookWidget {
                   children: [
                     TextFormField(
                       controller: titleController,
+                      textCapitalization: TextCapitalization.words,
                       style: TextStyle(color: Color(0xff58865C)),
                       maxLines: 1,
                       maxLength: 20,
@@ -152,17 +153,25 @@ class TodoTaskList extends HookWidget {
                     child: Text('Save'),
                   )).showPopup();
             },
-            child: Container(
-                width: 60.w,
-                height: 5.h,
-                decoration: BoxDecoration(
-                    color: Colors.amber,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(15),
-                        topRight: Radius.circular(15))),
-                child: Center(
-                    child:
-                        Text(title.value == '' ? 'Enter title' : title.value))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                    constraints: BoxConstraints(minWidth: 25.w),
+                    height: 5.h,
+                    decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15))),
+                    child: Center(
+                        child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                      child:
+                          Text(title.value == '' ? 'Enter Title' : title.value),
+                    ))),
+              ],
+            ),
           ),
           ConstrainedBox(
               constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
@@ -281,6 +290,7 @@ class TaskDescPopup {
           key: _formKey,
           child: TextFormField(
               controller: taskController,
+              textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Color(0xff58865C)),
               maxLines: 1,
               maxLength: 30,
