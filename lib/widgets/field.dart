@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shizen_app/utils/allUtils.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class StyledContainerField extends StatelessWidget {
   const StyledContainerField(
@@ -122,46 +123,30 @@ class StyledPopup {
   }
 }
 
-// class StyledSnackbar {
-//   const StyledSnackbar({Key? key, required this.message});
+class StyledToast {
+  const StyledToast({Key? key, required this.msg});
 
-//   final String message;
+  final msg;
 
-//   showSuccess() {
-//     OneContext().showSnackBar(
-//         builder: (_) => SnackBar(
-//               margin: EdgeInsets.fromLTRB(10.w, 0, 10.w, 80.h),
-//               content: Text(
-//                 message,
-//                 textAlign: TextAlign.center,
-//               ),
-//               backgroundColor: Color(0xff17bd46),
-//               shape: RoundedRectangleBorder(
-//                 borderRadius: BorderRadius.circular(15),
-//               ),
-//               behavior: SnackBarBehavior.floating,
-//               action: SnackBarAction(
-//                   label: 'OK',
-//                   onPressed: () => OneContext().hideCurrentSnackBar()),
-//             ));
-//   }
+  showSuccessToast() {
+    Fluttertoast.showToast(
+        msg: msg,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.TOP,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green[400],
+        textColor: Colors.white,
+        fontSize: 16.0);
+  }
 
-//   showError() {
-//     OneContext().showSnackBar(
-//         builder: (_) => SnackBar(
-//               margin: EdgeInsets.fromLTRB(10.w, 0, 10.w, 80.h),
-//               content: Text(
-//                 message,
-//                 textAlign: TextAlign.center,
-//               ),
-//               backgroundColor: Color(0xffF24C4C),
-//               shape: RoundedRectangleBorder(
-//                 borderRadius: BorderRadius.circular(15),
-//               ),
-//               behavior: SnackBarBehavior.floating,
-//               action: SnackBarAction(
-//                   label: 'OK',
-//                   onPressed: () => OneContext().hideCurrentSnackBar()),
-//             ));
-//   }
-// }
+  showDeletedToast() {
+    Fluttertoast.showToast(
+        msg: msg,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.TOP,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red[400],
+        textColor: Colors.white,
+        fontSize: 16.0);
+  }
+}

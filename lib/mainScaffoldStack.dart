@@ -1,5 +1,5 @@
+import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:provider/provider.dart';
-import 'package:shizen_app/modules/community/addnewpost.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import './modules/tasks/tasks.dart';
@@ -73,16 +73,30 @@ class MainScaffoldStack extends HookWidget {
                 pageController.jumpToPage(selectedIndex.value);
               }),
         ),
-        body: PageView(
-            controller: pageController,
-            physics: NeverScrollableScrollPhysics(),
-            children: <Widget>[
-              KeepAlivePage(child: TaskPage()),
-              KeepAlivePage(child: FriendsPage()),
-              KeepAlivePage(child: CommunityPage()),
-              KeepAlivePage(child: ProgressPage()),
-              KeepAlivePage(child: ProfilePage()),
-            ]));
+        body: DoubleBackToCloseApp(
+          snackBar: SnackBar(
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.blueGrey[100],
+            width: 60.w,
+            elevation: 2,
+            behavior: SnackBarBehavior.floating,
+            content: Text(
+              'Back again to leave',
+              style: TextStyle(color: Colors.black),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          child: PageView(
+              controller: pageController,
+              physics: NeverScrollableScrollPhysics(),
+              children: <Widget>[
+                KeepAlivePage(child: TaskPage()),
+                KeepAlivePage(child: FriendsPage()),
+                KeepAlivePage(child: CommunityPage()),
+                KeepAlivePage(child: ProgressPage()),
+                KeepAlivePage(child: ProfilePage()),
+              ]),
+        ));
   }
 }
 

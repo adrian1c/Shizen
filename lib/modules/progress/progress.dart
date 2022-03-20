@@ -1,4 +1,4 @@
-import 'package:flutter_colorful_tab/flutter_colorful_tab.dart';
+import 'package:shizen_app/modules/tasks/tasks.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:grouped_list/grouped_list.dart';
@@ -16,46 +16,6 @@ class ProgressPage extends HookWidget {
       initialLength: 2,
       initialIndex: 0,
     );
-    // return CustomScrollView(
-    //   physics: BouncingScrollPhysics(),
-    //   slivers: [
-    //     SliverAppBar(
-    //       pinned: false,
-    //       snap: false,
-    //       floating: true,
-    //       expandedHeight: 11.h,
-    //       collapsedHeight: 11.h,
-    //       flexibleSpace: Container(
-    //         decoration:
-    //             BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
-    //         child: Padding(
-    //           padding: const EdgeInsets.all(10),
-    //           child: Row(
-    //             crossAxisAlignment: CrossAxisAlignment.start,
-    //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    //             children: [
-    //               Column(
-    //                 children: [
-    //                   Row(
-    //                     children: [
-    //                       Icon(Icons.filter_alt),
-    //                       Text("Filter", style: TextStyle(fontSize: 15.sp)),
-    //                     ],
-    //                   ),
-    //                 ],
-    //               ),
-    //             ],
-    //           ),
-    //         ),
-    //       ),
-    //     ),
-    //     SliverList(
-    //         delegate: SliverChildBuilderDelegate((context, index) {
-    //       return TodoTaskProgressList(
-    //           filterValue: filterValue, searchValue: searchValue);
-    //     }, childCount: 1))
-    //   ],
-    // );
     return Column(
       children: [
         Container(
@@ -81,24 +41,56 @@ class ProgressPage extends HookWidget {
             ),
           ),
         ),
-        ColorfulTabBar(
-          tabs: [
-            TabItem(color: Colors.red, title: Text('To Do')),
-            TabItem(color: Colors.green, title: Text('Habit Tracker')),
-          ],
-          controller: tabController,
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Container(
+            width: 60.w,
+            height: 5.h,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(
+                25.0,
+              ),
+            ),
+            child: TabBar(
+              controller: tabController,
+              // give the indicator a decoration (color and border radius)
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(
+                  25.0,
+                ),
+                color: Colors.blueGrey[700],
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.blueGrey[700],
+              tabs: [
+                // first tab [you can add an icon using the icon property]
+                Tab(
+                  text: 'To Do',
+                ),
+
+                // second tab [you can add an icon using the icon property]
+                Tab(
+                  text: 'Daily Tracker',
+                ),
+              ],
+            ),
+          ),
         ),
         Expanded(
-          child: TabBarView(controller: tabController, children: [
-            KeepAlivePage(
-              child: TodoTaskProgressList(
-                  filterValue: filterValue, searchValue: searchValue),
-            ),
-            KeepAlivePage(
-              child: TodoTaskProgressList(
-                  filterValue: filterValue, searchValue: searchValue),
-            )
-          ]),
+          child: TabBarView(
+              physics: CustomTabBarViewScrollPhysics(),
+              controller: tabController,
+              children: [
+                KeepAlivePage(
+                  child: TodoTaskProgressList(
+                      filterValue: filterValue, searchValue: searchValue),
+                ),
+                KeepAlivePage(
+                  child: TodoTaskProgressList(
+                      filterValue: filterValue, searchValue: searchValue),
+                )
+              ]),
         ),
       ],
     );
@@ -127,12 +119,16 @@ class TodoTaskProgressList extends HookWidget {
           shrinkWrap: true,
           elements: snapshot.data,
           groupBy: (Map element) => element['dateCompletedDay'],
-          groupSeparatorBuilder: (value) => Padding(
+          groupSeparatorBuilder: (value) => Container(
             padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(color: Colors.blueGrey[600]),
             child: Text(
               value.toString(),
               textAlign: TextAlign.left,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold),
             ),
           ),
           itemBuilder: (context, dynamic element) {

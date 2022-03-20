@@ -45,6 +45,7 @@ class ProfilePage extends HookWidget {
                       uid: uid,
                       isLoading: isLoading,
                       nameController: nameController,
+                      viewId: viewId,
                     )
                   : Shimmer.fromColors(
                       baseColor: Colors.grey[300]!,
@@ -97,11 +98,8 @@ class ProfilePage extends HookWidget {
                       shrinkWrap: true,
                       itemCount: snapshotUserPosts.data!.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                          child: PostListTile(
-                              postData: snapshotUserPosts.data![index]),
-                        );
+                        return PostListTile(
+                            postData: snapshotUserPosts.data![index]);
                       })
                   : Text('You don\'t have any posts.')
               : Shimmer.fromColors(
@@ -113,9 +111,9 @@ class ProfilePage extends HookWidget {
                       itemCount: 10,
                       itemBuilder: (context, index) {
                         return Container(
-                            margin: const EdgeInsets.all(8),
+                            margin: const EdgeInsets.symmetric(vertical: 8),
                             width: 80.w,
-                            height: 20.h,
+                            height: 30.h,
                             color: Colors.white);
                       }),
                 ),
@@ -132,12 +130,14 @@ class UserProfileData extends StatelessWidget {
     required this.uid,
     required this.isLoading,
     required this.nameController,
+    this.viewId,
   }) : super(key: key);
 
   final data;
   final String uid;
   final isLoading;
   final nameController;
+  final String? viewId;
 
   @override
   Widget build(BuildContext context) {
@@ -158,8 +158,10 @@ class UserProfileData extends StatelessWidget {
                           image: CachedNetworkImageProvider(data!['image']),
                         )),
                   ),
-                  onTap: () async =>
-                      await changeProfilePic(context, true, isLoading),
+                  onTap: viewId != null
+                      ? () {}
+                      : () async =>
+                          await changeProfilePic(context, true, isLoading),
                 )
               : InkWell(
                   child: CircleAvatar(
@@ -167,9 +169,11 @@ class UserProfileData extends StatelessWidget {
                     backgroundColor: Colors.grey,
                     radius: 3.h,
                   ),
-                  onTap: () async {
-                    await changeProfilePic(context, false, isLoading);
-                  },
+                  onTap: viewId != null
+                      ? () {}
+                      : () async {
+                          await changeProfilePic(context, false, isLoading);
+                        },
                 ),
         ),
         Padding(
@@ -178,49 +182,52 @@ class UserProfileData extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               InkWell(
-                  onTap: () {
-                    nameController.text = data!['name'];
-                    StyledPopup(
-                            context: context,
-                            title: 'Change Name?',
-                            children: [
-                              Form(
-                                key: _form,
-                                child: TextFormField(
-                                  controller: nameController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Enter the Value',
-                                  ),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.deny(
-                                        RegExp('[ ]')),
+                  onTap: viewId != null
+                      ? () {}
+                      : () {
+                          nameController.text = data!['name'];
+                          StyledPopup(
+                                  context: context,
+                                  title: 'Change Name?',
+                                  children: [
+                                    Form(
+                                      key: _form,
+                                      child: TextFormField(
+                                        controller: nameController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Enter the Value',
+                                        ),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.deny(
+                                              RegExp('[ ]')),
+                                        ],
+                                        validator: (value) {
+                                          if (value!.isEmpty) {
+                                            return 'Name cannot be empty';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
                                   ],
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return 'Name cannot be empty';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                            textButton: TextButton(
-                                onPressed: () async {
-                                  if (_form.currentState!.validate()) {
-                                    var newName = nameController.text;
-                                    Navigator.pop(context);
-                                    await Database(uid).editUserName(newName);
-                                    isLoading.value += 1;
-                                    print(isLoading.value);
-                                    // StyledSnackbar(
-                                    //         message:
-                                    //             'Your display name has been changed!')
-                                    //     .showSuccess();
-                                  }
-                                },
-                                child: Text('Save')))
-                        .showPopup();
-                  },
+                                  textButton: TextButton(
+                                      onPressed: () async {
+                                        if (_form.currentState!.validate()) {
+                                          var newName = nameController.text;
+                                          Navigator.pop(context);
+                                          await Database(uid)
+                                              .editUserName(newName);
+                                          isLoading.value += 1;
+                                          print(isLoading.value);
+                                          // StyledSnackbar(
+                                          //         message:
+                                          //             'Your display name has been changed!')
+                                          //     .showSuccess();
+                                        }
+                                      },
+                                      child: Text('Save')))
+                              .showPopup();
+                        },
                   child:
                       Text(data!['name'], style: TextStyle(fontSize: 25.sp))),
               Text(data!['email'], style: TextStyle(fontSize: 15.sp)),

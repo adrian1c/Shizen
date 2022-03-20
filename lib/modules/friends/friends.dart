@@ -286,6 +286,7 @@ class _FriendsPageState extends State<FriendsPage> {
             style: TextStyle(color: Colors.white),
           ),
           trailing: IconButton(
+            color: Colors.white,
             onPressed: () {
               StyledPopup(
                 context: context,

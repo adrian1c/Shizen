@@ -201,6 +201,8 @@ class AddTrackerTask extends HookWidget {
                                   milestones.value,
                                   startDate.value);
                               await Database(uid).addTrackerTask(tracker);
+                              StyledToast(msg: 'Tracker Created Successfully')
+                                  .showSuccessToast();
                               trackerChanged.value += 1;
                               Navigator.of(context).pop();
                             },

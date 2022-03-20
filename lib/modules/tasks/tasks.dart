@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/field.dart';
 import './addtodo.dart';
 import './addtracker.dart';
 import '../../utils/allUtils.dart';
-import 'package:flutter_colorful_tab/flutter_colorful_tab.dart';
-import 'package:shizen_app/modules/tasks/edittodo.dart';
 
 class TaskPage extends HookWidget {
   @override
@@ -40,22 +40,55 @@ class TaskPage extends HookWidget {
           children: <Widget>[
             Column(
               children: [
-                ColorfulTabBar(
-                  tabs: [
-                    TabItem(color: Colors.red, title: Text('To Do')),
-                    TabItem(color: Colors.green, title: Text('Habit Tracker')),
-                  ],
-                  controller: tabController,
+                Container(
+                  width: 60.w,
+                  height: 5.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(
+                      25.0,
+                    ),
+                  ),
+                  child: TabBar(
+                    controller: tabController,
+                    // give the indicator a decoration (color and border radius)
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        25.0,
+                      ),
+                      color: Colors.blueGrey[700],
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.blueGrey[700],
+                    tabs: [
+                      // first tab [you can add an icon using the icon property]
+                      Tab(
+                        child: Text('To Do', style: TextStyle(fontSize: 12.sp)),
+                      ),
+
+                      // second tab [you can add an icon using the icon property]
+                      Tab(
+                        child: Text('Daily Tracker',
+                            style: TextStyle(fontSize: 12.sp)),
+                      ),
+                    ],
+                  ),
                 ),
                 Expanded(
-                  child:
-                      TabBarView(controller: tabController, children: <Widget>[
-                    ToDoTask(
-                      uid: uid,
-                      todoChanged: todoChanged,
-                    ),
-                    TrackerTask(uid: uid, trackerChanged: trackerChanged),
-                  ]),
+                  child: TabBarView(
+                      physics: CustomTabBarViewScrollPhysics(),
+                      controller: tabController,
+                      children: <Widget>[
+                        KeepAlivePage(
+                          child: ToDoTask(
+                            uid: uid,
+                            todoChanged: todoChanged,
+                          ),
+                        ),
+                        KeepAlivePage(
+                            child: TrackerTask(
+                                uid: uid, trackerChanged: trackerChanged)),
+                      ]),
                 ),
               ],
             ),
@@ -546,8 +579,7 @@ class TrackerTile extends HookWidget {
                                     context: context,
                                     title: 'Are you sure?',
                                     children: [
-                                      Text(
-                                          'The changes that you have made will not be saved')
+                                      Text('Your changes are NOT saved yet!')
                                     ],
                                     textButton: TextButton(
                                         onPressed: () {
@@ -556,6 +588,7 @@ class TrackerTile extends HookWidget {
                                                   .map((e) =>
                                                       e as Map<String, dynamic>)
                                                   .toList();
+                                          Navigator.pop(context);
                                           Navigator.pop(context);
                                         },
                                         child: Text('Yes')))
@@ -615,9 +648,8 @@ class TrackerTile extends HookWidget {
                             onPressed: () async {
                               await Database(uid).deleteTrackerTask(task.id);
                               Navigator.pop(context);
-                              // StyledSnackbar(
-                              //         message: 'The task has been deleted.')
-                              //     .showSuccess();
+                              StyledToast(msg: 'Tracker deleted')
+                                  .showDeletedToast();
                               trackerChanged.value += 1;
                             },
                             child: Text('Delete'),
@@ -802,4 +834,21 @@ class MilestonePopupTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class CustomTabBarViewScrollPhysics extends ScrollPhysics {
+  const CustomTabBarViewScrollPhysics({ScrollPhysics? parent})
+      : super(parent: parent);
+
+  @override
+  CustomTabBarViewScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return CustomTabBarViewScrollPhysics(parent: buildParent(ancestor)!);
+  }
+
+  @override
+  SpringDescription get spring => const SpringDescription(
+        mass: 80,
+        stiffness: 100,
+        damping: 2,
+      );
 }

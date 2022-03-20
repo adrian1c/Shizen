@@ -5,7 +5,8 @@ import 'package:shizen_app/utils/allUtils.dart';
 import './modules/signup/signup.dart';
 import './modules/login/login.dart';
 import './mainScaffoldStack.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
