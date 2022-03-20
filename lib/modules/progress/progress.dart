@@ -1,7 +1,9 @@
-import 'package:shizen_app/modules/tasks/tasks.dart';
-
-import '../../utils/allUtils.dart';
+import 'package:flutter_colorful_tab/flutter_colorful_tab.dart';
+import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:grouped_list/grouped_list.dart';
+import 'package:intl/intl.dart';
+import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 
 class ProgressPage extends HookWidget {
   const ProgressPage({Key? key}) : super(key: key);
@@ -10,44 +12,94 @@ class ProgressPage extends HookWidget {
   Widget build(BuildContext context) {
     final filterValue = useState(null);
     final searchValue = useState(null);
-    return CustomScrollView(
-      physics: BouncingScrollPhysics(),
-      slivers: [
-        SliverAppBar(
-          pinned: false,
-          snap: false,
-          floating: true,
-          expandedHeight: 11.h,
-          collapsedHeight: 11.h,
-          flexibleSpace: Container(
-            decoration:
-                BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.filter_alt),
-                          Text("Filter", style: TextStyle(fontSize: 15.sp)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+    final tabController = useTabController(
+      initialLength: 2,
+      initialIndex: 0,
+    );
+    // return CustomScrollView(
+    //   physics: BouncingScrollPhysics(),
+    //   slivers: [
+    //     SliverAppBar(
+    //       pinned: false,
+    //       snap: false,
+    //       floating: true,
+    //       expandedHeight: 11.h,
+    //       collapsedHeight: 11.h,
+    //       flexibleSpace: Container(
+    //         decoration:
+    //             BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
+    //         child: Padding(
+    //           padding: const EdgeInsets.all(10),
+    //           child: Row(
+    //             crossAxisAlignment: CrossAxisAlignment.start,
+    //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //             children: [
+    //               Column(
+    //                 children: [
+    //                   Row(
+    //                     children: [
+    //                       Icon(Icons.filter_alt),
+    //                       Text("Filter", style: TextStyle(fontSize: 15.sp)),
+    //                     ],
+    //                   ),
+    //                 ],
+    //               ),
+    //             ],
+    //           ),
+    //         ),
+    //       ),
+    //     ),
+    //     SliverList(
+    //         delegate: SliverChildBuilderDelegate((context, index) {
+    //       return TodoTaskProgressList(
+    //           filterValue: filterValue, searchValue: searchValue);
+    //     }, childCount: 1))
+    //   ],
+    // );
+    return Column(
+      children: [
+        Container(
+          decoration:
+              BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.filter_alt),
+                        Text("Filter", style: TextStyle(fontSize: 15.sp)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
-        SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-          return TodoTaskProgressList(
-              filterValue: filterValue, searchValue: searchValue);
-        }, childCount: 1))
+        ColorfulTabBar(
+          tabs: [
+            TabItem(color: Colors.red, title: Text('To Do')),
+            TabItem(color: Colors.green, title: Text('Habit Tracker')),
+          ],
+          controller: tabController,
+        ),
+        Expanded(
+          child: TabBarView(controller: tabController, children: [
+            KeepAlivePage(
+              child: TodoTaskProgressList(
+                  filterValue: filterValue, searchValue: searchValue),
+            ),
+            KeepAlivePage(
+              child: TodoTaskProgressList(
+                  filterValue: filterValue, searchValue: searchValue),
+            )
+          ]),
+        ),
       ],
     );
   }
@@ -69,39 +121,53 @@ class TodoTaskProgressList extends HookWidget {
             Database(uid).getProgressList(filterValue.value, searchValue.value),
         [filterValue.value, searchValue.value]);
     final snapshot = useFuture(future);
-    return Container(
-        child: !snapshot.hasData
-            ? const Text("Loading")
-            : ListView.builder(
-                physics: BouncingScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: snapshot.data.docs.length,
-                itemBuilder: (context, index) {
-                  var taskDoc = snapshot.data.docs[index];
-
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                    child: TodoTaskProgressTile(
-                      taskId: taskDoc.id,
-                      title: taskDoc['title'],
-                      taskList: taskDoc['desc'],
-                    ),
-                  );
-                }));
+    if (snapshot.hasData) {
+      return Container(
+        child: GroupedListView(
+          shrinkWrap: true,
+          elements: snapshot.data,
+          groupBy: (Map element) => element['dateCompletedDay'],
+          groupSeparatorBuilder: (value) => Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              value.toString(),
+              textAlign: TextAlign.left,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          itemBuilder: (context, dynamic element) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+              child: TodoTaskProgressTile(
+                taskId: element['taskId'],
+                title: element['title'],
+                taskList: element['desc'],
+                timeCompleted: element['dateCompleted'],
+              ),
+            );
+          },
+          useStickyGroupSeparators: true,
+          order: GroupedListOrder.DESC,
+        ),
+      );
+    }
+    return Container(child: const Text("Loading"));
   }
 }
 
 class TodoTaskProgressTile extends StatelessWidget {
-  const TodoTaskProgressTile({
-    Key? key,
-    required this.taskId,
-    required this.title,
-    required this.taskList,
-  }) : super(key: key);
+  const TodoTaskProgressTile(
+      {Key? key,
+      required this.taskId,
+      required this.title,
+      required this.taskList,
+      required this.timeCompleted})
+      : super(key: key);
 
   final String taskId;
   final String title;
   final taskList;
+  final timeCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +192,8 @@ class TodoTaskProgressTile extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
                     child: Text(title),
                   ))),
+              Text(
+                  'Completed at ${DateFormat("hh:MM a").format(timeCompleted)}')
             ],
           ),
           ConstrainedBox(
@@ -140,6 +208,7 @@ class TodoTaskProgressTile extends StatelessWidget {
                         topRight: Radius.circular(5)),
                   ),
                   child: ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       itemCount: taskList.length,
                       itemBuilder: (context, index) {

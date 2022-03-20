@@ -117,10 +117,11 @@ class AddTrackerTask extends HookWidget {
                                           }
                                           if (hasOverlapMilestone) {
                                             StyledPopup(
+                                                    context: context,
                                                     children: [
-                                                  Text(
-                                                      'If you change the starting date, some milestones will be invalid. Do you want to automatically remove the invalid milestones?')
-                                                ],
+                                                      Text(
+                                                          'If you change the starting date, some milestones will be invalid. Do you want to automatically remove the invalid milestones?')
+                                                    ],
                                                     title:
                                                         'Remove Invalid Milestones?',
                                                     textButton: TextButton(
@@ -145,8 +146,8 @@ class AddTrackerTask extends HookWidget {
                                                           }
                                                           startDate.value =
                                                               value;
-                                                          OneContext()
-                                                              .popDialog();
+                                                          Navigator.pop(
+                                                              context);
                                                         },
                                                         child: Text('Yes')))
                                                 .showPopup();
@@ -263,9 +264,10 @@ class MilestoneList extends HookWidget {
             }),
         IconButton(
             onPressed: () {
-              OneContext().showDialog(
+              showDialog(
+                  context: context,
                   barrierDismissible: false,
-                  builder: (_) {
+                  builder: (context) {
                     final _formKey2 = GlobalKey<FormState>();
                     return AlertDialog(
                       title: Text('Add New Milestone'),
@@ -322,7 +324,7 @@ class MilestoneList extends HookWidget {
                                 milestones.value = tempList.toList();
                                 dayController.clear();
                                 rewardController.clear();
-                                OneContext().popDialog();
+                                Navigator.pop(context);
                               }
                             }),
                         TextButton(
@@ -330,7 +332,7 @@ class MilestoneList extends HookWidget {
                             onPressed: () {
                               dayController.clear();
                               rewardController.clear();
-                              OneContext().popDialog();
+                              Navigator.pop(context);
                             }),
                       ],
                     );
@@ -387,6 +389,7 @@ class MilestoneTile extends StatelessWidget {
                   ),
                   onTap: () {
                     StyledPopup(
+                      context: context,
                       title: 'Delete Milestone?',
                       children: [],
                       textButton: TextButton(
@@ -396,7 +399,7 @@ class MilestoneTile extends StatelessWidget {
                             milestonesList.value =
                                 List<Map<String, dynamic>>.from(
                                     milestonesList.value);
-                            OneContext().popDialog();
+                            Navigator.pop(context);
                           }),
                     ).showPopup();
                   },
@@ -425,9 +428,10 @@ class MilestoneTile extends StatelessWidget {
         onTap: () {
           dayController.text = milestones['day'].toString();
           rewardController.text = milestones['reward'];
-          OneContext().showDialog(
+          showDialog(
+              context: context,
               barrierDismissible: false,
-              builder: (_) {
+              builder: (context) {
                 final _formKey3 = GlobalKey<FormState>();
                 return AlertDialog(
                   title: Text('Edit Milestone'),
@@ -480,7 +484,7 @@ class MilestoneTile extends StatelessWidget {
                             milestonesList.value = tempList.toList();
                             dayController.clear();
                             rewardController.clear();
-                            OneContext().popDialog();
+                            Navigator.pop(context);
                           }
                         }),
                     TextButton(
@@ -488,7 +492,7 @@ class MilestoneTile extends StatelessWidget {
                         onPressed: () {
                           dayController.clear();
                           rewardController.clear();
-                          OneContext().popDialog();
+                          Navigator.pop(context);
                         }),
                   ],
                 );

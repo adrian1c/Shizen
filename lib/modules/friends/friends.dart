@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:shizen_app/modules/profile/profile.dart';
 import 'package:shizen_app/widgets/field.dart';
 
 import '../../utils/allUtils.dart';
-import './functions.dart';
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({Key? key}) : super(key: key);
@@ -38,7 +38,7 @@ class _FriendsPageState extends State<FriendsPage> {
             children: [
               Icon(Icons.search),
               Text("Search"),
-              searchField(uid),
+              searchField(uid, context),
               IconButton(
                   onPressed: () {},
                   icon: Icon(
@@ -98,7 +98,7 @@ class _FriendsPageState extends State<FriendsPage> {
                                     : "You have ${friendsData.length} friend"),
                               ],
                             ),
-                            friendsBuilder(friendsData, uid),
+                            friendsBuilder(friendsData, uid, context),
                           ],
                         );
                       }),
@@ -109,7 +109,7 @@ class _FriendsPageState extends State<FriendsPage> {
         ]));
   }
 
-  Widget searchField(uid) {
+  Widget searchField(uid, context) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
@@ -135,6 +135,7 @@ class _FriendsPageState extends State<FriendsPage> {
           },
           onFieldSubmitted: (value) {
             StyledPopup(
+              context: context,
               children: [
                 FutureBuilder<List<QuerySnapshot>>(
                     future: Database(uid).getFriendSearch(value),
@@ -259,17 +260,17 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-  Widget friendsBuilder(itemList, uid) {
+  Widget friendsBuilder(itemList, uid, context) {
     return ListView.builder(
         physics: NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         itemCount: itemList.length,
         itemBuilder: (context, index) {
-          return friendListTile(itemList, index, uid);
+          return friendListTile(itemList, index, uid, context);
         });
   }
 
-  Widget friendListTile(itemList, index, uid) {
+  Widget friendListTile(itemList, index, uid, context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
       child: Material(
@@ -287,12 +288,23 @@ class _FriendsPageState extends State<FriendsPage> {
           trailing: IconButton(
             onPressed: () {
               StyledPopup(
+                context: context,
                 title: 'Actions',
                 children: [
                   Divider(),
                   TextButton(
                       onPressed: () {
-                        print("View Profile");
+                        Navigator.pop(context);
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return Scaffold(
+                              appBar: AppBar(
+                                title: Text(
+                                    '${itemList[index]['name']}\'s Profile'),
+                                centerTitle: true,
+                              ),
+                              body: ProfilePage(viewId: itemList[index].id));
+                        }));
                       },
                       child: Text("View Profile")),
                   TextButton(
@@ -304,7 +316,7 @@ class _FriendsPageState extends State<FriendsPage> {
                                 setState(() => itemList.removeAt(index)));
                         print(itemList);
 
-                        OneContext().popDialog();
+                        Navigator.pop(context);
                       },
                       child: Text("Remove Friend")),
                 ],

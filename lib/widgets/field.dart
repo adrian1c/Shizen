@@ -63,12 +63,14 @@ class StyledInputField {
 class StyledPopup {
   const StyledPopup(
       {Key? key,
+      required this.context,
       required this.title,
       required this.children,
       this.cancelText = 'Cancel',
       this.cancelFunction,
       this.textButton});
 
+  final context;
   final String title;
   final List<Widget> children;
   final String cancelText;
@@ -76,88 +78,90 @@ class StyledPopup {
   final TextButton? textButton;
 
   showPopup() {
-    OneContext().showDialog(builder: (_) {
-      return AlertDialog(
-        title: Text(title),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: children,
-          ),
-        ),
-        actions: textButton != null
-            ? [
-                textButton!,
-                TextButton(
-                  onPressed: cancelFunction != null
-                      ? cancelFunction
-                      : () {
-                          OneContext().popDialog();
-                        },
-                  child: Text(cancelText,
-                      style: cancelText != 'Cancel'
-                          ? null
-                          : TextStyle(color: Colors.red)),
-                ),
-              ]
-            : [
-                TextButton(
-                  onPressed: cancelFunction != null
-                      ? cancelFunction
-                      : () {
-                          OneContext().popDialog();
-                        },
-                  child: Text(cancelText,
-                      style: cancelText != 'Cancel'
-                          ? null
-                          : TextStyle(color: Colors.red)),
-                ),
-              ],
-      );
-    });
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: children,
+              ),
+            ),
+            actions: textButton != null
+                ? [
+                    textButton!,
+                    TextButton(
+                      onPressed: cancelFunction != null
+                          ? cancelFunction
+                          : () {
+                              Navigator.pop(context);
+                            },
+                      child: Text(cancelText,
+                          style: cancelText != 'Cancel'
+                              ? null
+                              : TextStyle(color: Colors.red)),
+                    ),
+                  ]
+                : [
+                    TextButton(
+                      onPressed: cancelFunction != null
+                          ? cancelFunction
+                          : () {
+                              Navigator.pop(context);
+                            },
+                      child: Text(cancelText,
+                          style: cancelText != 'Cancel'
+                              ? null
+                              : TextStyle(color: Colors.red)),
+                    ),
+                  ],
+          );
+        });
   }
 }
 
-class StyledSnackbar {
-  const StyledSnackbar({Key? key, required this.message});
+// class StyledSnackbar {
+//   const StyledSnackbar({Key? key, required this.message});
 
-  final String message;
+//   final String message;
 
-  showSuccess() {
-    OneContext().showSnackBar(
-        builder: (_) => SnackBar(
-              margin: EdgeInsets.fromLTRB(10.w, 0, 10.w, 80.h),
-              content: Text(
-                message,
-                textAlign: TextAlign.center,
-              ),
-              backgroundColor: Color(0xff17bd46),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              behavior: SnackBarBehavior.floating,
-              action: SnackBarAction(
-                  label: 'OK',
-                  onPressed: () => OneContext().hideCurrentSnackBar()),
-            ));
-  }
+//   showSuccess() {
+//     OneContext().showSnackBar(
+//         builder: (_) => SnackBar(
+//               margin: EdgeInsets.fromLTRB(10.w, 0, 10.w, 80.h),
+//               content: Text(
+//                 message,
+//                 textAlign: TextAlign.center,
+//               ),
+//               backgroundColor: Color(0xff17bd46),
+//               shape: RoundedRectangleBorder(
+//                 borderRadius: BorderRadius.circular(15),
+//               ),
+//               behavior: SnackBarBehavior.floating,
+//               action: SnackBarAction(
+//                   label: 'OK',
+//                   onPressed: () => OneContext().hideCurrentSnackBar()),
+//             ));
+//   }
 
-  showError() {
-    OneContext().showSnackBar(
-        builder: (_) => SnackBar(
-              margin: EdgeInsets.fromLTRB(10.w, 0, 10.w, 80.h),
-              content: Text(
-                message,
-                textAlign: TextAlign.center,
-              ),
-              backgroundColor: Color(0xffF24C4C),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              behavior: SnackBarBehavior.floating,
-              action: SnackBarAction(
-                  label: 'OK',
-                  onPressed: () => OneContext().hideCurrentSnackBar()),
-            ));
-  }
-}
+//   showError() {
+//     OneContext().showSnackBar(
+//         builder: (_) => SnackBar(
+//               margin: EdgeInsets.fromLTRB(10.w, 0, 10.w, 80.h),
+//               content: Text(
+//                 message,
+//                 textAlign: TextAlign.center,
+//               ),
+//               backgroundColor: Color(0xffF24C4C),
+//               shape: RoundedRectangleBorder(
+//                 borderRadius: BorderRadius.circular(15),
+//               ),
+//               behavior: SnackBarBehavior.floating,
+//               action: SnackBarAction(
+//                   label: 'OK',
+//                   onPressed: () => OneContext().hideCurrentSnackBar()),
+//             ));
+//   }
+// }

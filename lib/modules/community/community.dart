@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/dropdown.dart';
@@ -183,8 +184,8 @@ class PostListTile extends StatelessWidget {
                                 border: Border.all(width: 1),
                                 color: Colors.grey,
                                 image: DecorationImage(
-                                    image: Image.network(postData!['image'])
-                                        .image),
+                                    image: CachedNetworkImageProvider(
+                                        postData!['image'])),
                               )),
                               onTap: () => print('Nicer'),
                             )

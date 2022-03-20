@@ -33,8 +33,6 @@ class MyApp extends StatelessWidget {
             child: Sizer(
               builder: (context, orientation, deviceType) {
                 return MaterialApp(
-                  builder: OneContext().builder,
-                  navigatorKey: OneContext().key,
                   debugShowCheckedModeBanner: false,
                   title: 'Shizen',
                   theme: CustomTheme.lightTheme,

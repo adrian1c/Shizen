@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -10,17 +11,24 @@ import 'package:shizen_app/widgets/field.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ProfilePage extends HookWidget {
+  const ProfilePage({Key? key, this.viewId}) : super(key: key);
+
+  final String? viewId;
+
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid =
+        viewId != null ? viewId! : Provider.of<UserProvider>(context).uid;
     final ValueNotifier<int> isLoading = useState(0);
     final TextEditingController nameController = useTextEditingController();
-    final ValueNotifier isValid = useValueNotifier(true);
     final futureUserProfileData = useMemoized(
         () => Database(uid).getCurrentUserData(), [isLoading.value]);
     final snapshotUserProfileData = useFuture(futureUserProfileData);
-    final futureUserPosts =
-        useMemoized(() => Database(uid).getUserPosts(uid), [isLoading.value]);
+    final futureUserPosts = useMemoized(
+        () => viewId != null
+            ? Database(uid).getUserPostsOtherProfile(uid)
+            : Database(uid).getUserPostsOwnProfile(uid),
+        [isLoading.value]);
     final snapshotUserPosts = useFuture(futureUserPosts);
     return SingleChildScrollView(
       child: Column(
@@ -37,7 +45,6 @@ class ProfilePage extends HookWidget {
                       uid: uid,
                       isLoading: isLoading,
                       nameController: nameController,
-                      isValid: isValid,
                     )
                   : Shimmer.fromColors(
                       baseColor: Colors.grey[300]!,
@@ -119,20 +126,18 @@ class ProfilePage extends HookWidget {
 }
 
 class UserProfileData extends StatelessWidget {
-  const UserProfileData(
-      {Key? key,
-      required this.data,
-      required this.uid,
-      required this.isLoading,
-      required this.nameController,
-      required this.isValid})
-      : super(key: key);
+  const UserProfileData({
+    Key? key,
+    required this.data,
+    required this.uid,
+    required this.isLoading,
+    required this.nameController,
+  }) : super(key: key);
 
   final data;
   final String uid;
   final isLoading;
   final nameController;
-  final isValid;
 
   @override
   Widget build(BuildContext context) {
@@ -145,13 +150,14 @@ class UserProfileData extends StatelessWidget {
           child: data.data()['image'] != ''
               ? InkWell(
                   child: Container(
-                      decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(width: 1),
-                    color: Colors.grey,
-                    image: DecorationImage(
-                        image: Image.network(data!['image']).image),
-                  )),
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(width: 1),
+                        color: Colors.grey,
+                        image: DecorationImage(
+                          image: CachedNetworkImageProvider(data!['image']),
+                        )),
+                  ),
                   onTap: () async =>
                       await changeProfilePic(context, true, isLoading),
                 )
@@ -175,6 +181,7 @@ class UserProfileData extends StatelessWidget {
                   onTap: () {
                     nameController.text = data!['name'];
                     StyledPopup(
+                            context: context,
                             title: 'Change Name?',
                             children: [
                               Form(
@@ -201,14 +208,14 @@ class UserProfileData extends StatelessWidget {
                                 onPressed: () async {
                                   if (_form.currentState!.validate()) {
                                     var newName = nameController.text;
-                                    OneContext().popDialog();
+                                    Navigator.pop(context);
                                     await Database(uid).editUserName(newName);
                                     isLoading.value += 1;
                                     print(isLoading.value);
-                                    StyledSnackbar(
-                                            message:
-                                                'Your display name has been changed!')
-                                        .showSuccess();
+                                    // StyledSnackbar(
+                                    //         message:
+                                    //             'Your display name has been changed!')
+                                    //     .showSuccess();
                                   }
                                 },
                                 child: Text('Save')))
@@ -258,6 +265,7 @@ class UserProfileData extends StatelessWidget {
 
   changeProfilePic(context, bool existingPic, isLoading) async {
     StyledPopup(
+      context: context,
       title: existingPic ? 'Change Profile Picture' : 'Upload Profile Picture',
       children: existingPic
           ? [
@@ -267,30 +275,32 @@ class UserProfileData extends StatelessWidget {
                 onPressed: () async {
                   var image = await pickImage();
                   if (image != null) {
-                    OneContext().popDialog();
+                    Navigator.pop(context);
                     image = await cropImage(image);
                     if (image == null) return;
-                    OneContext().showDialog(builder: (_) {
-                      return AlertDialog(
-                        title: Text("Upload Profile Picture"),
-                        content: Image(image: FileImage(image)),
-                        actions: [
-                          TextButton(
-                              onPressed: () async {
-                                OneContext().popDialog();
-                                await Database(uid).uploadProfilePic(image);
-                                isLoading.value += 1;
-                              },
-                              child: Text("Upload")),
-                          TextButton(
-                            onPressed: () {
-                              OneContext().popDialog();
-                            },
-                            child: Text("Cancel"),
-                          ),
-                        ],
-                      );
-                    });
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text("Upload Profile Picture"),
+                            content: Image(image: FileImage(image)),
+                            actions: [
+                              TextButton(
+                                  onPressed: () async {
+                                    Navigator.pop(context);
+                                    await Database(uid).uploadProfilePic(image);
+                                    isLoading.value += 1;
+                                  },
+                                  child: Text("Upload")),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text("Cancel"),
+                              ),
+                            ],
+                          );
+                        });
                   }
                 },
               ),
@@ -298,6 +308,7 @@ class UserProfileData extends StatelessWidget {
                 child: Text('Remove Profile Picture'),
                 onPressed: () {
                   StyledPopup(
+                          context: context,
                           title: 'Are you sure?',
                           children: [
                             Text('Your profile picture will be removed.')
@@ -306,7 +317,7 @@ class UserProfileData extends StatelessWidget {
                               onPressed: () async {
                                 await Database(uid).removeProfilePic();
                                 isLoading.value += 1;
-                                OneContext().popAllDialogs();
+                                Navigator.pop(context);
                               },
                               child: Text('Yes')))
                       .showPopup();
@@ -320,30 +331,32 @@ class UserProfileData extends StatelessWidget {
                 onPressed: () async {
                   var image = await pickImage();
                   if (image != null) {
-                    OneContext().popDialog();
+                    Navigator.pop(context);
                     image = await cropImage(image);
                     if (image == null) return;
-                    OneContext().showDialog(builder: (_) {
-                      return AlertDialog(
-                        title: Text("Upload Profile Picture"),
-                        content: Image(image: FileImage(image)),
-                        actions: [
-                          TextButton(
-                              onPressed: () async {
-                                OneContext().popDialog();
-                                await Database(uid).uploadProfilePic(image);
-                                isLoading.value += 1;
-                              },
-                              child: Text("Upload")),
-                          TextButton(
-                            onPressed: () {
-                              OneContext().popDialog();
-                            },
-                            child: Text("Cancel"),
-                          ),
-                        ],
-                      );
-                    });
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text("Upload Profile Picture"),
+                            content: Image(image: FileImage(image)),
+                            actions: [
+                              TextButton(
+                                  onPressed: () async {
+                                    Navigator.pop(context);
+                                    await Database(uid).uploadProfilePic(image);
+                                    isLoading.value += 1;
+                                  },
+                                  child: Text("Upload")),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text("Cancel"),
+                              ),
+                            ],
+                          );
+                        });
                   }
                 },
               ),

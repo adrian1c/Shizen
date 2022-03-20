@@ -127,6 +127,7 @@ class TodoTaskList extends HookWidget {
           InkWell(
             onTap: () {
               StyledPopup(
+                  context: context,
                   title: 'Task Title',
                   children: [
                     TextFormField(
@@ -148,7 +149,7 @@ class TodoTaskList extends HookWidget {
                   textButton: TextButton(
                     onPressed: () {
                       title.value = titleController.text;
-                      OneContext().popAllDialogs();
+                      Navigator.pop(context);
                     },
                     child: Text('Save'),
                   )).showPopup();
@@ -215,6 +216,7 @@ class TodoTaskList extends HookWidget {
                                     padding: EdgeInsets.zero,
                                     onPressed: () {
                                       StyledPopup(
+                                              context: context,
                                               title: 'Remove this task?',
                                               children: [],
                                               textButton: TextButton(
@@ -224,8 +226,7 @@ class TodoTaskList extends HookWidget {
                                                       ..removeAt(index);
                                                     AddToDoTask.checkTaskValid(
                                                         taskList, isValid);
-                                                    OneContext()
-                                                        .popAllDialogs();
+                                                    Navigator.pop(context);
                                                   },
                                                   child: Text('Remove')))
                                           .showPopup();
@@ -236,6 +237,7 @@ class TodoTaskList extends HookWidget {
                                     taskController.text =
                                         taskList.value[index]['task'];
                                     TaskDescPopup(
+                                      context: context,
                                       taskController: taskController,
                                       taskList: taskList,
                                       isValid: isValid,
@@ -253,6 +255,7 @@ class TodoTaskList extends HookWidget {
                   onPressed: () {
                     taskController.clear();
                     TaskDescPopup(
+                      context: context,
                       taskController: taskController,
                       taskList: taskList,
                       isValid: isValid,
@@ -269,12 +272,14 @@ class TodoTaskList extends HookWidget {
 class TaskDescPopup {
   const TaskDescPopup(
       {Key? key,
+      required this.context,
       required this.taskController,
       required this.taskList,
       required this.isValid,
       required this.isEdit,
       this.index});
 
+  final context;
   final TextEditingController taskController;
   final ValueNotifier<List> taskList;
   final ValueNotifier<bool> isValid;
@@ -284,6 +289,7 @@ class TaskDescPopup {
   showTaskDescPopup() {
     var _formKey = GlobalKey<FormState>();
     StyledPopup(
+      context: context,
       title: 'Add Task',
       children: [
         Form(
@@ -319,19 +325,19 @@ class TaskDescPopup {
               ..add({'task': taskController.text, 'status': false});
             AddToDoTask.checkTaskValid(taskList, isValid);
             taskController.clear();
-            OneContext().popAllDialogs();
+            Navigator.pop(context);
           }
           if (_formKey.currentState!.validate() && isEdit) {
             taskList.value[index]['task'] = taskController.text;
             taskList.value = List.from(taskList.value);
             taskController.clear();
-            OneContext().popAllDialogs();
+            Navigator.pop(context);
           }
         },
       ),
       cancelFunction: () {
         taskController.clear();
-        OneContext().popAllDialogs();
+        Navigator.pop(context);
       },
     ).showPopup();
   }
@@ -371,9 +377,11 @@ class RecurButton extends HookWidget {
               onTap: taskList.value.length == 0
                   ? () {}
                   : () {
-                      OneContext().showDialog(
+                      selectedValue.value = recurValue.value.toList();
+                      showDialog(
+                        context: context,
                         barrierDismissible: false,
-                        builder: (_) {
+                        builder: (context) {
                           return AlertDialog(
                             title: Text('Recurring Days'),
                             content: SingleChildScrollView(
@@ -407,15 +415,13 @@ class RecurButton extends HookWidget {
                                 onPressed: () {
                                   recurValue.value =
                                       selectedValue.value.toList();
-                                  OneContext().popDialog();
+                                  Navigator.pop(context);
                                 },
                                 child: Text('Save'),
                               ),
                               TextButton(
                                   onPressed: () {
-                                    selectedValue.value =
-                                        recurValue.value.toList();
-                                    OneContext().popDialog();
+                                    Navigator.pop(context);
                                   },
                                   child: Text('Cancel'))
                             ],
@@ -468,6 +474,7 @@ class RecurButton extends HookWidget {
                   onTap: recurValue.value.contains(true)
                       ? () {
                           StyledPopup(
+                                  context: context,
                                   title:
                                       'Do you want to remove all existing recurring days?',
                                   children: [],
@@ -491,7 +498,7 @@ class RecurButton extends HookWidget {
                                           false,
                                           false
                                         ];
-                                        OneContext().popDialog();
+                                        Navigator.pop(context);
                                       },
                                       child: Text('Remove')))
                               .showPopup();
@@ -565,12 +572,13 @@ class ReminderButton extends HookWidget {
                   onTap: reminderValue.value != null
                       ? () {
                           StyledPopup(
+                                  context: context,
                                   title: 'Do you want to remove this reminder?',
                                   children: [],
                                   textButton: TextButton(
                                       onPressed: () {
                                         reminderValue.value = null;
-                                        OneContext().popDialog();
+                                        Navigator.pop(context);
                                       },
                                       child: Text('Remove')))
                               .showPopup();

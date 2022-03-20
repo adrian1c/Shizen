@@ -72,7 +72,7 @@ class AddNewPost extends HookWidget {
                       ),
                     ),
                     onTap: () {
-                      showAttach();
+                      showAttach(context);
                     },
                   ),
                 ),
@@ -136,51 +136,53 @@ class AddNewPost extends HookWidget {
         ));
   }
 
-  Future<dynamic> showAttach() {
-    return OneContext().showDialog(builder: (_) {
-      return AlertDialog(
-        title: Text("Add an attachment"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Divider(),
-              SizedBox(
-                width: 300,
-                height: 60,
-                child: Container(
-                  decoration: BoxDecoration(border: Border.all(width: 1)),
-                  child: InkWell(
-                    child: Center(child: Text("Image")),
-                    onTap: () {},
+  showAttach(context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Add an attachment"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Divider(),
+                  SizedBox(
+                    width: 300,
+                    height: 60,
+                    child: Container(
+                      decoration: BoxDecoration(border: Border.all(width: 1)),
+                      child: InkWell(
+                        child: Center(child: Text("Image")),
+                        onTap: () {},
+                      ),
+                    ),
                   ),
-                ),
+                  Divider(
+                    color: Colors.transparent,
+                  ),
+                  SizedBox(
+                    width: 300,
+                    height: 60,
+                    child: Container(
+                      decoration: BoxDecoration(border: Border.all(width: 1)),
+                      child: InkWell(
+                          child: Center(child: Text("Task")), onTap: () {}),
+                    ),
+                  ),
+                ],
               ),
-              Divider(
-                color: Colors.transparent,
-              ),
-              SizedBox(
-                width: 300,
-                height: 60,
-                child: Container(
-                  decoration: BoxDecoration(border: Border.all(width: 1)),
-                  child:
-                      InkWell(child: Center(child: Text("Task")), onTap: () {}),
-                ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("Cancel"),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              OneContext().popDialog();
-            },
-            child: Text("Cancel"),
-          ),
-        ],
-      );
-    });
+          );
+        });
   }
 }
 

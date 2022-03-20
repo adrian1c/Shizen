@@ -8,6 +8,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shizen_app/models/todoTask.dart';
 import 'package:shizen_app/models/trackerTask.dart';
+import "package:collection/collection.dart";
+import 'package:intl/intl.dart';
 
 import 'package:path/path.dart';
 
@@ -47,21 +49,15 @@ class Database {
   Future<void> addToDoTask(toDoTask) async {
     print("Firing addToDoTask");
 
-    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
-
     await userDoc
         .collection('todo')
         .add(toDoTask.toJson())
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
-
-    OneContext().hideProgressIndicator();
   }
 
   Future<void> editToDoTask(tid, toDoTask) async {
     print("Firing editToDoTask");
-
-    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
     await userDoc
         .collection('todo')
@@ -69,8 +65,6 @@ class Database {
         .update(toDoTask.toJson())
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
-
-    OneContext().hideProgressIndicator();
   }
 
   Future<void> deleteToDoTask(tid) async {
@@ -238,8 +232,6 @@ class Database {
   Future<void> addNewPost(Map<String, dynamic> postData, visibility) async {
     print("Firing addNewPost");
 
-    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
-
     var batch = firestore.batch();
     var newPostDoc = firestore.collection('posts').doc();
 
@@ -265,14 +257,22 @@ class Database {
     }
 
     batch.set(newPostDoc, postData);
-    batch.set(
-        userDoc,
-        {
-          'posts': FieldValue.arrayUnion([newPostDoc.id])
-        },
-        SetOptions(merge: true));
+    if (visibility == 'Anonymous') {
+      batch.set(
+          userDoc,
+          {
+            'anonPosts': FieldValue.arrayUnion([newPostDoc.id])
+          },
+          SetOptions(merge: true));
+    }
 
     if (visibility != 'Anonymous') {
+      batch.set(
+          userDoc,
+          {
+            'posts': FieldValue.arrayUnion([newPostDoc.id])
+          },
+          SetOptions(merge: true));
       List<String> friendsList = await getAllFriendsID();
       friendsList.forEach((e) {
         batch.set(
@@ -285,8 +285,6 @@ class Database {
     }
 
     await batch.commit();
-
-    OneContext().hideProgressIndicator();
 
     return;
   }
@@ -378,54 +376,47 @@ class Database {
   Future uploadProfilePic(image) async {
     print("Firing uploadProfilePic");
 
-    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
-
-    File imageFile = image;
-    FirebaseStorage storage = FirebaseStorage.instance;
-    final fileName = basename(imageFile.path);
-    final destination = 'files/$fileName';
-
     var batch = firestore.batch();
 
     try {
-      final ref = storage.ref(destination).child(uid);
-      await ref.putFile(imageFile);
-      var downloadURL = await ref.getDownloadURL();
-      batch.update(userDoc, {'image': downloadURL});
-      var userDoc1 = await userDoc.get().then((value) => value.data());
+      String downloadURL;
+      FirebaseStorage storage = FirebaseStorage.instance;
+      Reference ref = storage.ref().child("image1" + DateTime.now().toString());
+      UploadTask uploadTask = ref.putFile(image);
+      uploadTask.whenComplete(() async {
+        downloadURL = await ref.getDownloadURL();
+        batch.update(userDoc, {'image': downloadURL});
+        var userDoc1 = await userDoc.get().then((value) => value.data());
 
-      if (userDoc1!.containsKey('posts')) {
-        var postList = userDoc1['posts'];
-        for (var i = 0; i < postList.length; i++) {
-          batch.update(firestore.collection('posts').doc(postList[i]),
-              {'image': downloadURL});
+        if (userDoc1!.containsKey('posts')) {
+          var postList = userDoc1['posts'];
+          for (var i = 0; i < postList.length; i++) {
+            batch.update(firestore.collection('posts').doc(postList[i]),
+                {'image': downloadURL});
+          }
         }
-      }
 
-      var userFriends = await userDoc.collection('friends').get();
+        var userFriends = await userDoc.collection('friends').get();
 
-      if (userFriends.size != 0) {
-        for (var i = 0; i < userFriends.size; i++) {
-          batch.update(
-              userCol
-                  .doc(userFriends.docs[i].id)
-                  .collection('friends')
-                  .doc(uid),
-              {'image': downloadURL});
+        if (userFriends.size != 0) {
+          for (var i = 0; i < userFriends.size; i++) {
+            batch.update(
+                userCol
+                    .doc(userFriends.docs[i].id)
+                    .collection('friends')
+                    .doc(uid),
+                {'image': downloadURL});
+          }
         }
-      }
-      await batch.commit();
+        await batch.commit();
+      });
     } catch (e) {
       print(e);
     }
-
-    OneContext().hideProgressIndicator();
   }
 
   Future removeProfilePic() async {
     print("Firing removeProfilePic");
-
-    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
     var batch = firestore.batch();
     batch.update(userDoc, {'image': ''});
@@ -451,14 +442,10 @@ class Database {
     }
 
     await batch.commit();
-
-    OneContext().hideProgressIndicator();
   }
 
   Future editUserName(newName) async {
     print("Firing editUserName");
-
-    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
 
     var batch = firestore.batch();
     batch.update(userDoc, {'name': newName});
@@ -484,11 +471,9 @@ class Database {
     }
 
     await batch.commit();
-
-    OneContext().hideProgressIndicator();
   }
 
-  Future getUserPosts(uid) async {
+  Future getUserPostsOwnProfile(uid) async {
     print("Firing getUserPosts");
 
     var results = [];
@@ -503,6 +488,36 @@ class Database {
       }
     }
 
+    if (userDoc1.data()!.containsKey('anonPosts')) {
+      var postList = userDoc1.data()!['anonPosts'];
+      for (var i = 0; i < postList.length; i++) {
+        var postData = await postCol.doc(postList[i]).get();
+        results.add(postData.data());
+      }
+    }
+
+    results.sort((a, b) => b['dateCreated'].compareTo(a['dateCreated']));
+
+    return results;
+  }
+
+  Future getUserPostsOtherProfile(uid) async {
+    print("Firing getUserPosts");
+
+    var results = [];
+
+    var userDoc1 = await userDoc.get();
+
+    if (userDoc1.data()!.containsKey('posts')) {
+      var postList = userDoc1.data()!['posts'];
+      for (var i = 0; i < postList.length; i++) {
+        var postData = await postCol.doc(postList[i]).get();
+        results.add(postData.data());
+      }
+    }
+
+    results.sort((a, b) => b['dateCreated'].compareTo(a['dateCreated']));
+
     return results;
   }
 
@@ -514,11 +529,7 @@ class Database {
   Future addTrackerTask(TrackerTask tracker) async {
     print("Firing addNewTracker");
 
-    OneContext().showProgressIndicator(builder: (_) => LoaderOverlay());
-
     await userDoc.collection('trackers').add(tracker.toJson());
-
-    OneContext().hideProgressIndicator();
   }
 
   //-----------------------------------------------------
@@ -529,10 +540,32 @@ class Database {
   Future getProgressList(filter, search) async {
     print("Firing getProgressList");
 
-    return userDoc
+    List<Map> progressList = [];
+    await userDoc
         .collection('todo')
         .where('allComplete', isEqualTo: true)
         .orderBy('dateCompleted', descending: false)
-        .get();
+        .get()
+        .then((value) {
+      value.docs.forEach((element) {
+        var currElement = element.data();
+        currElement['taskId'] = element.id;
+        currElement['dateCompletedDay'] = new DateFormat("dd MMM yy").format(
+            DateTime.parse((currElement['dateCompleted'] as Timestamp)
+                .toDate()
+                .toString()));
+        currElement['dateCompleted'] =
+            (currElement['dateCompleted'] as Timestamp).toDate();
+        progressList.add(currElement);
+      });
+    });
+    return progressList;
+
+    // var groupByDate = groupBy(progressList,
+    //     (Map obj) => obj['dateCompleted'].toString().substring(0, 10));
+
+    // List test = [];
+
+    // groupByDate.forEach((k, v) => test.add([k, v]));
   }
 }

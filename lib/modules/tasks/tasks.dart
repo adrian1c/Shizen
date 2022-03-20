@@ -242,6 +242,7 @@ class TodoTaskDisplay extends HookWidget {
                           topRight: Radius.circular(5)),
                     ),
                     child: ListView.builder(
+                        physics: NeverScrollableScrollPhysics(),
                         shrinkWrap: true,
                         itemCount: taskList.length,
                         itemBuilder: (context, index) {
@@ -274,10 +275,10 @@ class TodoTaskDisplay extends HookWidget {
                                               .completeTask(taskId, taskList);
 
                                       todoChanged.value += 1;
-                                      StyledSnackbar(
-                                              message:
-                                                  'Congratulations! I\'m proud of you')
-                                          .showSuccess();
+                                      // StyledSnackbar(
+                                      //         message:
+                                      //             'Congratulations! I\'m proud of you')
+                                      //     .showSuccess();
                                     },
                                   ),
                                   Text(taskList[index]['task'],
@@ -376,6 +377,7 @@ class TrackerTile extends HookWidget {
                   ElevatedButton(
                     onPressed: () {
                       StyledPopup(
+                          context: context,
                           title: 'Milestones',
                           children: [
                             StatefulBuilder(builder: (context, _setState) {
@@ -402,9 +404,10 @@ class TrackerTile extends HookWidget {
                                       }),
                                   IconButton(
                                       onPressed: () {
-                                        OneContext().showDialog(
+                                        showDialog(
+                                            context: context,
                                             barrierDismissible: false,
-                                            builder: (_) {
+                                            builder: (context) {
                                               final _formKey2 =
                                                   GlobalKey<FormState>();
                                               return AlertDialog(
@@ -504,8 +507,8 @@ class TrackerTile extends HookWidget {
                                                           dayController.clear();
                                                           rewardController
                                                               .clear();
-                                                          OneContext()
-                                                              .popDialog();
+                                                          Navigator.pop(
+                                                              context);
                                                         }
                                                       }),
                                                   TextButton(
@@ -514,8 +517,7 @@ class TrackerTile extends HookWidget {
                                                         dayController.clear();
                                                         rewardController
                                                             .clear();
-                                                        OneContext()
-                                                            .popDialog();
+                                                        Navigator.pop(context);
                                                       }),
                                                 ],
                                               );
@@ -536,11 +538,12 @@ class TrackerTile extends HookWidget {
                                 trackerChanged.value += 1;
                                 Database(uid)
                                     .editMilestones(task.id, milestones.value);
-                                OneContext().popDialog();
+                                Navigator.pop(context);
                               },
                               child: Text('Save')),
                           cancelFunction: () {
                             StyledPopup(
+                                    context: context,
                                     title: 'Are you sure?',
                                     children: [
                                       Text(
@@ -553,7 +556,7 @@ class TrackerTile extends HookWidget {
                                                   .map((e) =>
                                                       e as Map<String, dynamic>)
                                                   .toList();
-                                          OneContext().popAllDialogs();
+                                          Navigator.pop(context);
                                         },
                                         child: Text('Yes')))
                                 .showPopup();
@@ -566,6 +569,7 @@ class TrackerTile extends HookWidget {
                   ElevatedButton(
                     onPressed: () {
                       StyledPopup(
+                        context: context,
                         title: 'Milestones',
                         children: [],
                       ).showPopup();
@@ -577,6 +581,7 @@ class TrackerTile extends HookWidget {
                   ElevatedButton(
                     onPressed: () {
                       StyledPopup(
+                        context: context,
                         title: 'Milestones',
                         children: [],
                       ).showPopup();
@@ -588,6 +593,7 @@ class TrackerTile extends HookWidget {
                   ElevatedButton(
                     onPressed: () {
                       StyledPopup(
+                        context: context,
                         title: 'Milestones',
                         children: [],
                       ).showPopup();
@@ -599,6 +605,7 @@ class TrackerTile extends HookWidget {
                   ElevatedButton(
                     onPressed: () {
                       StyledPopup(
+                          context: context,
                           title: 'Delete Tracker?',
                           children: [
                             Text(
@@ -607,10 +614,10 @@ class TrackerTile extends HookWidget {
                           textButton: TextButton(
                             onPressed: () async {
                               await Database(uid).deleteTrackerTask(task.id);
-                              OneContext().popDialog();
-                              StyledSnackbar(
-                                      message: 'The task has been deleted.')
-                                  .showSuccess();
+                              Navigator.pop(context);
+                              // StyledSnackbar(
+                              //         message: 'The task has been deleted.')
+                              //     .showSuccess();
                               trackerChanged.value += 1;
                             },
                             child: Text('Delete'),
@@ -677,6 +684,7 @@ class MilestonePopupTile extends StatelessWidget {
                   ),
                   onTap: () {
                     StyledPopup(
+                      context: context,
                       title: 'Delete Milestone?',
                       children: [],
                       textButton: TextButton(
@@ -688,7 +696,7 @@ class MilestonePopupTile extends StatelessWidget {
                                   List<Map<String, dynamic>>.from(
                                       milestonesList.value);
                             });
-                            OneContext().popDialog();
+                            Navigator.pop(context);
                           }),
                     ).showPopup();
                   },
@@ -717,9 +725,10 @@ class MilestonePopupTile extends StatelessWidget {
         onTap: () {
           dayController.text = milestone['day'].toString();
           rewardController.text = milestone['reward'];
-          OneContext().showDialog(
+          showDialog(
+              context: context,
               barrierDismissible: false,
-              builder: (_) {
+              builder: (context) {
                 final _formKey3 = GlobalKey<FormState>();
                 return AlertDialog(
                   title: Text('Edit Milestone'),
@@ -776,7 +785,7 @@ class MilestonePopupTile extends StatelessWidget {
                             });
                             dayController.clear();
                             rewardController.clear();
-                            OneContext().popDialog();
+                            Navigator.pop(context);
                           }
                         }),
                     TextButton(
@@ -784,7 +793,7 @@ class MilestonePopupTile extends StatelessWidget {
                         onPressed: () {
                           dayController.clear();
                           rewardController.clear();
-                          OneContext().popDialog();
+                          Navigator.pop(context);
                         }),
                   ],
                 );
