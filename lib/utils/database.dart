@@ -229,8 +229,10 @@ class Database {
   //-----------------------------------------------------
   //
 
-  Future<void> addNewPost(Map<String, dynamic> postData, visibility) async {
+  Future<void> addNewPost(
+      Map<String, dynamic> postData, visibility, attachmentType) async {
     print("Firing addNewPost");
+    print(postData['attachment']);
 
     var batch = firestore.batch();
     var newPostDoc = firestore.collection('posts').doc();
@@ -254,6 +256,20 @@ class Database {
         'image': '',
       };
       postData.addAll(map);
+    }
+
+    if (attachmentType == 'image') {
+      FirebaseStorage storage = FirebaseStorage.instance;
+      Reference ref = storage.ref().child("image1" + DateTime.now().toString());
+      UploadTask uploadTask = ref.putFile(postData['attachment']);
+      await uploadTask.whenComplete(() async {
+        postData['attachment'] = await ref.getDownloadURL();
+      });
+    }
+
+    if (attachmentType == 'task') {
+      //TODO retrieve information of task
+      postData['attachment'] = null;
     }
 
     batch.set(newPostDoc, postData);

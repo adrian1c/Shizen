@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/dropdown.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shizen_app/widgets/field.dart';
-import 'package:sticky_headers/sticky_headers.dart';
+import 'package:shizen_app/utils/dateTimeAgo.dart';
 
 import './addnewpost.dart';
 
@@ -164,66 +165,103 @@ class PostListTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(15),
-          constraints: BoxConstraints(minHeight: 30.h),
-          decoration: BoxDecoration(color: Colors.blueGrey[100]),
+          padding: const EdgeInsets.only(top: 15, bottom: 15),
+          decoration: BoxDecoration(
+              color: Colors.blueGrey[100],
+              borderRadius: BorderRadius.circular(20)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                      width: 5.h,
-                      height: 5.h,
-                      child: postData['image'] != ''
-                          ? CircleAvatar(
-                              foregroundImage: CachedNetworkImageProvider(
-                                  postData!['image']),
-                              backgroundColor: Colors.grey,
-                              radius: 3.h,
-                            )
-                          : CircleAvatar(
-                              foregroundImage: Images.defaultPic.image,
-                              backgroundColor: Colors.grey,
-                              radius: 3.h,
-                            )),
                   Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(postData['name']),
-                        Text(postData['email']),
+                        Container(
+                            width: 5.h,
+                            height: 5.h,
+                            child: postData['image'] != ''
+                                ? CircleAvatar(
+                                    foregroundImage: CachedNetworkImageProvider(
+                                        postData!['image']),
+                                    backgroundColor: Colors.grey,
+                                    radius: 3.h,
+                                  )
+                                : CircleAvatar(
+                                    foregroundImage: Images.defaultPic.image,
+                                    backgroundColor: Colors.grey,
+                                    radius: 3.h,
+                                  )),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(postData['name']),
+                              Text(postData['email']),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Text(postData['desc']),
+                  ),
+                  if (postData['attachment'] != null)
+                    Image(
+                        width: 100.w,
+                        image:
+                            CachedNetworkImageProvider(postData['attachment']),
+                        fit: BoxFit.fitWidth),
                 ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-                child: Text(postData['desc']),
               ),
               if (postData['hashtags'].length > 0)
                 Container(
+                  padding: const EdgeInsets.all(10),
                   width: 100.w,
-                  height: 30,
+                  height: 50,
                   child: ListView.builder(
                     physics: BouncingScrollPhysics(),
                     scrollDirection: Axis.horizontal,
                     itemCount: postData['hashtags'].length,
                     itemBuilder: (context, index) {
-                      return InkWell(
-                        onTap: () {
-                          hashtag.value = postData['hashtags'][index];
-                          hashtagController.text = postData['hashtags'][index];
-                        },
-                        child: Text('#${postData['hashtags'][index]}   ',
-                            style: TextStyle(fontSize: 13.sp)),
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: InkWell(
+                          onTap: () {
+                            hashtag.value = postData['hashtags'][index];
+                            hashtagController.text =
+                                postData['hashtags'][index];
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                                color: Colors.blueGrey[200],
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Center(
+                              child: Text('#${postData['hashtags'][index]}',
+                                  style: TextStyle(
+                                      fontSize: 13.sp,
+                                      decoration: TextDecoration.underline)),
+                            ),
+                          ),
+                        ),
                       );
                     },
                   ),
                 ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                child: Text(
+                    (postData['dateCreated'] as Timestamp).toDate().timeAgo(),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12.sp)),
+              )
             ],
           ),
         ),

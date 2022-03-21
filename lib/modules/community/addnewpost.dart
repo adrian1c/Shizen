@@ -28,7 +28,8 @@ class AddNewPost extends HookWidget {
       useTextEditingController(),
     ];
     final String uid = Provider.of<UserProvider>(context).uid;
-    final ValueNotifier<FileImage?> attachment = useState(null);
+    final ValueNotifier<File?> attachment = useState(null);
+    final ValueNotifier<String?> attachmentType = useState(null);
     return Scaffold(
         appBar: AppBar(
           title: const Text("New Post"),
@@ -98,13 +99,13 @@ class AddNewPost extends HookWidget {
                                 Text('Image'),
                                 Image(
                                     width: 100.w,
-                                    image: attachment.value!,
+                                    image: FileImage(attachment.value!),
                                     fit: BoxFit.fitWidth),
                               ],
                             ),
                     ),
                     onTap: () {
-                      showAttach(context, attachment);
+                      showAttach(context, attachment, attachmentType);
                     },
                   ),
                 ),
@@ -147,13 +148,15 @@ class AddNewPost extends HookWidget {
                           ];
                           hashtags.removeWhere((item) => item == '');
                           Map<String, dynamic> newPost = CommunityPost(
-                            uid,
-                            postDescController.text,
-                            hashtags,
-                            visibilityValue.value,
-                          ).toJson();
+                                  uid,
+                                  postDescController.text,
+                                  hashtags,
+                                  visibilityValue.value,
+                                  attachment.value)
+                              .toJson();
                           await Database(uid)
-                              .addNewPost(newPost, visibilityValue.value)
+                              .addNewPost(newPost, visibilityValue.value,
+                                  attachmentType.value)
                               .then((value) => Navigator.of(context).pop());
                         },
                         isValid: isValid,
@@ -172,9 +175,8 @@ class AddNewPost extends HookWidget {
     final ImagePicker picker = ImagePicker();
 
     XFile? image = await picker.pickImage(
-        source: source == 'gallery' ? ImageSource.gallery : ImageSource.camera,
-        maxWidth: 100.w,
-        maxHeight: 50.h);
+      source: source == 'gallery' ? ImageSource.gallery : ImageSource.camera,
+    );
     return image;
   }
 
@@ -202,7 +204,7 @@ class AddNewPost extends HookWidget {
     return imageFile;
   }
 
-  showAttach(context, attachment) {
+  showAttach(context, attachment, attachmentType) {
     showDialog(
         context: context,
         builder: (context1) {
@@ -255,8 +257,8 @@ class AddNewPost extends HookWidget {
                                           TextButton(
                                               onPressed: () async {
                                                 Navigator.pop(context2);
-                                                attachment.value =
-                                                    FileImage(image);
+                                                attachment.value = image;
+                                                attachmentType.value = 'image';
                                               },
                                               child: Text("Yes")),
                                           TextButton(
@@ -299,14 +301,12 @@ class AddNewPost extends HookWidget {
                                     builder: (context2) {
                                       return AlertDialog(
                                         title: Text("Confirm Picture"),
-                                        content: Image(
-                                            image: FileImage(File(image.path))),
+                                        content: Image(image: FileImage(image)),
                                         actions: [
                                           TextButton(
                                               onPressed: () async {
                                                 Navigator.pop(context2);
-                                                attachment.value =
-                                                    FileImage(File(image.path));
+                                                attachment.value = image;
                                               },
                                               child: Text("Yes")),
                                           TextButton(
@@ -352,6 +352,7 @@ class AddNewPost extends HookWidget {
                         ),
                         onPressed: () {
                           attachment.value = null;
+                          attachmentType.value = null;
                           Navigator.pop(context);
                         },
                       ),

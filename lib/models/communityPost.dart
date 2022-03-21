@@ -4,11 +4,11 @@ class CommunityPost {
   DateTime dateCreated = DateTime.now();
   List<String> hashtags = [];
   String visibility = 'Friends Only';
-  String? attachment;
+  var attachment;
   List<String> comments = [];
 
-  CommunityPost(this.uid, this.desc, this.hashtags, this.visibility,
-      [attachment]);
+  CommunityPost(
+      this.uid, this.desc, this.hashtags, this.visibility, this.attachment);
 
   toJson() {
     return {

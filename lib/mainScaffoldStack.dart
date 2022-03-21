@@ -52,27 +52,24 @@ class MainScaffoldStack extends HookWidget {
           centerTitle: true,
         ),
         drawer: NavDrawer(),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-              color: Colors.grey, borderRadius: BorderRadius.circular(20)),
-          child: GNav(
-              rippleColor: Colors.grey[300]!,
-              hoverColor: Colors.grey[100]!,
-              gap: 5,
-              activeColor: Colors.white,
-              iconSize: 20,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              tabMargin: EdgeInsets.fromLTRB(5, 10, 5, 10),
-              duration: Duration(milliseconds: 400),
-              tabBackgroundColor: Colors.grey[850]!,
-              color: Colors.black,
-              tabs: screens,
-              selectedIndex: selectedIndex.value,
-              onTabChange: (index) {
-                selectedIndex.value = index;
-                pageController.jumpToPage(selectedIndex.value);
-              }),
-        ),
+        bottomNavigationBar: GNav(
+            backgroundColor: Colors.grey[400]!,
+            rippleColor: Colors.grey[300]!,
+            hoverColor: Colors.grey[100]!,
+            gap: 5,
+            activeColor: Colors.white,
+            iconSize: 20,
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            tabMargin: EdgeInsets.fromLTRB(5, 10, 5, 10),
+            duration: Duration(milliseconds: 400),
+            tabBackgroundColor: Colors.grey[850]!,
+            color: Colors.black,
+            tabs: screens,
+            selectedIndex: selectedIndex.value,
+            onTabChange: (index) {
+              selectedIndex.value = index;
+              pageController.jumpToPage(selectedIndex.value);
+            }),
         body: DoubleBackToCloseApp(
           snackBar: SnackBar(
             duration: Duration(seconds: 2),
