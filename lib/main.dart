@@ -47,11 +47,13 @@ class MyApp extends StatelessWidget {
         }
 
         //TODO: Make loading screen
-        return Container(
-            child: Text(
-          'Loading',
-          textDirection: TextDirection.ltr,
-        ));
+        return Center(
+          child: Container(
+              child: Text(
+            'Nice to meet you!',
+            textDirection: TextDirection.ltr,
+          )),
+        );
       },
     );
   }

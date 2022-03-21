@@ -7,6 +7,7 @@ import 'package:shizen_app/widgets/field.dart';
 import './addtodo.dart';
 import './addtracker.dart';
 import '../../utils/allUtils.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class TaskPage extends HookWidget {
   @override
@@ -144,22 +145,30 @@ class ToDoTask extends HookWidget {
     final snapshot = useFuture(future);
     return Container(
         child: !snapshot.hasData
-            ? const Text('Loading')
-            : Material(
-                child: ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: (context, index) {
-                      var taskDoc = snapshot.data.docs[index];
+            ? SpinKitWanderingCubes(
+                color: Colors.blueGrey,
+                size: 75.0,
+              )
+            : snapshot.data.docs.length > 0
+                ? Material(
+                    child: ListView.builder(
+                        physics: BouncingScrollPhysics(),
+                        itemCount: snapshot.data.docs.length,
+                        itemBuilder: (context, index) {
+                          var taskDoc = snapshot.data.docs[index];
 
-                      return TodoTaskDisplay(
-                          todoChanged: todoChanged,
-                          taskId: taskDoc.id,
-                          title: taskDoc['title'],
-                          taskList: taskDoc['desc'],
-                          recur: List<bool>.from(taskDoc['recur']),
-                          reminder: convertTimestamp(taskDoc['reminder']));
-                    })));
+                          return TodoTaskDisplay(
+                              todoChanged: todoChanged,
+                              taskId: taskDoc.id,
+                              title: taskDoc['title'],
+                              taskList: taskDoc['desc'],
+                              recur: List<bool>.from(taskDoc['recur']),
+                              reminder: convertTimestamp(taskDoc['reminder']));
+                        }))
+                : Center(
+                    child: Text(
+                        'You have no To Do tasks.\n\nYou can create tasks by\nhitting the button below!',
+                        textAlign: TextAlign.center)));
   }
 }
 
@@ -177,17 +186,25 @@ class TrackerTask extends HookWidget {
     final snapshot = useFuture(future);
     return Container(
         child: !snapshot.hasData
-            ? const Text('Loading')
-            : Material(
-                child: ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: (context, index) {
-                      return TrackerTile(
-                          uid: uid,
-                          task: snapshot.data.docs[index],
-                          trackerChanged: trackerChanged);
-                    })));
+            ? SpinKitWanderingCubes(
+                color: Colors.blueGrey,
+                size: 75.0,
+              )
+            : snapshot.data.docs.length > 0
+                ? Material(
+                    child: ListView.builder(
+                        physics: BouncingScrollPhysics(),
+                        itemCount: snapshot.data.docs.length,
+                        itemBuilder: (context, index) {
+                          return TrackerTile(
+                              uid: uid,
+                              task: snapshot.data.docs[index],
+                              trackerChanged: trackerChanged);
+                        }))
+                : Center(
+                    child: Text(
+                        'You have no Daily Trackers.\n\nYou can create tasks by\nhitting the button below!',
+                        textAlign: TextAlign.center)));
   }
 }
 
@@ -280,7 +297,7 @@ class TodoTaskDisplay extends HookWidget {
                         itemCount: taskList.length,
                         itemBuilder: (context, index) {
                           return SizedBox(
-                            height: 8.h,
+                            height: 5.h,
                             child: Container(
                               decoration: BoxDecoration(
                                   color: taskList[index]['status']
@@ -289,6 +306,8 @@ class TodoTaskDisplay extends HookWidget {
                               child: Row(
                                 children: [
                                   Checkbox(
+                                    shape: CircleBorder(),
+                                    activeColor: Colors.lightGreen[700],
                                     value: taskList[index]['status'],
                                     onChanged: (value) async {
                                       taskList[index]['status'] = true;

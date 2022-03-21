@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:shizen_app/modules/profile/profile.dart';
@@ -275,15 +276,25 @@ class _FriendsPageState extends State<FriendsPage> {
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
       child: Material(
         child: ListTile(
+          leading: Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: CircleAvatar(
+              foregroundImage:
+                  CachedNetworkImageProvider(itemList[index]['image']),
+              backgroundColor: Colors.grey,
+              radius: 3.h,
+            ),
+          ),
           contentPadding: const EdgeInsets.all(10),
           title: Text(
             "${itemList[index]["name"]}",
-            style: TextStyle(color: Colors.white),
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: Colors.white, fontSize: 20.sp),
           ),
           subtitle: Text(
             "${itemList[index]["email"]}",
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.white, fontSize: 13.sp),
           ),
           trailing: IconButton(
             color: Colors.white,

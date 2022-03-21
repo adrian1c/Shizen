@@ -188,7 +188,7 @@ class TodoTaskList extends HookWidget {
                   child: taskList.value.length == 0
                       ? Container(
                           decoration: BoxDecoration(color: Colors.grey[400]),
-                          height: 8.h,
+                          height: 5.h,
                           padding: EdgeInsets.only(top: 10, bottom: 10),
                           alignment: Alignment.center,
                           child: Text('Add a task',
@@ -198,71 +198,86 @@ class TodoTaskList extends HookWidget {
                           itemCount: taskList.value.length,
                           itemBuilder: (context, index) {
                             return SizedBox(
-                              height: 8.h,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: taskList.value[index]['status']
-                                        ? Colors.lightGreen[400]
-                                        : null),
-                                child: ListTile(
-                                  leading: Text(taskList.value[index]['task'],
-                                      softWrap: false,
-                                      style: TextStyle(
-                                          decoration: taskList.value[index]
-                                                  ['status']
-                                              ? TextDecoration.lineThrough
-                                              : null)),
-                                  trailing: IconButton(
-                                    padding: EdgeInsets.zero,
-                                    onPressed: () {
-                                      StyledPopup(
-                                              context: context,
-                                              title: 'Remove this task?',
-                                              children: [],
-                                              textButton: TextButton(
-                                                  onPressed: () {
-                                                    taskList.value = List.from(
-                                                        taskList.value)
-                                                      ..removeAt(index);
-                                                    AddToDoTask.checkTaskValid(
-                                                        taskList, isValid);
-                                                    Navigator.pop(context);
-                                                  },
-                                                  child: Text('Remove')))
-                                          .showPopup();
-                                    },
-                                    icon: Icon(Icons.delete),
-                                  ),
-                                  onTap: () {
-                                    taskController.text =
-                                        taskList.value[index]['task'];
-                                    TaskDescPopup(
-                                      context: context,
-                                      taskController: taskController,
-                                      taskList: taskList,
-                                      isValid: isValid,
-                                      isEdit: true,
-                                      index: index,
-                                    ).showTaskDescPopup();
-                                  },
+                              height: 5.h,
+                              child: InkWell(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15),
+                                  decoration: BoxDecoration(
+                                      color: taskList.value[index]['status']
+                                          ? Colors.lightGreen[400]
+                                          : null),
+                                  child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(taskList.value[index]['task'],
+                                            softWrap: false,
+                                            style: TextStyle(
+                                                decoration: taskList
+                                                        .value[index]['status']
+                                                    ? TextDecoration.lineThrough
+                                                    : null)),
+                                        IconButton(
+                                          color: Colors.red[400],
+                                          constraints:
+                                              BoxConstraints(maxHeight: 20),
+                                          padding: EdgeInsets.zero,
+                                          onPressed: () {
+                                            StyledPopup(
+                                                    context: context,
+                                                    title: 'Remove this task?',
+                                                    children: [],
+                                                    textButton: TextButton(
+                                                        onPressed: () {
+                                                          taskList.value = List
+                                                              .from(taskList
+                                                                  .value)
+                                                            ..removeAt(index);
+                                                          AddToDoTask
+                                                              .checkTaskValid(
+                                                                  taskList,
+                                                                  isValid);
+                                                          Navigator.pop(
+                                                              context);
+                                                        },
+                                                        child: Text('Remove')))
+                                                .showPopup();
+                                          },
+                                          icon: Icon(Icons.delete),
+                                        ),
+                                      ]),
                                 ),
+                                onTap: () {
+                                  taskController.text =
+                                      taskList.value[index]['task'];
+                                  TaskDescPopup(
+                                    context: context,
+                                    taskController: taskController,
+                                    taskList: taskList,
+                                    isValid: isValid,
+                                    isEdit: true,
+                                    index: index,
+                                  ).showTaskDescPopup();
+                                },
                               ),
                             );
                           }))),
-          Align(
-              alignment: Alignment.center,
-              child: IconButton(
-                  onPressed: () {
-                    taskController.clear();
-                    TaskDescPopup(
-                      context: context,
-                      taskController: taskController,
-                      taskList: taskList,
-                      isValid: isValid,
-                      isEdit: false,
-                    ).showTaskDescPopup();
-                  },
-                  icon: Icon(Icons.add))),
+          if (taskList.value.length < 10)
+            Align(
+                alignment: Alignment.center,
+                child: IconButton(
+                    onPressed: () {
+                      taskController.clear();
+                      TaskDescPopup(
+                        context: context,
+                        taskController: taskController,
+                        taskList: taskList,
+                        isValid: isValid,
+                        isEdit: false,
+                      ).showTaskDescPopup();
+                    },
+                    icon: Icon(Icons.add))),
         ],
       ),
     );

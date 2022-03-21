@@ -76,13 +76,13 @@ class MainScaffoldStack extends HookWidget {
         body: DoubleBackToCloseApp(
           snackBar: SnackBar(
             duration: Duration(seconds: 2),
-            backgroundColor: Colors.blueGrey[100],
+            backgroundColor: Colors.grey,
             width: 60.w,
             elevation: 2,
             behavior: SnackBarBehavior.floating,
             content: Text(
               'Back again to leave',
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(color: Colors.white),
               textAlign: TextAlign.center,
             ),
           ),

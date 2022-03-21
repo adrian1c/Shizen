@@ -48,11 +48,17 @@ class StyledInputField {
     return InputDecoration(
       isDense: true,
       hintText: hintText,
-      contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 0),
-      // suffixIcon: InkWell(
-      //   onTap: controller.clear,
-      //   child: Container(padding: const EdgeInsets.all(0), child: Text('X')),
-      // ),
+      contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+      suffixIcon: IconButton(
+          color: Colors.grey[400],
+          iconSize: 20,
+          padding: EdgeInsets.only(right: 20),
+          onPressed: () {
+            controller.clear();
+          },
+          icon: Icon(Icons.cancel)),
+      suffixIconConstraints:
+          BoxConstraints(minHeight: 35, maxHeight: 35, maxWidth: 25),
       border: OutlineInputBorder(
         borderRadius: new BorderRadius.circular(5),
         borderSide: new BorderSide(),

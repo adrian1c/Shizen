@@ -177,17 +177,11 @@ class PostListTile extends StatelessWidget {
                       width: 5.h,
                       height: 5.h,
                       child: postData['image'] != ''
-                          ? InkWell(
-                              child: Container(
-                                  decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(width: 1),
-                                color: Colors.grey,
-                                image: DecorationImage(
-                                    image: CachedNetworkImageProvider(
-                                        postData!['image'])),
-                              )),
-                              onTap: () => print('Nicer'),
+                          ? CircleAvatar(
+                              foregroundImage: CachedNetworkImageProvider(
+                                  postData!['image']),
+                              backgroundColor: Colors.grey,
+                              radius: 3.h,
                             )
                           : CircleAvatar(
                               foregroundImage: Images.defaultPic.image,
@@ -262,7 +256,7 @@ class HashtagFilter extends StatelessWidget {
           LengthLimitingTextInputFormatter(20),
         ],
         decoration: StyledInputField(
-                hintText: 'Search by hashtag...', controller: hashtagController)
+                hintText: 'Search hashtag...', controller: hashtagController)
             .inputDecoration(),
         onFieldSubmitted: (value) {
           hashtagValue.value = value;

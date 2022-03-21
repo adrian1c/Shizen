@@ -209,7 +209,7 @@ class TodoTaskProgressTile extends StatelessWidget {
                       itemCount: taskList.length,
                       itemBuilder: (context, index) {
                         return SizedBox(
-                          height: 8.h,
+                          height: 5.h,
                           child: Container(
                             decoration: BoxDecoration(
                                 color: taskList[index]['status']
@@ -218,6 +218,8 @@ class TodoTaskProgressTile extends StatelessWidget {
                             child: Row(
                               children: [
                                 Checkbox(
+                                  shape: CircleBorder(),
+                                  activeColor: Colors.lightGreen[700],
                                   value: taskList[index]['status'],
                                   onChanged: (value) {},
                                 ),

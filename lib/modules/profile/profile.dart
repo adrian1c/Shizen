@@ -149,14 +149,10 @@ class UserProfileData extends StatelessWidget {
           height: 25.w,
           child: data.data()['image'] != ''
               ? InkWell(
-                  child: Container(
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(width: 1),
-                        color: Colors.grey,
-                        image: DecorationImage(
-                          image: CachedNetworkImageProvider(data!['image']),
-                        )),
+                  child: CircleAvatar(
+                    foregroundImage: CachedNetworkImageProvider(data!['image']),
+                    backgroundColor: Colors.grey,
+                    radius: 3.h,
                   ),
                   onTap: viewId != null
                       ? () {}
@@ -218,7 +214,6 @@ class UserProfileData extends StatelessWidget {
                                           await Database(uid)
                                               .editUserName(newName);
                                           isLoading.value += 1;
-                                          print(isLoading.value);
                                           // StyledSnackbar(
                                           //         message:
                                           //             'Your display name has been changed!')
@@ -273,7 +268,7 @@ class UserProfileData extends StatelessWidget {
   changeProfilePic(context, bool existingPic, isLoading) async {
     StyledPopup(
       context: context,
-      title: existingPic ? 'Change Profile Picture' : 'Upload Profile Picture',
+      title: existingPic ? 'Change Profile Picture?' : 'Upload Profile Picture',
       children: existingPic
           ? [
               Text('Do you want to change your profile picture to a new one?'),
@@ -324,6 +319,7 @@ class UserProfileData extends StatelessWidget {
                               onPressed: () async {
                                 await Database(uid).removeProfilePic();
                                 isLoading.value += 1;
+                                Navigator.pop(context);
                                 Navigator.pop(context);
                               },
                               child: Text('Yes')))
