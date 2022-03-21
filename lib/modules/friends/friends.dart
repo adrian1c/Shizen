@@ -275,72 +275,78 @@ class _FriendsPageState extends State<FriendsPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
       child: Material(
-        child: ListTile(
-          leading: Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: CircleAvatar(
-              foregroundImage:
-                  CachedNetworkImageProvider(itemList[index]['image']),
-              backgroundColor: Colors.grey,
-              radius: 3.h,
+        child: SizedBox(
+          width: 100.w,
+          height: 10.h,
+          child: Center(
+            child: ListTile(
+              leading: Padding(
+                padding: const EdgeInsets.only(right: 10.0),
+                child: CircleAvatar(
+                  foregroundImage:
+                      CachedNetworkImageProvider(itemList[index]['image']),
+                  backgroundColor: Colors.grey,
+                  radius: 3.h,
+                ),
+              ),
+              title: Text(
+                "${itemList[index]["name"]}",
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.white, fontSize: 20.sp),
+              ),
+              subtitle: Text(
+                "${itemList[index]["email"]}",
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.white, fontSize: 13.sp),
+              ),
+              trailing: IconButton(
+                color: Colors.white,
+                onPressed: () {
+                  StyledPopup(
+                    context: context,
+                    title: 'Actions',
+                    children: [
+                      Divider(),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) {
+                              return Scaffold(
+                                  appBar: AppBar(
+                                    title: Text(
+                                        '${itemList[index]['name']}\'s Profile'),
+                                    centerTitle: true,
+                                  ),
+                                  body:
+                                      ProfilePage(viewId: itemList[index].id));
+                            }));
+                          },
+                          child: Text("View Profile")),
+                      TextButton(
+                          onPressed: () async {
+                            print("Remove");
+                            await Database(uid)
+                                .declineFriendReq(itemList[index].id)
+                                .then((value) =>
+                                    setState(() => itemList.removeAt(index)));
+                            print(itemList);
+
+                            Navigator.pop(context);
+                          },
+                          child: Text("Remove Friend")),
+                    ],
+                    cancelText: 'Done',
+                  ).showPopup();
+                },
+                icon: Icon(Icons.more_horiz),
+              ),
+              horizontalTitleGap: 0,
+              tileColor: Colors.blueGrey[600],
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           ),
-          contentPadding: const EdgeInsets.all(10),
-          title: Text(
-            "${itemList[index]["name"]}",
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: Colors.white, fontSize: 20.sp),
-          ),
-          subtitle: Text(
-            "${itemList[index]["email"]}",
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: Colors.white, fontSize: 13.sp),
-          ),
-          trailing: IconButton(
-            color: Colors.white,
-            onPressed: () {
-              StyledPopup(
-                context: context,
-                title: 'Actions',
-                children: [
-                  Divider(),
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                          return Scaffold(
-                              appBar: AppBar(
-                                title: Text(
-                                    '${itemList[index]['name']}\'s Profile'),
-                                centerTitle: true,
-                              ),
-                              body: ProfilePage(viewId: itemList[index].id));
-                        }));
-                      },
-                      child: Text("View Profile")),
-                  TextButton(
-                      onPressed: () async {
-                        print("Remove");
-                        await Database(uid)
-                            .declineFriendReq(itemList[index].id)
-                            .then((value) =>
-                                setState(() => itemList.removeAt(index)));
-                        print(itemList);
-
-                        Navigator.pop(context);
-                      },
-                      child: Text("Remove Friend")),
-                ],
-                cancelText: 'Done',
-              ).showPopup();
-            },
-            icon: Icon(Icons.more_horiz),
-          ),
-          horizontalTitleGap: 0,
-          tileColor: Colors.blueGrey[600],
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );

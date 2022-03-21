@@ -156,8 +156,8 @@ class UserProfileData extends StatelessWidget {
                   ),
                   onTap: viewId != null
                       ? () {}
-                      : () async =>
-                          await changeProfilePic(context, true, isLoading),
+                      : () async => await changeProfilePic(
+                          context, true, isLoading, data['image']),
                 )
               : InkWell(
                   child: CircleAvatar(
@@ -249,15 +249,16 @@ class UserProfileData extends StatelessWidget {
 
     File? croppedFile = await cropper.cropImage(
         sourcePath: imageFile.path,
+        cropStyle: CropStyle.circle,
         aspectRatioPresets: [CropAspectRatioPreset.square],
         androidUiSettings: AndroidUiSettings(
-            toolbarTitle: 'Cropper',
+            toolbarTitle: 'Crop Image',
             toolbarColor: Colors.deepOrange,
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.original,
             lockAspectRatio: false),
         iosUiSettings: IOSUiSettings(
-          title: 'Cropper',
+          title: 'Crop Image',
         ));
     if (croppedFile != null) {
       imageFile = croppedFile;
@@ -265,7 +266,7 @@ class UserProfileData extends StatelessWidget {
     return imageFile;
   }
 
-  changeProfilePic(context, bool existingPic, isLoading) async {
+  changeProfilePic(context, bool existingPic, isLoading, [currPicUrl]) async {
     StyledPopup(
       context: context,
       title: existingPic ? 'Change Profile Picture?' : 'Upload Profile Picture',

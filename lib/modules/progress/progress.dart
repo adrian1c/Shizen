@@ -147,7 +147,10 @@ class TodoTaskProgressList extends HookWidget {
         ),
       );
     }
-    return Container(child: const Text("Loading"));
+    return SpinKitWanderingCubes(
+      color: Colors.blueGrey,
+      size: 75.0,
+    );
   }
 }
 

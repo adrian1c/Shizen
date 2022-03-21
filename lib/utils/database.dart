@@ -378,41 +378,37 @@ class Database {
 
     var batch = firestore.batch();
 
-    try {
-      String downloadURL;
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child("image1" + DateTime.now().toString());
-      UploadTask uploadTask = ref.putFile(image);
-      uploadTask.whenComplete(() async {
-        downloadURL = await ref.getDownloadURL();
-        batch.update(userDoc, {'image': downloadURL});
-        var userDoc1 = await userDoc.get().then((value) => value.data());
+    String downloadURL;
+    FirebaseStorage storage = FirebaseStorage.instance;
+    Reference ref = storage.ref().child("image1" + DateTime.now().toString());
+    UploadTask uploadTask = ref.putFile(image);
+    await uploadTask.whenComplete(() async {
+      downloadURL = await ref.getDownloadURL();
+      batch.update(userDoc, {'image': downloadURL});
+      var userDoc1 = await userDoc.get().then((value) => value.data());
 
-        if (userDoc1!.containsKey('posts')) {
-          var postList = userDoc1['posts'];
-          for (var i = 0; i < postList.length; i++) {
-            batch.update(firestore.collection('posts').doc(postList[i]),
-                {'image': downloadURL});
-          }
+      if (userDoc1!.containsKey('posts')) {
+        var postList = userDoc1['posts'];
+        for (var i = 0; i < postList.length; i++) {
+          batch.update(firestore.collection('posts').doc(postList[i]),
+              {'image': downloadURL});
         }
+      }
 
-        var userFriends = await userDoc.collection('friends').get();
+      var userFriends = await userDoc.collection('friends').get();
 
-        if (userFriends.size != 0) {
-          for (var i = 0; i < userFriends.size; i++) {
-            batch.update(
-                userCol
-                    .doc(userFriends.docs[i].id)
-                    .collection('friends')
-                    .doc(uid),
-                {'image': downloadURL});
-          }
+      if (userFriends.size != 0) {
+        for (var i = 0; i < userFriends.size; i++) {
+          batch.update(
+              userCol
+                  .doc(userFriends.docs[i].id)
+                  .collection('friends')
+                  .doc(uid),
+              {'image': downloadURL});
         }
-        await batch.commit();
-      });
-    } catch (e) {
-      print(e);
-    }
+      }
+      await batch.commit();
+    });
   }
 
   Future removeProfilePic() async {
