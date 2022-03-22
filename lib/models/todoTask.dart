@@ -1,4 +1,4 @@
-class ToDoTask {
+class ToDoTaskModel {
   String? key;
   String title = '';
   List desc = [];
@@ -8,7 +8,7 @@ class ToDoTask {
   bool allComplete = false;
   List? descEdit;
 
-  ToDoTask(this.title, this.desc, this.recur, this.reminder);
+  ToDoTaskModel(this.title, this.desc, this.recur, this.reminder);
 
   toJson() {
     if (title == '') {

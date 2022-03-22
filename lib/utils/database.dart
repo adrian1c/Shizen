@@ -1,17 +1,8 @@
-import 'dart:io';
-
-import 'package:shizen_app/modules/tasks/addtracker.dart';
-import 'package:shizen_app/utils/allUtils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:shizen_app/models/todoTask.dart';
 import 'package:shizen_app/models/trackerTask.dart';
-import "package:collection/collection.dart";
 import 'package:intl/intl.dart';
-
-import 'package:path/path.dart';
 
 class Database {
   Database(this.uid);
@@ -538,10 +529,21 @@ class Database {
   //-----------------------------------------------------
   //
 
-  Future addTrackerTask(TrackerTask tracker) async {
+  Future addTrackerTask(TrackerTaskModel tracker) async {
     print("Firing addNewTracker");
 
     await userDoc.collection('trackers').add(tracker.toJson());
+  }
+
+  Future editTrackerTask(TrackerTaskModel tracker, tid) async {
+    print("Firing editTrackerTask");
+
+    await userDoc
+        .collection('trackers')
+        .doc(tid)
+        .update(tracker.toJson())
+        .whenComplete(() => print("Done"))
+        .catchError((e) => print(e));
   }
 
   //-----------------------------------------------------

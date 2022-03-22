@@ -71,13 +71,13 @@ class AddToDoTask extends HookWidget {
                       onPressed: () async {
                         if (isValid.value) {
                           var newTask = editParams != null
-                              ? ToDoTask(
+                              ? ToDoTaskModel(
                                   title.value,
                                   taskList.value,
                                   recurValue.value,
                                   reminderValue.value,
                                 )
-                              : ToDoTask(title.value, taskList.value,
+                              : ToDoTaskModel(title.value, taskList.value,
                                   recurValue.value, reminderValue.value);
                           editParams != null
                               ? await Database(uid)

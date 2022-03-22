@@ -8,22 +8,28 @@ import 'package:shizen_app/widgets/field.dart';
 import 'package:intl/intl.dart';
 
 class AddTrackerTask extends HookWidget {
-  const AddTrackerTask({Key? key, required this.trackerChanged})
+  const AddTrackerTask(
+      {Key? key, required this.trackerChanged, this.editParams})
       : super(key: key);
 
   final trackerChanged;
+  final editParams;
 
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).uid;
-    final titleController = useTextEditingController(text: '');
-    final noteController = useTextEditingController(text: '');
+    final titleController = useTextEditingController(
+        text: editParams != null ? editParams['title'] : '');
+    final noteController = useTextEditingController(
+        text: editParams != null ? editParams['note'] : '');
     final dayController = useTextEditingController();
     final rewardController = useTextEditingController();
     final _formKey = GlobalKey<FormState>();
-    final isValid = useValueNotifier(false);
-    final startDate = useState(DateTime.now());
-    final ValueNotifier<List<Map<String, dynamic>>> milestones = useState([]);
+    final isValid = useValueNotifier(editParams != null ? true : false);
+    final startDate =
+        useState(editParams != null ? editParams['startDate'] : DateTime.now());
+    final ValueNotifier<List> milestones =
+        useState(editParams != null ? editParams['milestones'] : []);
     return Scaffold(
       appBar: AppBar(
         title: Text("Add Daily Tracker"),
@@ -194,19 +200,27 @@ class AddTrackerTask extends HookWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         CreateButton(
-                            onPressed: () async {
-                              var tracker = new TrackerTask(
-                                  titleController.text,
-                                  noteController.text,
-                                  milestones.value,
-                                  startDate.value);
-                              await Database(uid).addTrackerTask(tracker);
-                              StyledToast(msg: 'Tracker Created Successfully')
-                                  .showSuccessToast();
-                              trackerChanged.value += 1;
-                              Navigator.of(context).pop();
-                            },
-                            isValid: isValid),
+                          onPressed: () async {
+                            var tracker = new TrackerTaskModel(
+                                titleController.text,
+                                noteController.text,
+                                milestones.value,
+                                startDate.value);
+                            editParams != null
+                                ? await Database(uid).editTrackerTask(
+                                    tracker, editParams['taskId'])
+                                : await Database(uid).addTrackerTask(tracker);
+                            StyledToast(
+                                    msg: editParams != null
+                                        ? 'The changes have been saved!'
+                                        : 'Tracker Created Successfully')
+                                .showSuccessToast();
+                            trackerChanged.value += 1;
+                            Navigator.of(context).pop();
+                          },
+                          isValid: isValid,
+                          buttonLabel: editParams != null ? 'Save' : null,
+                        ),
                         const CancelButton()
                       ],
                     ))

@@ -1,4 +1,4 @@
-class TrackerTask {
+class TrackerTaskModel {
   String? key;
   String title = '';
   String note = '';
@@ -6,7 +6,7 @@ class TrackerTask {
   DateTime startDate;
   List milestones = [];
 
-  TrackerTask(this.title, this.note, this.milestones, this.startDate);
+  TrackerTaskModel(this.title, this.note, this.milestones, this.startDate);
 
   toJson() {
     return {
