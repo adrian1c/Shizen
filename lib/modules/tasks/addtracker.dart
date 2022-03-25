@@ -46,6 +46,7 @@ class AddTrackerTask extends HookWidget {
                       children: [
                         TextFormField(
                           controller: titleController,
+                          textCapitalization: TextCapitalization.words,
                           maxLength: 30,
                           decoration: InputDecoration(
                             contentPadding:
@@ -63,6 +64,7 @@ class AddTrackerTask extends HookWidget {
                         Divider(),
                         TextFormField(
                           controller: noteController,
+                          textCapitalization: TextCapitalization.sentences,
                           maxLines: 5,
                           maxLength: 300,
                           decoration: InputDecoration(
@@ -106,7 +108,7 @@ class AddTrackerTask extends HookWidget {
                                         DatePicker.showDatePicker(context,
                                             currentTime: startDate.value,
                                             minTime: DateTime(
-                                                DateTime.now().year - 3),
+                                                DateTime.now().year - 1),
                                             maxTime: DateTime.now(),
                                             onConfirm: (value) {
                                           bool hasOverlapMilestone = false;
@@ -174,7 +176,7 @@ class AddTrackerTask extends HookWidget {
                                     child: Row(
                                       children: [
                                         Text(
-                                            '${DateTime.now().difference(startDate.value).inDays}'),
+                                            '${DateTime.now().difference(startDate.value).inDays + 1}'),
                                         Icon(Icons.brush_sharp)
                                       ],
                                     ),
@@ -315,6 +317,7 @@ class MilestoneList extends HookWidget {
                             Text('Text'),
                             TextFormField(
                               controller: rewardController,
+                              textCapitalization: TextCapitalization.sentences,
                               maxLength: 100,
                             ),
                           ],

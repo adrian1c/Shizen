@@ -15,6 +15,7 @@ class TrackerTaskModel {
       'title': title,
       'note': note,
       'milestones': milestones,
+      'checkin': []
     };
   }
 }

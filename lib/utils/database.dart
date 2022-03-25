@@ -258,11 +258,6 @@ class Database {
       });
     }
 
-    if (attachmentType == 'task') {
-      //TODO retrieve information of task
-      postData['attachment'] = null;
-    }
-
     batch.set(newPostDoc, postData);
     if (visibility == 'Anonymous') {
       batch.set(
@@ -310,11 +305,19 @@ class Database {
               .where('uid', isNotEqualTo: uid)
               .where('hashtags', arrayContainsAny: hashtag)
               .get();
-          query.docs.forEach((doc) => results.add(doc.data()));
+          query.docs.forEach((doc) {
+            var data = doc.data();
+            data['postId'] = doc.id;
+            results.add(data);
+          });
         } else {
           QuerySnapshot<Map<String, dynamic>> query =
               await postCol.where('uid', isNotEqualTo: uid).get();
-          query.docs.forEach((doc) => results.add(doc.data()));
+          query.docs.forEach((doc) {
+            var data = doc.data();
+            data['postId'] = doc.id;
+            results.add(data);
+          });
         }
         return results;
       case 'Friends Only':
@@ -337,14 +340,22 @@ class Database {
                 .where('hashtags', arrayContains: hashtag)
                 .get()
                 .then((value) {
-              value.docs.forEach((doc) => results.add(doc.data()));
+              value.docs.forEach((doc) {
+                var data = doc.data();
+                data['postId'] = doc.id;
+                results.add(data);
+              });
             });
           } else {
             await postCol
                 .where(FieldPath.documentId, whereIn: element)
                 .get()
                 .then((value) {
-              value.docs.forEach((doc) => results.add(doc.data()));
+              value.docs.forEach((doc) {
+                var data = doc.data();
+                data['postId'] = doc.id;
+                results.add(data);
+              });
             });
           }
         }
@@ -356,18 +367,56 @@ class Database {
               .where('visibility', isEqualTo: filter)
               .where('hashtags', arrayContains: hashtag)
               .get();
-          query.docs.forEach((doc) => results.add(doc.data()));
+          query.docs.forEach((doc) {
+            var data = doc.data();
+            data['postId'] = doc.id;
+            results.add(data);
+          });
         } else {
           QuerySnapshot<Map<String, dynamic>> query = await postCol
               .where('uid', isNotEqualTo: uid)
               .where('visibility', isEqualTo: filter)
               .get();
-          query.docs.forEach((doc) => results.add(doc.data()));
+          query.docs.forEach((doc) {
+            var data = doc.data();
+            data['postId'] = doc.id;
+            results.add(data);
+          });
         }
         return results;
     }
     return results;
   }
+
+  Future postComment(pid, commentText) async {
+    print("Firing postComment");
+
+    var userData = await Database(uid).getCurrentUserData().then((value) {
+      var data = value.data()!;
+      return {'userId': value.id, 'name': data['name'], 'image': data['image']};
+    });
+    userData.addAll({'comment': commentText});
+    postCol.doc(pid).update({'commentCount': FieldValue.increment(1)});
+    await postCol.doc(pid).collection('comments').add(userData);
+    return userData;
+  }
+
+  Future getComments(pid) async {
+    print("Firing getComments");
+
+    return postCol.doc(pid).collection('comments').get();
+  }
+
+  Future getAllTasks() async {
+    print("Firing getAllTasks");
+
+    return userDoc.collection('todo').orderBy('dateCreated').get();
+  }
+
+  //-----------------------------------------------------
+  //----------------  PROFILE  --------------------------
+  //-----------------------------------------------------
+  //
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getCurrentUserData() {
     print("Firing getUserProfileData");
@@ -481,21 +530,29 @@ class Database {
 
     var results = [];
 
-    var userDoc1 = await userDoc.get();
+    var userDoc1 = await userDoc.get().then((value) => value.data());
 
-    if (userDoc1.data()!.containsKey('posts')) {
-      var postList = userDoc1.data()!['posts'];
+    if (userDoc1!.containsKey('posts')) {
+      var postList = userDoc1['posts'];
       for (var i = 0; i < postList.length; i++) {
-        var postData = await postCol.doc(postList[i]).get();
-        results.add(postData.data());
+        var postData = await postCol.doc(postList[i]).get().then((value) {
+          var data = value.data();
+          data!['postId'] = value.id;
+          return data;
+        });
+        results.add(postData);
       }
     }
 
-    if (userDoc1.data()!.containsKey('anonPosts')) {
-      var postList = userDoc1.data()!['anonPosts'];
+    if (userDoc1.containsKey('anonPosts')) {
+      var postList = userDoc1['anonPosts'];
       for (var i = 0; i < postList.length; i++) {
-        var postData = await postCol.doc(postList[i]).get();
-        results.add(postData.data());
+        var postData = await postCol.doc(postList[i]).get().then((value) {
+          var data = value.data();
+          data!['postId'] = value.id;
+          return data;
+        });
+        results.add(postData);
       }
     }
 
@@ -514,8 +571,12 @@ class Database {
     if (userDoc1.data()!.containsKey('posts')) {
       var postList = userDoc1.data()!['posts'];
       for (var i = 0; i < postList.length; i++) {
-        var postData = await postCol.doc(postList[i]).get();
-        results.add(postData.data());
+        var postData = await postCol.doc(postList[i]).get().then((value) {
+          var data = value.data();
+          data!['postId'] = value.id;
+          return data;
+        });
+        results.add(postData);
       }
     }
 
@@ -544,6 +605,16 @@ class Database {
         .update(tracker.toJson())
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
+  }
+
+  Future checkInTracker(tid, day, note, attachment) async {
+    print("Firing checkInTracker");
+
+    await userDoc.collection('trackers').doc(tid).set({
+      'checkin': FieldValue.arrayUnion([
+        {'day': day, 'note': note, 'attachment': attachment}
+      ])
+    }, SetOptions(merge: true));
   }
 
   //-----------------------------------------------------
