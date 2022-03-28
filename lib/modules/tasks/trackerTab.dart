@@ -55,56 +55,7 @@ class TrackerTile extends HookWidget {
   final String uid;
   final trackerChanged;
 
-  List generateDays(checkInData) {
-    List<Map?> daysList = List.generate(
-        (DateTime.now()
-                .difference((task['currStreakDate'] as Timestamp).toDate())
-                .inDays +
-            1),
-        (int index) => null);
-
-    for (var i = 0; i < checkInData.length; i++) {
-      daysList[(checkInData[i]['day'] as int) - 1] = {
-        'note': checkInData[i]['note']
-      };
-    }
-
-    return daysList;
-  }
-
-  IndicatorStyle indicatorCheckedIn(timeline) {
-    return IndicatorStyle(
-      width: 30,
-      height: 30,
-      indicatorXY: 0,
-      indicator: Container(
-        decoration: BoxDecoration(
-          color: timeline != null ? Colors.lightGreen[200] : Colors.grey[400],
-          borderRadius: const BorderRadius.all(
-            Radius.circular(20),
-          ),
-        ),
-        child: Center(
-          child: timeline != null
-              ? Icon(
-                  Icons.check_circle,
-                  color: Colors.lightGreen[700],
-                  size: 30,
-                )
-              : Container(
-                  width: 25,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle, color: Colors.grey[200]),
-                ),
-        ),
-      ),
-    );
-  }
-
-  checkInPopup(
-    context,
-    controller,
-  ) {
+  checkInPopup(context, controller, checkinData) {
     final _formKey = GlobalKey<FormState>();
     showDialog(
         context: context,
@@ -140,6 +91,7 @@ class TrackerTile extends HookWidget {
                   TextButton(
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
+                          var ciData = currentDayCheckIn(checkinData);
                           await Database(uid).checkInTracker(
                               task.id,
                               DateTime.now()
@@ -149,7 +101,8 @@ class TrackerTile extends HookWidget {
                                       .inDays +
                                   1,
                               controller.text,
-                              null);
+                              null,
+                              ciData != null ? ciData['checkinId'] : null);
                           controller.clear();
                           trackerChanged.value += 1;
                           Navigator.pop(context);
@@ -166,12 +119,31 @@ class TrackerTile extends HookWidget {
                 ]));
   }
 
+  Map? currentDayCheckIn(List checkinData) {
+    for (var i = 0; i < checkinData.length; i++) {
+      if (checkinData[i]['day'] ==
+          DateTime.now()
+                  .difference((task['currStreakDate'] as Timestamp).toDate())
+                  .inDays +
+              1) {
+        var result = checkinData[i].data();
+        result['checkinId'] = checkinData[i].id;
+        return result;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final checkInController = useTextEditingController();
-    final timelineData = generateDays(task['checkin']);
     final isExpanded = useState(false);
     final noteController = useTextEditingController();
+    final String uid = Provider.of<UserProvider>(context).uid;
+    final future = useMemoized(
+        () => Database(uid).getCheckInButtonData(task.id),
+        [trackerChanged.value]);
+    final snapshot = useFuture(future);
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -303,66 +275,6 @@ class TrackerTile extends HookWidget {
                         ],
                       ),
                       Divider(),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                            minWidth: 100.w, minHeight: 10.h, maxHeight: 30.h),
-                        child: ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: <Color>[
-                                Colors.red,
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.red
-                              ],
-                            ).createShader(bounds);
-                          },
-                          blendMode: BlendMode.dstOut,
-                          child: ListView.builder(
-                              physics: BouncingScrollPhysics(),
-                              shrinkWrap: true,
-                              reverse: true,
-                              itemCount: timelineData.length,
-                              itemBuilder: (context, index) {
-                                final timeline = timelineData[index];
-                                return GestureDetector(
-                                  onTap: timeline != null ? () {} : () {},
-                                  child: TimelineTile(
-                                    isLast: index == 0 ? true : false,
-                                    isFirst: index == timelineData.length - 1
-                                        ? true
-                                        : false,
-                                    alignment: TimelineAlign.manual,
-                                    lineXY: 0.25,
-                                    indicatorStyle:
-                                        indicatorCheckedIn(timeline),
-                                    endChild: Container(
-                                        alignment: Alignment.topLeft,
-                                        padding: const EdgeInsets.only(
-                                            top: 3, left: 5, bottom: 10),
-                                        constraints:
-                                            BoxConstraints(minHeight: 40),
-                                        color: Colors.transparent,
-                                        child: Text(
-                                            '${timeline != null ? timeline['note'] : 'Not checked-in'}',
-                                            textAlign: TextAlign.justify)),
-                                    startChild: Container(
-                                        alignment: Alignment.topCenter,
-                                        padding: const EdgeInsets.only(top: 3),
-                                        constraints:
-                                            BoxConstraints(minHeight: 40),
-                                        color: Colors.transparent,
-                                        child: Text('${index + 1}')),
-                                  ),
-                                );
-                              }),
-                        ),
-                      ),
                       Divider(),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -431,46 +343,49 @@ class TrackerTile extends HookWidget {
                           ],
                         ),
                       ),
-                      Center(
-                          child: ElevatedButton(
-                              onPressed: timelineData[timelineData.length - 1] !=
-                                      null
-                                  ? () {
-                                      checkInController.text =
-                                          timelineData[timelineData.length - 1]
-                                              ['note'];
-                                      checkInPopup(context, checkInController);
-                                    }
-                                  : () {
-                                      checkInPopup(context, checkInController);
-                                    },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.check_circle_outline_rounded),
-                                  Text(
-                                      timelineData[timelineData.length - 1] !=
-                                              null
-                                          ? 'Checked-in Today'
-                                          : 'Check-in Today',
-                                      style: TextStyle(color: Colors.white)),
-                                ],
-                              ),
-                              style: ButtonStyle(
-                                  backgroundColor:
-                                      timelineData[timelineData.length - 1] !=
-                                              null
-                                          ? MaterialStateProperty.all(
-                                              Colors.lightGreen[400])
-                                          : MaterialStateProperty.all(
-                                              Colors.grey[400]),
-                                  shape: MaterialStateProperty.all<
-                                          RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(18.0),
-                                          side: BorderSide(
-                                              color: Colors.grey)))))),
+                      if (snapshot.hasData)
+                        Center(
+                            child: ElevatedButton(
+                                onPressed: currentDayCheckIn(snapshot.data.docs) !=
+                                        null
+                                    ? () {
+                                        checkInController.text =
+                                            currentDayCheckIn(
+                                                snapshot.data.docs)!['note'];
+                                        checkInPopup(context, checkInController,
+                                            snapshot.data.docs);
+                                      }
+                                    : () {
+                                        checkInPopup(context, checkInController,
+                                            snapshot.data.docs);
+                                      },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle_outline_rounded),
+                                    Text(
+                                        currentDayCheckIn(snapshot.data.docs) !=
+                                                null
+                                            ? 'Checked-in Today'
+                                            : 'Check-in Today',
+                                        style: TextStyle(color: Colors.white)),
+                                  ],
+                                ),
+                                style: ButtonStyle(
+                                    backgroundColor:
+                                        currentDayCheckIn(snapshot.data.docs) !=
+                                                null
+                                            ? MaterialStateProperty.all(
+                                                Colors.lightGreen[400])
+                                            : MaterialStateProperty.all(
+                                                Colors.grey[400]),
+                                    shape: MaterialStateProperty.all<
+                                            RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(18.0),
+                                            side:
+                                                BorderSide(color: Colors.grey)))))),
                       Center(
                           child: IconButton(
                               icon: Icon(
@@ -549,14 +464,14 @@ class ExpandedTracker extends HookWidget {
             snapshot.hasData
                 ? ListView.builder(
                     shrinkWrap: true,
-                    itemCount: snapshot.data.docs.length,
+                    itemCount: snapshot.data['resets'].length,
                     itemBuilder: (context, index) => Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                                '${DateFormat('dd MMM yy').format((snapshot.data.docs[index]['resetDate'] as Timestamp).toDate())}'),
-                            Text(snapshot.data.docs[index]['note'] != ''
-                                ? '${snapshot.data.docs[index]['note']}'
+                                '${DateFormat('dd MMM yy').format((snapshot.data['resets'][index]['resetDate'] as Timestamp).toDate())}'),
+                            Text(snapshot.data['resets'][index]['note'] != ''
+                                ? '${snapshot.data['resets'][index]['note']}'
                                 : '-')
                           ],
                         ))
@@ -564,7 +479,132 @@ class ExpandedTracker extends HookWidget {
           ]),
           Divider(),
           Divider(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Check-in', style: TextStyle(fontWeight: FontWeight.bold)),
+              Divider(),
+              snapshot.hasData
+                  ? CheckInList(
+                      checkinList: snapshot.data['checkin'], task: task)
+                  : CircularProgressIndicator()
+            ],
+          )
         ],
+      ),
+    );
+  }
+}
+
+class CheckInList extends HookWidget {
+  const CheckInList({Key? key, required this.checkinList, required this.task})
+      : super(key: key);
+
+  final checkinList;
+  final task;
+
+  List generateDays(checkInData) {
+    List<Map?> daysList = List.generate(
+        (DateTime.now()
+                .difference((task['currStreakDate'] as Timestamp).toDate())
+                .inDays +
+            1),
+        (int index) => null);
+
+    for (var i = 0; i < checkInData.length; i++) {
+      daysList[(checkInData[i]['day'] as int) - 1] = {
+        'note': checkInData[i]['note']
+      };
+    }
+
+    return daysList;
+  }
+
+  IndicatorStyle indicatorCheckedIn(timeline) {
+    return IndicatorStyle(
+      width: 30,
+      height: 30,
+      indicatorXY: 0,
+      indicator: Container(
+        decoration: BoxDecoration(
+          color: timeline != null ? Colors.lightGreen[200] : Colors.grey[400],
+          borderRadius: const BorderRadius.all(
+            Radius.circular(20),
+          ),
+        ),
+        child: Center(
+          child: timeline != null
+              ? Icon(
+                  Icons.check_circle,
+                  color: Colors.lightGreen[700],
+                  size: 30,
+                )
+              : Container(
+                  width: 25,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle, color: Colors.grey[200]),
+                ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final timelineData = generateDays(checkinList);
+    return ConstrainedBox(
+      constraints:
+          BoxConstraints(minWidth: 100.w, minHeight: 10.h, maxHeight: 30.h),
+      child: ShaderMask(
+        shaderCallback: (Rect bounds) {
+          return LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              Colors.red,
+              Colors.transparent,
+              Colors.transparent,
+              Colors.transparent,
+              Colors.transparent,
+              Colors.transparent,
+              Colors.red
+            ],
+          ).createShader(bounds);
+        },
+        blendMode: BlendMode.dstOut,
+        child: ListView.builder(
+            physics: BouncingScrollPhysics(),
+            shrinkWrap: true,
+            reverse: true,
+            itemCount: timelineData.length,
+            itemBuilder: (context, index) {
+              final timeline = timelineData[index];
+              return GestureDetector(
+                onTap: timeline != null ? () {} : () {},
+                child: TimelineTile(
+                  isLast: index == 0 ? true : false,
+                  isFirst: index == timelineData.length - 1 ? true : false,
+                  alignment: TimelineAlign.manual,
+                  lineXY: 0.25,
+                  indicatorStyle: indicatorCheckedIn(timeline),
+                  endChild: Container(
+                      alignment: Alignment.topLeft,
+                      padding:
+                          const EdgeInsets.only(top: 3, left: 5, bottom: 10),
+                      constraints: BoxConstraints(minHeight: 40),
+                      color: Colors.transparent,
+                      child: Text(
+                          '${timeline != null ? timeline['note'] : 'Not checked-in'}',
+                          textAlign: TextAlign.justify)),
+                  startChild: Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.only(top: 3),
+                      constraints: BoxConstraints(minHeight: 40),
+                      color: Colors.transparent,
+                      child: Text('${index + 1}')),
+                ),
+              );
+            }),
       ),
     );
   }

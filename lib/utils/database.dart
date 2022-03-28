@@ -619,14 +619,29 @@ class Database {
         .catchError((e) => print(e));
   }
 
-  Future checkInTracker(tid, day, note, attachment) async {
+  Future checkInTracker(tid, day, note, attachment, ciid) async {
     print("Firing checkInTracker");
+    print(tid);
 
-    await userDoc.collection('trackers').doc(tid).set({
-      'checkin': FieldValue.arrayUnion([
-        {'day': day, 'note': note, 'attachment': attachment}
-      ])
-    }, SetOptions(merge: true));
+    var newCheckInDoc;
+    if (ciid != null) {
+      newCheckInDoc = userDoc
+          .collection('trackers')
+          .doc(tid)
+          .collection('checkin')
+          .doc(ciid);
+    } else {
+      newCheckInDoc =
+          userDoc.collection('trackers').doc(tid).collection('checkin').doc();
+    }
+
+    await newCheckInDoc
+        .set({'day': day, 'note': note, 'attachment': attachment}).then(
+            (value) async => await userDoc
+                .collection('trackerCheckIn')
+                .doc(newCheckInDoc.id)
+                .set({'day': day, 'note': note, 'attachment': attachment}));
+    print(newCheckInDoc.id);
   }
 
   Future resetTrackerTask(tid, note) async {
@@ -647,7 +662,36 @@ class Database {
   Future getExpandedTrackerData(tid) async {
     print("Firing getExpandedTrackerData");
 
-    return userDoc.collection('trackers').doc(tid).collection('resets').get();
+    var results = {};
+
+    var resetsList = [];
+    var query1 = await userDoc
+        .collection('trackers')
+        .doc(tid)
+        .collection('resets')
+        .get();
+    query1.docs.forEach((doc) {
+      resetsList.add(doc.data());
+    });
+
+    var checkinList = [];
+    var query2 = await userDoc
+        .collection('trackers')
+        .doc(tid)
+        .collection('checkin')
+        .get();
+    query2.docs.forEach((doc) {
+      checkinList.add(doc.data());
+    });
+
+    results['resets'] = resetsList;
+    results['checkin'] = checkinList;
+
+    return results;
+  }
+
+  Future getCheckInButtonData(tid) async {
+    return userDoc.collection('trackers').doc(tid).collection('checkin').get();
   }
 
   //-----------------------------------------------------
