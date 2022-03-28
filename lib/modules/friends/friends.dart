@@ -37,8 +37,6 @@ class _FriendsPageState extends State<FriendsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.search),
-              Text("Search"),
               searchField(uid, context),
               IconButton(
                   onPressed: () {},
@@ -280,6 +278,16 @@ class _FriendsPageState extends State<FriendsPage> {
           height: 10.h,
           child: Center(
             child: ListTile(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return Scaffold(
+                      appBar: AppBar(
+                        title: Text('${itemList[index]['name']}\'s Profile'),
+                        centerTitle: true,
+                      ),
+                      body: ProfilePage(viewId: itemList[index].id));
+                }));
+              },
               leading: Padding(
                 padding: const EdgeInsets.only(right: 10.0),
                 child: CircleAvatar(

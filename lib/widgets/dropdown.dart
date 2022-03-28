@@ -46,7 +46,7 @@ class VisibilityItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 35.w,
+      width: 40.w,
       height: 4.h,
       child: Container(
         decoration: BoxDecoration(
@@ -67,8 +67,17 @@ class VisibilityItem extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
+              Icon(Icons.visibility, size: 20, color: Colors.blueGrey),
               Flexible(
-                  child: Text(value.value, overflow: TextOverflow.ellipsis)),
+                  fit: FlexFit.tight,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                    child: Text(
+                      value.value,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
+                  )),
               const SizedBox(
                 width: 15,
                 height: 25,

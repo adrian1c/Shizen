@@ -129,24 +129,39 @@ class NavDrawer extends HookWidget {
             ),
           ),
           ListTile(
-            leading: new IconButton(
-              icon: new Icon(Icons.face, color: Colors.black),
-              onPressed: () => null,
-            ),
+            leading: new Icon(Icons.settings, color: Colors.black),
             title: Text(
-              'Profile',
+              'Settings',
               style: TextStyle(
+                color: Colors.black,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
                 letterSpacing: 2.0,
               ),
             ),
             onTap: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //       builder: (context) => ProfilePage(uid: widget.uid)),
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: new Icon(Icons.info_outline_rounded, color: Colors.black),
+            title: Text(
+              'About Us',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                letterSpacing: 2.0,
+              ),
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AboutUsPage()),
+              );
             },
           ),
           Container(
@@ -191,5 +206,33 @@ class NavDrawer extends HookWidget {
         ],
       ),
     );
+  }
+}
+
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('SETTINGS'),
+          centerTitle: true,
+        ),
+        body: Text('Settings Page yeet'));
+  }
+}
+
+class AboutUsPage extends StatelessWidget {
+  const AboutUsPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('ABOUT US'),
+          centerTitle: true,
+        ),
+        body: Text('About Us Page yote'));
   }
 }

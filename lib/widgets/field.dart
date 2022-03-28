@@ -46,6 +46,15 @@ class StyledInputField {
 
   inputDecoration() {
     return InputDecoration(
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(left: 5.0),
+        child: Icon(
+          Icons.search,
+          size: 20,
+        ),
+      ),
+      prefixIconConstraints:
+          BoxConstraints(minHeight: 35, maxHeight: 35, maxWidth: 25),
       isDense: true,
       hintText: hintText,
       contentPadding: EdgeInsets.fromLTRB(10, 10, 10, 0),

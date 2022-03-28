@@ -30,6 +30,7 @@ class CommunityPage extends HookWidget {
         hashtagValue.value = hashtagController.text;
       }
     });
+    final scrollController = useScrollController();
 
     return Stack(
         fit: StackFit.expand,
@@ -39,11 +40,10 @@ class CommunityPage extends HookWidget {
             physics: BouncingScrollPhysics(),
             slivers: [
               SliverAppBar(
+                automaticallyImplyLeading: false,
                 pinned: false,
                 snap: false,
                 floating: true,
-                expandedHeight: 11.h,
-                collapsedHeight: 11.h,
                 flexibleSpace: Container(
                   decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor),
@@ -53,38 +53,17 @@ class CommunityPage extends HookWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.visibility),
-                                Text("Display",
-                                    style: TextStyle(fontSize: 15.sp)),
-                              ],
-                            ),
-                            Dropdown(
-                                items: items,
-                                value: visibilityValue,
-                                onItemSelected: (String value) {
-                                  visibilityValue.value = value;
-                                }),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.tag_rounded),
-                                Text("Hashtag",
-                                    style: TextStyle(fontSize: 15.sp)),
-                              ],
-                            ),
-                            HashtagFilter(
-                                hashtagController: hashtagController,
-                                hashtagValue: hashtagValue,
-                                isFocus: isFocus),
-                          ],
-                        ),
+                        Dropdown(
+                            items: items,
+                            value: visibilityValue,
+                            onItemSelected: (String value) {
+                              visibilityValue.value = value;
+                            }),
+                        HashtagFilter(
+                            hashtagController: hashtagController,
+                            hashtagValue: hashtagValue,
+                            isFocus: isFocus,
+                            scrollController: scrollController),
                       ],
                     ),
                   ),
@@ -96,12 +75,13 @@ class CommunityPage extends HookWidget {
                   visibilityValue: visibilityValue,
                   hashtag: hashtagValue,
                   hashtagController: hashtagController,
+                  scrollController: scrollController,
                 );
               }, childCount: 1))
             ],
           ),
           Positioned(
-            bottom: 30,
+            bottom: 0,
             child: ElevatedButton(
               child: Text("New Post"),
               onPressed: () {
@@ -118,6 +98,7 @@ class CommunityPostList extends HookWidget {
   CommunityPostList(
       {Key? key,
       required this.visibilityValue,
+      required this.scrollController,
       this.hashtag,
       this.hashtagController})
       : super(key: key);
@@ -125,6 +106,7 @@ class CommunityPostList extends HookWidget {
   final visibilityValue;
   final hashtag;
   final hashtagController;
+  final scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -134,31 +116,39 @@ class CommunityPostList extends HookWidget {
             .getCommunityPost(visibilityValue.value, hashtag.value),
         [visibilityValue.value, hashtag.value]);
     final snapshot = useFuture(future);
-    return Container(
-        child: !snapshot.hasData
-            ? const Text("Loading")
-            : ListView.builder(
-                physics: BouncingScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  return PostListTile(
-                    postData: snapshot.data![index],
-                    hashtag: hashtag,
-                    hashtagController: hashtagController,
-                  );
-                }));
+    if (snapshot.hasData) {
+      return Container(
+          child: ListView.builder(
+              physics: BouncingScrollPhysics(),
+              controller: scrollController,
+              shrinkWrap: true,
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) {
+                return PostListTile(
+                  postData: snapshot.data![index],
+                  hashtag: hashtag,
+                  hashtagController: hashtagController,
+                );
+              }));
+    }
+
+    return Container(child: const Text('Loading'));
   }
 }
 
 class PostListTile extends HookWidget {
   const PostListTile(
-      {Key? key, required this.postData, this.hashtag, this.hashtagController})
+      {Key? key,
+      required this.postData,
+      this.hashtag,
+      this.hashtagController,
+      this.isProfile = false})
       : super(key: key);
 
   final postData;
   final hashtag;
   final hashtagController;
+  final isProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -185,36 +175,57 @@ class PostListTile extends HookWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                              width: 5.h,
-                              height: 5.h,
-                              child: postData['image'] != ''
-                                  ? CircleAvatar(
-                                      foregroundImage:
-                                          CachedNetworkImageProvider(
-                                              postData!['image']),
-                                      backgroundColor: Colors.grey,
-                                      radius: 3.h,
-                                    )
-                                  : CircleAvatar(
-                                      foregroundImage: Images.defaultPic.image,
-                                      backgroundColor: Colors.grey,
-                                      radius: 3.h,
-                                    )),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(postData['name']),
-                                Text(postData['email']),
-                              ],
+                      child: InkWell(
+                        onTap: isProfile
+                            ? () {}
+                            : () {
+                                if (postData['visibility'] == 'Anonymous') {
+                                  return;
+                                }
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                  return Scaffold(
+                                      appBar: AppBar(
+                                        title: Text(
+                                            '${postData['name']}\'s Profile'),
+                                        centerTitle: true,
+                                      ),
+                                      body:
+                                          ProfilePage(viewId: postData['uid']));
+                                }));
+                              },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Container(
+                                width: 5.h,
+                                height: 5.h,
+                                child: postData['image'] != ''
+                                    ? CircleAvatar(
+                                        foregroundImage:
+                                            CachedNetworkImageProvider(
+                                                postData!['image']),
+                                        backgroundColor: Colors.grey,
+                                        radius: 3.h,
+                                      )
+                                    : CircleAvatar(
+                                        foregroundImage:
+                                            Images.defaultPic.image,
+                                        backgroundColor: Colors.grey,
+                                        radius: 3.h,
+                                      )),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(postData['name']),
+                                  Text(postData['email']),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     Padding(
@@ -223,10 +234,19 @@ class PostListTile extends HookWidget {
                     ),
                     if (postData['attachmentType'] != null)
                       if (postData['attachmentType'] == 'image')
-                        Image(
+                        CachedNetworkImage(
                             width: 100.w,
-                            image: CachedNetworkImageProvider(
-                                postData['attachment']),
+                            imageUrl: postData['attachment'],
+                            progressIndicatorBuilder:
+                                (context, url, downloadProgress) => SizedBox(
+                                      width: 100.w,
+                                      height: 100.w,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black26,
+                                        ),
+                                      ),
+                                    ),
                             fit: BoxFit.fitWidth),
                     if (postData['attachmentType'] == 'task')
                       Padding(
@@ -346,11 +366,13 @@ class PostListTile extends HookWidget {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 5),
                           child: InkWell(
-                            onTap: () {
-                              hashtag.value = postData['hashtags'][index];
-                              hashtagController.text =
-                                  postData['hashtags'][index];
-                            },
+                            onTap: isProfile
+                                ? () {}
+                                : () {
+                                    hashtag.value = postData['hashtags'][index];
+                                    hashtagController.text =
+                                        postData['hashtags'][index];
+                                  },
                             child: Container(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
@@ -370,7 +392,7 @@ class PostListTile extends HookWidget {
                     ),
                   ),
                 CommentList(
-                    pid: postData['postId'], commentCount: commentCount.value),
+                    pid: postData['postId'], commentCount: commentCount),
                 Center(
                   child: InkWell(
                       onTap: () {
@@ -468,7 +490,7 @@ class CommentList extends HookWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: commentCount > 0
+      onTap: commentCount.value > 0
           ? () {
               Navigator.push(
                   context,
@@ -480,8 +502,8 @@ class CommentList extends HookWidget {
           : () {},
       child: Container(
           padding: const EdgeInsets.fromLTRB(20, 10, 0, 10),
-          child: commentCount > 0
-              ? Text('View all $commentCount comments')
+          child: commentCount.value > 0
+              ? Text('View all ${commentCount.value} comments')
               : null),
     );
   }
@@ -492,17 +514,19 @@ class HashtagFilter extends StatelessWidget {
       {Key? key,
       required this.hashtagController,
       required this.hashtagValue,
-      required this.isFocus})
+      required this.isFocus,
+      required this.scrollController})
       : super(key: key);
 
   final TextEditingController hashtagController;
+  final scrollController;
   final hashtagValue;
   final isFocus;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 40.w,
+      width: 45.w,
       child: TextFormField(
         controller: hashtagController,
         focusNode: isFocus,
@@ -510,7 +534,7 @@ class HashtagFilter extends StatelessWidget {
           LengthLimitingTextInputFormatter(20),
         ],
         decoration: StyledInputField(
-                hintText: 'Search hashtag...', controller: hashtagController)
+                hintText: '# Search...', controller: hashtagController)
             .inputDecoration(),
         onFieldSubmitted: (value) {
           hashtagValue.value = value;
@@ -530,13 +554,13 @@ class CommentPage extends HookWidget {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).uid;
-    final future = useMemoized(
-      () => Database(uid).getComments(pid),
-    );
+    final isAdded = useState(0);
+    final future =
+        useMemoized(() => Database(uid).getComments(pid), [isAdded.value]);
     final snapshot = useFuture(future);
     final commentController = useTextEditingController();
     if (snapshot.hasData) {
-      final commentList = useState(snapshot.data.docs);
+      final commentList = snapshot.data.docs;
       return Scaffold(
         appBar: AppBar(
           title: const Text("ALL COMMENTS"),
@@ -547,13 +571,24 @@ class CommentPage extends HookWidget {
                 Container(
                     child: ListView.builder(
                         shrinkWrap: true,
-                        itemCount: commentList.value.length,
+                        itemCount: commentList.length,
                         itemBuilder: (context, index) {
-                          var comment = commentList.value[index];
+                          var comment = commentList[index];
                           return Container(
                             padding: const EdgeInsets.all(10),
                             child: ListTile(
-                                title: Text(comment['name']),
+                                title: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(comment['name']),
+                                    Text(
+                                        (comment['dateCreated'] as Timestamp)
+                                            .toDate()
+                                            .timeAgo(),
+                                        style: TextStyle(fontSize: 10.sp)),
+                                  ],
+                                ),
                                 subtitle: Text(comment['comment'],
                                     maxLines: 10,
                                     overflow: TextOverflow.ellipsis),
@@ -606,23 +641,19 @@ class CommentPage extends HookWidget {
                                   suffixIcon: IconButton(
                                     onPressed: () async {
                                       if (commentController.text.length != 0) {
+                                        final comment = commentController.text;
+                                        commentController.clear();
                                         FocusScopeNode currentFocus =
                                             FocusScope.of(context);
-
                                         if (!currentFocus.hasPrimaryFocus) {
                                           currentFocus.unfocus();
                                         }
-                                        commentController.clear();
-                                        var newComment = await Database(uid)
-                                            .postComment(
-                                                pid, commentController.text)
+                                        await Database(uid)
+                                            .postComment(pid, comment)
                                             .then((value) {
                                           commentCount.value += 1;
                                         });
-                                        commentList.value =
-                                            List.from(commentList.value)
-                                              ..add(newComment);
-                                        Navigator.pop(context);
+                                        isAdded.value += 1;
                                       }
                                     },
                                     icon: Icon(Icons.send),

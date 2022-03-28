@@ -37,8 +37,9 @@ class AddNewPost extends HookWidget {
           centerTitle: true,
         ),
         body: SafeArea(
-          minimum: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+          minimum: const EdgeInsets.symmetric(horizontal: 20),
           child: SingleChildScrollView(
+            padding: EdgeInsets.only(top: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -46,21 +47,15 @@ class AddNewPost extends HookWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("Your story"),
-                    Row(
-                      children: [
-                        const Icon(Icons.visibility_sharp),
-                        const Text("Visibility"),
-                        ValueListenableBuilder(
-                            valueListenable: visibilityValue,
-                            builder: (context, data, _) {
-                              return Dropdown(
-                                  items: items,
-                                  value: visibilityValue,
-                                  onItemSelected: (String value) =>
-                                      visibilityValue.value = value);
-                            }),
-                      ],
-                    ),
+                    ValueListenableBuilder(
+                        valueListenable: visibilityValue,
+                        builder: (context, data, _) {
+                          return Dropdown(
+                              items: items,
+                              value: visibilityValue,
+                              onItemSelected: (String value) =>
+                                  visibilityValue.value = value);
+                        }),
                   ],
                 ),
                 PostDescField(
@@ -237,15 +232,9 @@ class AddNewPost extends HookWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 20, 50, 20),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.tag_rounded),
-                          const Text("Hashtag (max 3)"),
-                        ],
-                      ),
+                      const Text("Hashtag (max 3)"),
                       Container(
                         child: ListView.builder(
                             physics: NeverScrollableScrollPhysics(),
@@ -527,6 +516,7 @@ class PostDescField extends StatelessWidget {
           controller: postDescController,
           style: TextStyle(color: Color(0xff58865C)),
           keyboardType: TextInputType.multiline,
+          textCapitalization: TextCapitalization.sentences,
           maxLines: 10,
           maxLength: 500,
           decoration: InputDecoration(
@@ -562,7 +552,12 @@ class HashtagField extends StatelessWidget {
     return TextField(
       controller: hashtagController,
       maxLength: 20,
-      decoration: InputDecoration(hintText: 'Hashtag'),
+      decoration: InputDecoration(
+        labelText: '#',
+        hintText: 'Hashtag',
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        isDense: true,
+      ),
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z]"))
       ],

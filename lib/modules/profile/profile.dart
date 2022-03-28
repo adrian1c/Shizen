@@ -99,7 +99,9 @@ class ProfilePage extends HookWidget {
                       itemCount: snapshotUserPosts.data!.length,
                       itemBuilder: (context, index) {
                         return PostListTile(
-                            postData: snapshotUserPosts.data![index]);
+                          postData: snapshotUserPosts.data![index],
+                          isProfile: true,
+                        );
                       })
                   : Text('You don\'t have any posts.')
               : Shimmer.fromColors(

@@ -160,6 +160,14 @@ class Database {
     return;
   }
 
+  Future<void> removeFriend(user) async {
+    print("Firing removeFriend");
+
+    var batch = firestore.batch();
+
+    await batch.commit();
+  }
+
   Future<Map<dynamic, dynamic>> friendsPageData() async {
     print("Firing friendsPageData");
 
@@ -395,7 +403,7 @@ class Database {
       var data = value.data()!;
       return {'userId': value.id, 'name': data['name'], 'image': data['image']};
     });
-    userData.addAll({'comment': commentText});
+    userData.addAll({'comment': commentText, 'dateCreated': DateTime.now()});
     postCol.doc(pid).update({'commentCount': FieldValue.increment(1)});
     await postCol.doc(pid).collection('comments').add(userData);
     return userData;
@@ -404,7 +412,11 @@ class Database {
   Future getComments(pid) async {
     print("Firing getComments");
 
-    return postCol.doc(pid).collection('comments').get();
+    return postCol
+        .doc(pid)
+        .collection('comments')
+        .orderBy('dateCreated', descending: true)
+        .get();
   }
 
   Future getAllTasks() async {
