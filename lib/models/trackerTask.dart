@@ -12,6 +12,7 @@ class TrackerTaskModel {
     return {
       'dateCreated': dateCreated,
       'startDate': startDate,
+      'currStreakDate': startDate,
       'title': title,
       'note': note,
       'milestones': milestones,

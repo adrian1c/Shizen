@@ -629,6 +629,27 @@ class Database {
     }, SetOptions(merge: true));
   }
 
+  Future resetTrackerTask(tid, note) async {
+    print("FIring resetTrackerTask");
+
+    await userDoc
+        .collection('trackers')
+        .doc(tid)
+        .update({'currStreakDate': DateTime.now(), 'checkin': []});
+
+    await userDoc
+        .collection('trackers')
+        .doc(tid)
+        .collection('resets')
+        .add({'resetDate': DateTime.now(), 'note': note});
+  }
+
+  Future getExpandedTrackerData(tid) async {
+    print("Firing getExpandedTrackerData");
+
+    return userDoc.collection('trackers').doc(tid).collection('resets').get();
+  }
+
   //-----------------------------------------------------
   //--------------  PROGRESS LIST  ----------------------
   //-----------------------------------------------------

@@ -203,22 +203,45 @@ class AddTrackerTask extends HookWidget {
                       children: [
                         CreateButton(
                           onPressed: () async {
-                            var tracker = new TrackerTaskModel(
-                                titleController.text,
-                                noteController.text,
-                                milestones.value,
-                                startDate.value);
-                            editParams != null
-                                ? await Database(uid).editTrackerTask(
-                                    tracker, editParams['taskId'])
-                                : await Database(uid).addTrackerTask(tracker);
-                            StyledToast(
-                                    msg: editParams != null
-                                        ? 'The changes have been saved!'
-                                        : 'Tracker Created Successfully')
-                                .showSuccessToast();
-                            trackerChanged.value += 1;
-                            Navigator.of(context).pop();
+                            if (editParams != null) {
+                              await StyledPopup(
+                                      context: context,
+                                      title: 'Check-in Data',
+                                      children: [
+                                        Text(
+                                            'If you have changed your starting date, all of your check-in data will be reset.')
+                                      ],
+                                      textButton: TextButton(
+                                          onPressed: () async {
+                                            var tracker = new TrackerTaskModel(
+                                                titleController.text,
+                                                noteController.text,
+                                                milestones.value,
+                                                startDate.value);
+                                            await Database(uid).editTrackerTask(
+                                                tracker, editParams['taskId']);
+                                            StyledToast(
+                                                    msg:
+                                                        'The changes have been saved!')
+                                                .showSuccessToast();
+                                            trackerChanged.value += 1;
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text('Got it')))
+                                  .showPopup();
+                            } else {
+                              var tracker = new TrackerTaskModel(
+                                  titleController.text,
+                                  noteController.text,
+                                  milestones.value,
+                                  startDate.value);
+                              await Database(uid).addTrackerTask(tracker);
+                              StyledToast(msg: 'Tracker Created Successfully')
+                                  .showSuccessToast();
+                              trackerChanged.value += 1;
+                              Navigator.of(context).pop();
+                            }
                           },
                           isValid: isValid,
                           buttonLabel: editParams != null ? 'Save' : null,

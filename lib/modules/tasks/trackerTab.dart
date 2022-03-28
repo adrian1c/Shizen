@@ -5,6 +5,7 @@ import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+import 'package:intl/intl.dart';
 
 class TrackerTask extends HookWidget {
   const TrackerTask({Key? key, required this.uid, required this.trackerChanged})
@@ -57,9 +58,9 @@ class TrackerTile extends HookWidget {
   List generateDays(checkInData) {
     List<Map?> daysList = List.generate(
         (DateTime.now()
-                .difference((task['startDate'] as Timestamp).toDate())
+                .difference((task['currStreakDate'] as Timestamp).toDate())
                 .inDays +
-            2),
+            1),
         (int index) => null);
 
     for (var i = 0; i < checkInData.length; i++) {
@@ -115,6 +116,7 @@ class TrackerTile extends HookWidget {
                     controller: controller,
                     style: TextStyle(color: Color(0xff58865C)),
                     keyboardType: TextInputType.multiline,
+                    textCapitalization: TextCapitalization.sentences,
                     maxLines: 10,
                     maxLength: 500,
                     decoration: InputDecoration(
@@ -141,9 +143,11 @@ class TrackerTile extends HookWidget {
                           await Database(uid).checkInTracker(
                               task.id,
                               DateTime.now()
-                                  .difference(
-                                      (task['startDate'] as Timestamp).toDate())
-                                  .inDays,
+                                      .difference(
+                                          (task['currStreakDate'] as Timestamp)
+                                              .toDate())
+                                      .inDays +
+                                  1,
                               controller.text,
                               null);
                           controller.clear();
@@ -166,6 +170,8 @@ class TrackerTile extends HookWidget {
   Widget build(BuildContext context) {
     final checkInController = useTextEditingController();
     final timelineData = generateDays(task['checkin']);
+    final isExpanded = useState(false);
+    final noteController = useTextEditingController();
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -179,7 +185,7 @@ class TrackerTile extends HookWidget {
                   'taskId': task.id,
                   'title': task['title'],
                   'note': task['note'],
-                  'startDate': (task['startDate'] as Timestamp).toDate(),
+                  'startDate': (task['currStreakDate'] as Timestamp).toDate(),
                   'milestones': task['milestones']
                 };
                 Navigator.push(
@@ -195,10 +201,42 @@ class TrackerTile extends HookWidget {
                   ElevatedButton(
                     onPressed: () {
                       StyledPopup(
-                        context: context,
-                        title: 'Milestones',
-                        children: [],
-                      ).showPopup();
+                              context: context,
+                              title: 'Restart Counter?',
+                              children: [
+                                Text(
+                                    'Are you sure that you want to restart the counter? Your check-in data will be reset and lost.'),
+                                TextFormField(
+                                  controller: noteController,
+                                  style: TextStyle(color: Color(0xff58865C)),
+                                  keyboardType: TextInputType.multiline,
+                                  textCapitalization:
+                                      TextCapitalization.sentences,
+                                  maxLines: 10,
+                                  maxLength: 500,
+                                  decoration: InputDecoration(
+                                    hintText: "Description",
+                                    contentPadding: EdgeInsets.all(10.0),
+                                    labelStyle: CustomTheme
+                                        .lightTheme.textTheme.bodyText2,
+                                    border: OutlineInputBorder(
+                                      borderRadius:
+                                          new BorderRadius.circular(10.0),
+                                      borderSide: new BorderSide(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              textButton: TextButton(
+                                  onPressed: () async {
+                                    await Database(uid).resetTrackerTask(
+                                        task.id, noteController.text);
+                                    noteController.clear();
+                                    trackerChanged.value += 1;
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text('Reset')))
+                          .showPopup();
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -253,16 +291,18 @@ class TrackerTile extends HookWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(task['title']),
+                          Text(task['title'],
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                           Row(
                             children: [
                               Text(
-                                  'Day ${DateTime.now().difference((task['startDate'] as Timestamp).toDate()).inDays}'),
+                                  'Day ${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}'),
                               Icon(Icons.brush)
                             ],
                           )
                         ],
                       ),
+                      Divider(),
                       ConstrainedBox(
                         constraints: BoxConstraints(
                             minWidth: 100.w, minHeight: 10.h, maxHeight: 30.h),
@@ -293,6 +333,10 @@ class TrackerTile extends HookWidget {
                                 return GestureDetector(
                                   onTap: timeline != null ? () {} : () {},
                                   child: TimelineTile(
+                                    isLast: index == 0 ? true : false,
+                                    isFirst: index == timelineData.length - 1
+                                        ? true
+                                        : false,
                                     alignment: TimelineAlign.manual,
                                     lineXY: 0.25,
                                     indicatorStyle:
@@ -305,7 +349,7 @@ class TrackerTile extends HookWidget {
                                             BoxConstraints(minHeight: 40),
                                         color: Colors.transparent,
                                         child: Text(
-                                            '${timeline != null ? timeline['note'] : ''}',
+                                            '${timeline != null ? timeline['note'] : 'Not checked-in'}',
                                             textAlign: TextAlign.justify)),
                                     startChild: Container(
                                         alignment: Alignment.topCenter,
@@ -319,21 +363,22 @@ class TrackerTile extends HookWidget {
                               }),
                         ),
                       ),
+                      Divider(),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Next Milestone'),
+                                Text('Next Milestone',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
                                 Text(task['milestones'].isEmpty
                                     ? 'No milestone'
-                                    : 'Day ${task['milestones'][0]['day']}'),
-                                Text(task['milestones'].isEmpty
-                                    ? ''
-                                    : task['milestones'][0]['reward'])
+                                    : 'Day ${task['milestones'][0]['day']} - ${task['milestones'][0]['reward']}'),
                               ],
                             ),
                             ElevatedButton(
@@ -346,28 +391,32 @@ class TrackerTile extends HookWidget {
                                               builder: (context, _setState) {
                                             return Column(
                                               children: [
-                                                ListView.builder(
-                                                    physics:
-                                                        NeverScrollableScrollPhysics(),
-                                                    shrinkWrap: true,
-                                                    itemCount:
-                                                        task['milestones']
-                                                            .length,
-                                                    itemBuilder:
-                                                        (context, index) {
-                                                      return MilestonePopupTile(
-                                                        milestone:
+                                                task['milestones'].length > 0
+                                                    ? ListView.builder(
+                                                        physics:
+                                                            NeverScrollableScrollPhysics(),
+                                                        shrinkWrap: true,
+                                                        itemCount:
                                                             task['milestones']
+                                                                .length,
+                                                        itemBuilder:
+                                                            (context, index) {
+                                                          return MilestonePopupTile(
+                                                            milestone: task[
+                                                                    'milestones']
                                                                 [index],
-                                                        index: index,
-                                                        minDay: DateTime.now()
-                                                            .difference((task[
-                                                                        'startDate']
-                                                                    as Timestamp)
-                                                                .toDate())
-                                                            .inDays,
-                                                      );
-                                                    }),
+                                                            index: index,
+                                                            minDay: DateTime
+                                                                    .now()
+                                                                .difference((task[
+                                                                            'startDate']
+                                                                        as Timestamp)
+                                                                    .toDate())
+                                                                .inDays,
+                                                          );
+                                                        })
+                                                    : Text(
+                                                        'You dont have any milestones.'),
                                               ],
                                             );
                                           }),
@@ -421,11 +470,100 @@ class TrackerTile extends HookWidget {
                                           borderRadius:
                                               BorderRadius.circular(18.0),
                                           side: BorderSide(
-                                              color: Colors.grey))))))
+                                              color: Colors.grey)))))),
+                      Center(
+                          child: IconButton(
+                              icon: Icon(
+                                isExpanded.value
+                                    ? Icons.keyboard_arrow_up_rounded
+                                    : Icons.keyboard_arrow_down_rounded,
+                              ),
+                              onPressed: () {
+                                if (isExpanded.value == false) {
+                                  isExpanded.value = true;
+                                } else {
+                                  isExpanded.value = false;
+                                }
+                              })),
+                      if (isExpanded.value)
+                        ExpandedTracker(
+                            task: task, trackerChanged: trackerChanged)
                     ],
                   )),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class ExpandedTracker extends HookWidget {
+  const ExpandedTracker({
+    Key? key,
+    required this.task,
+    required this.trackerChanged,
+  }) : super(key: key);
+
+  final task;
+  final trackerChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).uid;
+    final future = useMemoized(
+        () => Database(uid).getExpandedTrackerData(task.id),
+        [trackerChanged.value]);
+    final snapshot = useFuture(future);
+    return Container(
+      width: 100.w,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Divider(),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Personal Note',
+                textAlign: TextAlign.justify,
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            Divider(),
+            Text(
+              task['note'],
+            )
+          ]),
+          Divider(),
+          Divider(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Start Date', style: TextStyle(fontWeight: FontWeight.bold)),
+              Divider(),
+              Text(
+                  '${DateFormat('dd MMM yy hh:mm a').format((task['startDate'] as Timestamp).toDate())}'),
+            ],
+          ),
+          Divider(),
+          Divider(),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Resets', style: TextStyle(fontWeight: FontWeight.bold)),
+            Divider(),
+            snapshot.hasData
+                ? ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: snapshot.data.docs.length,
+                    itemBuilder: (context, index) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                '${DateFormat('dd MMM yy').format((snapshot.data.docs[index]['resetDate'] as Timestamp).toDate())}'),
+                            Text(snapshot.data.docs[index]['note'] != ''
+                                ? '${snapshot.data.docs[index]['note']}'
+                                : '-')
+                          ],
+                        ))
+                : CircularProgressIndicator(),
+          ]),
+          Divider(),
+          Divider(),
         ],
       ),
     );
