@@ -8,16 +8,14 @@ import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
 
 class TrackerTask extends HookWidget {
-  const TrackerTask({Key? key, required this.uid, required this.trackerChanged})
-      : super(key: key);
+  const TrackerTask({Key? key, required this.uid}) : super(key: key);
 
   final String uid;
-  final trackerChanged;
 
   @override
   Widget build(BuildContext context) {
-    final future = useMemoized(
-        () => Database(uid).getTrackerTasks(), [trackerChanged.value]);
+    final future = useMemoized(() => Database(uid).getTrackerTasks(),
+        [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
     if (!snapshot.hasData) {
       return Container(
@@ -32,9 +30,7 @@ class TrackerTask extends HookWidget {
                     itemCount: snapshot.data.docs.length,
                     itemBuilder: (context, index) {
                       return TrackerTile(
-                          uid: uid,
-                          task: snapshot.data.docs[index],
-                          trackerChanged: trackerChanged);
+                          uid: uid, task: snapshot.data.docs[index]);
                     }))
             : Center(
                 child: Text(
@@ -48,12 +44,10 @@ class TrackerTile extends HookWidget {
     Key? key,
     required this.task,
     required this.uid,
-    required this.trackerChanged,
   }) : super(key: key);
 
   final task;
   final String uid;
-  final trackerChanged;
 
   checkInPopup(context, controller, checkinData) {
     final _formKey = GlobalKey<FormState>();
@@ -104,7 +98,8 @@ class TrackerTile extends HookWidget {
                               null,
                               ciData != null ? ciData['checkinId'] : null);
                           controller.clear();
-                          trackerChanged.value += 1;
+                          Provider.of<TabProvider>(context, listen: false)
+                              .rebuildPage('tracker');
                           Navigator.pop(context);
                         }
                       },
@@ -142,7 +137,7 @@ class TrackerTile extends HookWidget {
     final String uid = Provider.of<UserProvider>(context).uid;
     final future = useMemoized(
         () => Database(uid).getCheckInButtonData(task.id),
-        [trackerChanged.value]);
+        [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -163,9 +158,8 @@ class TrackerTile extends HookWidget {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AddTrackerTask(
-                          trackerChanged: trackerChanged,
-                          editParams: editParams),
+                      builder: (context) =>
+                          AddTrackerTask(editParams: editParams),
                     ));
               },
               onLongPress: () {
@@ -204,7 +198,10 @@ class TrackerTile extends HookWidget {
                                     await Database(uid).resetTrackerTask(
                                         task.id, noteController.text);
                                     noteController.clear();
-                                    trackerChanged.value += 1;
+                                    Provider.of<TabProvider>(context,
+                                            listen: false)
+                                        .rebuildPage('tracker');
+                                    Navigator.pop(context);
                                     Navigator.pop(context);
                                   },
                                   child: Text('Reset')))
@@ -242,7 +239,8 @@ class TrackerTile extends HookWidget {
                                 Navigator.pop(context);
                                 StyledToast(msg: 'Tracker deleted')
                                     .showDeletedToast();
-                                trackerChanged.value += 1;
+                                Provider.of<TabProvider>(context, listen: false)
+                                    .rebuildPage('tracker');
                               },
                               child: Text('Delete'),
                             )).showPopup();
@@ -400,9 +398,7 @@ class TrackerTile extends HookWidget {
                                   isExpanded.value = false;
                                 }
                               })),
-                      if (isExpanded.value)
-                        ExpandedTracker(
-                            task: task, trackerChanged: trackerChanged)
+                      if (isExpanded.value) ExpandedTracker(task: task)
                     ],
                   )),
             ),
@@ -417,18 +413,16 @@ class ExpandedTracker extends HookWidget {
   const ExpandedTracker({
     Key? key,
     required this.task,
-    required this.trackerChanged,
   }) : super(key: key);
 
   final task;
-  final trackerChanged;
 
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).uid;
     final future = useMemoized(
         () => Database(uid).getExpandedTrackerData(task.id),
-        [trackerChanged.value]);
+        [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
     return Container(
       width: 100.w,

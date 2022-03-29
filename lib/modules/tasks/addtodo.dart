@@ -7,11 +7,10 @@ import 'package:intl/intl.dart';
 import 'package:shizen_app/widgets/field.dart';
 
 class AddToDoTask extends HookWidget {
-  const AddToDoTask({Key? key, required this.todoChanged, this.editParams})
-      : super(key: key);
+  const AddToDoTask({Key? key, this.editParams, this.isEdit}) : super(key: key);
 
-  final todoChanged;
   final editParams;
+  final isEdit;
 
   static checkTaskValid(
       ValueNotifier<List> taskList, ValueNotifier<bool> isValid) {
@@ -41,7 +40,7 @@ class AddToDoTask extends HookWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(editParams != null ? "Edit Task" : "Add Task"),
+        title: Text(isEdit == null ? "Edit Task" : "Add Task"),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -50,12 +49,12 @@ class AddToDoTask extends HookWidget {
               child: Column(
             children: [
               TodoTaskList(
-                  titleController: titleController,
-                  taskController: taskController,
-                  title: title,
-                  taskList: taskList,
-                  isValid: isValid,
-                  editParams: editParams),
+                titleController: titleController,
+                taskController: taskController,
+                title: title,
+                taskList: taskList,
+                isValid: isValid,
+              ),
               RecurButton(
                 taskList: taskList,
                 recurValue: recurValue,
@@ -70,25 +69,24 @@ class AddToDoTask extends HookWidget {
                     CreateButton(
                       onPressed: () async {
                         if (isValid.value) {
-                          var newTask = editParams != null
-                              ? ToDoTaskModel(
-                                  title.value,
-                                  taskList.value,
-                                  recurValue.value,
-                                  reminderValue.value,
-                                )
-                              : ToDoTaskModel(title.value, taskList.value,
-                                  recurValue.value, reminderValue.value);
-                          editParams != null
+                          var newTask = ToDoTaskModel(
+                              title.value,
+                              taskList.value,
+                              recurValue.value,
+                              reminderValue.value);
+                          isEdit == null
                               ? await Database(uid)
                                   .editToDoTask(editParams['id'], newTask)
                               : await Database(uid).addToDoTask(newTask);
-                          todoChanged.value += 1;
+                          Provider.of<TabProvider>(context, listen: false)
+                              .rebuildPage('todo');
+                          Provider.of<TabProvider>(context, listen: false)
+                              .changeTabPage(0);
                           Navigator.of(context).pop();
                         }
                       },
                       isValid: isValid,
-                      buttonLabel: editParams != null ? 'Save' : 'Create',
+                      buttonLabel: isEdit == null ? 'Save' : 'Create',
                     ),
                     const CancelButton(),
                   ],
@@ -101,21 +99,20 @@ class AddToDoTask extends HookWidget {
 }
 
 class TodoTaskList extends HookWidget {
-  const TodoTaskList(
-      {Key? key,
-      required this.titleController,
-      required this.taskController,
-      required this.title,
-      required this.taskList,
-      required this.isValid,
-      this.editParams});
+  const TodoTaskList({
+    Key? key,
+    required this.titleController,
+    required this.taskController,
+    required this.title,
+    required this.taskList,
+    required this.isValid,
+  });
 
   final TextEditingController titleController;
   final TextEditingController taskController;
   final ValueNotifier<String> title;
   final ValueNotifier<List> taskList;
   final ValueNotifier<bool> isValid;
-  final editParams;
 
   @override
   Widget build(BuildContext context) {

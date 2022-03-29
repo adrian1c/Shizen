@@ -19,16 +19,16 @@ class ProfilePage extends HookWidget {
   Widget build(BuildContext context) {
     final String uid =
         viewId != null ? viewId! : Provider.of<UserProvider>(context).uid;
-    final ValueNotifier<int> isLoading = useState(0);
     final TextEditingController nameController = useTextEditingController();
     final futureUserProfileData = useMemoized(
-        () => Database(uid).getCurrentUserData(), [isLoading.value]);
+        () => Database(uid).getCurrentUserData(),
+        [Provider.of<TabProvider>(context).profileUser]);
     final snapshotUserProfileData = useFuture(futureUserProfileData);
     final futureUserPosts = useMemoized(
         () => viewId != null
             ? Database(uid).getUserPostsOtherProfile(uid)
             : Database(uid).getUserPostsOwnProfile(uid),
-        [isLoading.value]);
+        [Provider.of<TabProvider>(context).profilePosts]);
     final snapshotUserPosts = useFuture(futureUserPosts);
     return SingleChildScrollView(
       child: Column(
@@ -43,7 +43,6 @@ class ProfilePage extends HookWidget {
                   ? UserProfileData(
                       data: snapshotUserProfileData.data,
                       uid: uid,
-                      isLoading: isLoading,
                       nameController: nameController,
                       viewId: viewId,
                     )
@@ -130,14 +129,12 @@ class UserProfileData extends StatelessWidget {
     Key? key,
     required this.data,
     required this.uid,
-    required this.isLoading,
     required this.nameController,
     this.viewId,
   }) : super(key: key);
 
   final data;
   final String uid;
-  final isLoading;
   final nameController;
   final String? viewId;
 
@@ -158,8 +155,8 @@ class UserProfileData extends StatelessWidget {
                   ),
                   onTap: viewId != null
                       ? () {}
-                      : () async => await changeProfilePic(
-                          context, true, isLoading, data['image']),
+                      : () async =>
+                          await changeProfilePic(context, true, data['image']),
                 )
               : InkWell(
                   child: CircleAvatar(
@@ -170,7 +167,7 @@ class UserProfileData extends StatelessWidget {
                   onTap: viewId != null
                       ? () {}
                       : () async {
-                          await changeProfilePic(context, false, isLoading);
+                          await changeProfilePic(context, false);
                         },
                 ),
         ),
@@ -215,7 +212,12 @@ class UserProfileData extends StatelessWidget {
                                           Navigator.pop(context);
                                           await Database(uid)
                                               .editUserName(newName);
-                                          isLoading.value += 1;
+                                          Provider.of<TabProvider>(context,
+                                                  listen: false)
+                                              .rebuildPage('profileUser');
+                                          Provider.of<TabProvider>(context,
+                                                  listen: false)
+                                              .rebuildPage('profilePosts');
                                           // StyledSnackbar(
                                           //         message:
                                           //             'Your display name has been changed!')
@@ -268,7 +270,7 @@ class UserProfileData extends StatelessWidget {
     return imageFile;
   }
 
-  changeProfilePic(context, bool existingPic, isLoading, [currPicUrl]) async {
+  changeProfilePic(context, bool existingPic, [currPicUrl]) async {
     StyledPopup(
       context: context,
       title: existingPic ? 'Change Profile Picture?' : 'Upload Profile Picture',
@@ -292,9 +294,15 @@ class UserProfileData extends StatelessWidget {
                             actions: [
                               TextButton(
                                   onPressed: () async {
+                                    await Database(uid).uploadProfilePic(image,
+                                        hasPic: true, currPicUrl: currPicUrl);
+                                    Provider.of<TabProvider>(context,
+                                            listen: false)
+                                        .rebuildPage('profileUser');
+                                    Provider.of<TabProvider>(context,
+                                            listen: false)
+                                        .rebuildPage('profilePosts');
                                     Navigator.pop(context);
-                                    await Database(uid).uploadProfilePic(image);
-                                    isLoading.value += 1;
                                   },
                                   child: Text("Upload")),
                               TextButton(
@@ -321,7 +329,10 @@ class UserProfileData extends StatelessWidget {
                           textButton: TextButton(
                               onPressed: () async {
                                 await Database(uid).removeProfilePic();
-                                isLoading.value += 1;
+                                Provider.of<TabProvider>(context, listen: false)
+                                    .rebuildPage('profileUser');
+                                Provider.of<TabProvider>(context, listen: false)
+                                    .rebuildPage('profilePosts');
                                 Navigator.pop(context);
                                 Navigator.pop(context);
                               },
@@ -349,9 +360,14 @@ class UserProfileData extends StatelessWidget {
                             actions: [
                               TextButton(
                                   onPressed: () async {
-                                    Navigator.pop(context);
                                     await Database(uid).uploadProfilePic(image);
-                                    isLoading.value += 1;
+                                    Provider.of<TabProvider>(context,
+                                            listen: false)
+                                        .rebuildPage('profileUser');
+                                    Provider.of<TabProvider>(context,
+                                            listen: false)
+                                        .rebuildPage('profilePosts');
+                                    Navigator.pop(context);
                                   },
                                   child: Text("Upload")),
                               TextButton(

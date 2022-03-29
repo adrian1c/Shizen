@@ -44,11 +44,10 @@ class MainScaffoldStack extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    var pageController = usePageController();
-    var selectedIndex = useState(0);
     return Scaffold(
         appBar: AppBar(
-          title: Text(title[selectedIndex.value]),
+          title: Text(title[
+              Provider.of<TabProvider>(context, listen: false).selectedIndex]),
           centerTitle: true,
         ),
         drawer: NavDrawer(),
@@ -65,10 +64,10 @@ class MainScaffoldStack extends HookWidget {
             tabBackgroundColor: Colors.grey[850]!,
             color: Colors.black,
             tabs: screens,
-            selectedIndex: selectedIndex.value,
+            selectedIndex: Provider.of<TabProvider>(context).selectedIndex,
             onTabChange: (index) {
-              selectedIndex.value = index;
-              pageController.jumpToPage(selectedIndex.value);
+              Provider.of<TabProvider>(context, listen: false)
+                  .changeTabPage(index);
             }),
         body: DoubleBackToCloseApp(
           snackBar: SnackBar(
@@ -84,7 +83,8 @@ class MainScaffoldStack extends HookWidget {
             ),
           ),
           child: PageView(
-              controller: pageController,
+              controller: Provider.of<TabProvider>(context, listen: false)
+                  .pageController,
               physics: NeverScrollableScrollPhysics(),
               children: <Widget>[
                 KeepAlivePage(child: TaskPage()),

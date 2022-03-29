@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:shizen_app/main.dart';
 import 'package:shizen_app/mainscaffoldstack.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 
 class UserProvider extends ChangeNotifier {
   String uid = '';
@@ -66,6 +64,7 @@ class UserProvider extends ChangeNotifier {
           context,
           MaterialPageRoute(builder: (context) => WelcomePage()),
           (route) => route is WelcomePage);
+      Provider.of<TabProvider>(context, listen: false).resetPageIndex();
     }).catchError((err) {
       showDialog(
           context: context,
@@ -84,5 +83,54 @@ class UserProvider extends ChangeNotifier {
             );
           });
     });
+  }
+}
+
+class TabProvider extends ChangeNotifier {
+  int selectedIndex = 0;
+  PageController pageController = PageController();
+  int todo = 0;
+  int tracker = 0;
+  int community = 0;
+  int comment = 0;
+  int profileUser = 0;
+  int profilePosts = 0;
+
+  void changeTabPage(index) {
+    selectedIndex = index;
+    pageController.jumpToPage(selectedIndex);
+    notifyListeners();
+  }
+
+  void resetPageIndex() {
+    selectedIndex = 0;
+    pageController.jumpToPage(selectedIndex);
+  }
+
+  void rebuildPage(page) {
+    switch (page) {
+      case 'todo':
+        todo++;
+        break;
+      case 'tracker':
+        tracker++;
+        break;
+      case 'community':
+        community++;
+        break;
+      case 'comment':
+        comment++;
+        break;
+      case 'profileUser':
+        profileUser++;
+        break;
+      case 'profilePosts':
+        profilePosts++;
+        break;
+      default:
+        print('Not a valid page');
+    }
+    notifyListeners();
+    print(todo);
   }
 }

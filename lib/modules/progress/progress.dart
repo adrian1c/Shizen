@@ -87,7 +87,7 @@ class ProgressPage extends HookWidget {
                       filterValue: filterValue, searchValue: searchValue),
                 ),
                 KeepAlivePage(
-                  child: TodoTaskProgressList(
+                  child: TrackerProgressList(
                       filterValue: filterValue, searchValue: searchValue),
                 )
               ]),
@@ -109,8 +109,8 @@ class TodoTaskProgressList extends HookWidget {
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).uid;
     final future = useMemoized(
-        () =>
-            Database(uid).getProgressList(filterValue.value, searchValue.value),
+        () => Database(uid)
+            .getTodoProgressList(filterValue.value, searchValue.value),
         [filterValue.value, searchValue.value]);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
@@ -192,7 +192,7 @@ class TodoTaskProgressTile extends StatelessWidget {
                     child: Text(title),
                   ))),
               Text(
-                  'Completed at ${DateFormat("hh:MM a").format(timeCompleted)}')
+                  'Completed at ${DateFormat("hh:mm a").format(timeCompleted)}')
             ],
           ),
           ConstrainedBox(
@@ -240,5 +240,97 @@ class TodoTaskProgressTile extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class TrackerProgressList extends HookWidget {
+  const TrackerProgressList(
+      {Key? key, required this.filterValue, required this.searchValue})
+      : super(key: key);
+
+  final filterValue;
+  final searchValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).uid;
+    final future =
+        useMemoized(() => Database(uid).getTrackerProgressList(), []);
+    final snapshot = useFuture(future);
+    if (snapshot.hasData) {
+      return Container(
+        child: GroupedListView(
+          shrinkWrap: true,
+          elements: snapshot.data,
+          groupBy: (Map element) => element['dateCreatedDay'],
+          groupSeparatorBuilder: (value) => Container(
+            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(color: Colors.blueGrey[600]),
+            child: Text(
+              value.toString(),
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+          itemBuilder: (context, dynamic element) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+              child: TrackerProgressTile(
+                trackerId: element['trackerId'],
+                note: element['note'],
+                timeCompleted: element['dateCreated'],
+              ),
+            );
+          },
+          useStickyGroupSeparators: true,
+          order: GroupedListOrder.DESC,
+        ),
+      );
+    }
+    return SpinKitWanderingCubes(
+      color: Colors.blueGrey,
+      size: 75.0,
+    );
+  }
+}
+
+class TrackerProgressTile extends HookWidget {
+  const TrackerProgressTile(
+      {Key? key,
+      required this.trackerId,
+      required this.note,
+      required this.timeCompleted})
+      : super(key: key);
+
+  final String trackerId;
+  final note;
+  final timeCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).uid;
+    final future =
+        useMemoized(() => Database(uid).getTrackerData(trackerId), []);
+    final snapshot = useFuture(future);
+    if (snapshot.hasData) {
+      final tracker = snapshot.data;
+      print('$tracker nice nice ');
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                'Checked-in at ${DateFormat("hh:mm a").format(timeCompleted)}'),
+            Text(tracker['title']),
+            Text(note)
+          ],
+        ),
+      );
+    }
+    return Text('Loading');
   }
 }

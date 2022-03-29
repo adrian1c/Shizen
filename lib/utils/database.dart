@@ -441,13 +441,18 @@ class Database {
     return userCol.doc(targetUserID).get();
   }
 
-  Future uploadProfilePic(image) async {
+  Future uploadProfilePic(image, {hasPic = false, currPicUrl}) async {
     print("Firing uploadProfilePic");
-
-    var batch = firestore.batch();
 
     String downloadURL;
     FirebaseStorage storage = FirebaseStorage.instance;
+
+    if (hasPic) {
+      Reference currPic = storage.refFromURL(currPicUrl);
+      currPic.delete();
+    }
+    var batch = firestore.batch();
+
     Reference ref = storage.ref().child("image1" + DateTime.now().toString());
     UploadTask uploadTask = ref.putFile(image);
     await uploadTask.whenComplete(() async {
@@ -638,9 +643,15 @@ class Database {
     await newCheckInDoc
         .set({'day': day, 'note': note, 'attachment': attachment}).then(
             (value) async => await userDoc
-                .collection('trackerCheckIn')
-                .doc(newCheckInDoc.id)
-                .set({'day': day, 'note': note, 'attachment': attachment}));
+                    .collection('trackerCheckIn')
+                    .doc(newCheckInDoc.id)
+                    .set({
+                  'dateCreated': DateTime.now(),
+                  'day': day,
+                  'note': note,
+                  'attachment': attachment,
+                  'trackerId': tid
+                }));
     print(newCheckInDoc.id);
   }
 
@@ -650,13 +661,32 @@ class Database {
     await userDoc
         .collection('trackers')
         .doc(tid)
-        .update({'currStreakDate': DateTime.now(), 'checkin': []});
+        .update({'currStreakDate': DateTime.now()}).then((value) => userDoc
+                .collection('trackers')
+                .doc(tid)
+                .collection('checkin')
+                .get()
+                .then((snapshot) {
+              for (DocumentSnapshot ds in snapshot.docs) {
+                ds.reference.delete();
+              }
+            }));
 
     await userDoc
         .collection('trackers')
         .doc(tid)
         .collection('resets')
         .add({'resetDate': DateTime.now(), 'note': note});
+  }
+
+  Future getTrackerData(tid) async {
+    var result = await userDoc
+        .collection('trackers')
+        .doc(tid)
+        .get()
+        .then((value) => value.data());
+
+    return result;
   }
 
   Future getExpandedTrackerData(tid) async {
@@ -694,12 +724,33 @@ class Database {
     return userDoc.collection('trackers').doc(tid).collection('checkin').get();
   }
 
+  Future getTrackerProgressList() async {
+    List<Map> progressList = [];
+
+    await userDoc
+        .collection('trackerCheckIn')
+        .orderBy('dateCreated', descending: false)
+        .get()
+        .then((value) {
+      value.docs.forEach((element) {
+        var currElement = element.data();
+        currElement['dateCreatedDay'] = new DateFormat("dd MMM yy").format(
+            DateTime.parse(
+                (currElement['dateCreated'] as Timestamp).toDate().toString()));
+        currElement['dateCreated'] =
+            (currElement['dateCreated'] as Timestamp).toDate();
+        progressList.add(currElement);
+      });
+    });
+    return progressList;
+  }
+
   //-----------------------------------------------------
   //--------------  PROGRESS LIST  ----------------------
   //-----------------------------------------------------
   //
 
-  Future getProgressList(filter, search) async {
+  Future getTodoProgressList(filter, search) async {
     print("Firing getProgressList");
 
     List<Map> progressList = [];

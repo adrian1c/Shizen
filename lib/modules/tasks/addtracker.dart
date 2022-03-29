@@ -8,11 +8,8 @@ import 'package:shizen_app/widgets/field.dart';
 import 'package:intl/intl.dart';
 
 class AddTrackerTask extends HookWidget {
-  const AddTrackerTask(
-      {Key? key, required this.trackerChanged, this.editParams})
-      : super(key: key);
+  const AddTrackerTask({Key? key, this.editParams}) : super(key: key);
 
-  final trackerChanged;
   final editParams;
 
   @override
@@ -224,7 +221,9 @@ class AddTrackerTask extends HookWidget {
                                                     msg:
                                                         'The changes have been saved!')
                                                 .showSuccessToast();
-                                            trackerChanged.value += 1;
+                                            Provider.of<TabProvider>(context,
+                                                    listen: false)
+                                                .rebuildPage('tracker');
                                             Navigator.pop(context);
                                             Navigator.pop(context);
                                           },
@@ -239,7 +238,8 @@ class AddTrackerTask extends HookWidget {
                               await Database(uid).addTrackerTask(tracker);
                               StyledToast(msg: 'Tracker Created Successfully')
                                   .showSuccessToast();
-                              trackerChanged.value += 1;
+                              Provider.of<TabProvider>(context, listen: false)
+                                  .rebuildPage('tracker');
                               Navigator.of(context).pop();
                             }
                           },

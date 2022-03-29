@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:shizen_app/modules/profile/profile.dart';
+import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/dropdown.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -12,6 +13,8 @@ import 'package:intl/intl.dart';
 import './addnewpost.dart';
 
 class CommunityPage extends HookWidget {
+  CommunityPage({Key? key}) : super(key: key);
+
   final List<String> items = [
     'Friends Only',
     'Everyone',
@@ -95,13 +98,13 @@ class CommunityPage extends HookWidget {
 }
 
 class CommunityPostList extends HookWidget {
-  CommunityPostList(
-      {Key? key,
-      required this.visibilityValue,
-      required this.scrollController,
-      this.hashtag,
-      this.hashtagController})
-      : super(key: key);
+  CommunityPostList({
+    Key? key,
+    required this.visibilityValue,
+    required this.scrollController,
+    this.hashtag,
+    this.hashtagController,
+  }) : super(key: key);
 
   final visibilityValue;
   final hashtag;
@@ -137,13 +140,13 @@ class CommunityPostList extends HookWidget {
 }
 
 class PostListTile extends HookWidget {
-  const PostListTile(
-      {Key? key,
-      required this.postData,
-      this.hashtag,
-      this.hashtagController,
-      this.isProfile = false})
-      : super(key: key);
+  const PostListTile({
+    Key? key,
+    required this.postData,
+    this.hashtag,
+    this.hashtagController,
+    this.isProfile = false,
+  }) : super(key: key);
 
   final postData;
   final hashtag;
@@ -253,101 +256,129 @@ class PostListTile extends HookWidget {
                         padding: const EdgeInsets.all(8.0),
                         child: Transform.scale(
                           scale: 0.9,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                      constraints:
-                                          BoxConstraints(minWidth: 25.w),
-                                      height: 5.h,
-                                      decoration: BoxDecoration(
-                                          color: Colors.amber,
+                          child: InkWell(
+                            onTap: () {
+                              var undoTaskList =
+                                  List.from(postData['attachment']['taskList']);
+                              for (var i = 0; i < undoTaskList.length; i++) {
+                                undoTaskList[i]['status'] = false;
+                              }
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          AddToDoTask(editParams: {
+                                            'id': null,
+                                            'title': postData['attachment']
+                                                ['title'],
+                                            'desc': undoTaskList,
+                                            'recur': [
+                                              false,
+                                              false,
+                                              false,
+                                              false,
+                                              false,
+                                              false,
+                                              false
+                                            ],
+                                            'reminder': null
+                                          }, isEdit: true)));
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                        constraints:
+                                            BoxConstraints(minWidth: 25.w),
+                                        height: 5.h,
+                                        decoration: BoxDecoration(
+                                            color: Colors.amber,
+                                            borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(15),
+                                                topRight: Radius.circular(15))),
+                                        child: Center(
+                                            child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 15.0),
+                                          child: Text(
+                                              postData['attachment']['title']),
+                                        ))),
+                                    Text(postData['attachment']
+                                                ['timeCompleted'] !=
+                                            null
+                                        ? 'Completed at ${DateFormat("hh:MM a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
+                                        : '')
+                                  ],
+                                ),
+                                ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                        minHeight: 5.h, minWidth: 100.w),
+                                    child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber[200],
+                                          border: Border.all(
+                                              color: Colors.amber, width: 5),
                                           borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(15),
-                                              topRight: Radius.circular(15))),
-                                      child: Center(
-                                          child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 15.0),
-                                        child: Text(
-                                            postData['attachment']['title']),
-                                      ))),
-                                  Text(postData['attachment']
-                                              ['timeCompleted'] !=
-                                          null
-                                      ? 'Completed at ${DateFormat("hh:MM a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
-                                      : '')
-                                ],
-                              ),
-                              ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                      minHeight: 5.h, minWidth: 100.w),
-                                  child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber[200],
-                                        border: Border.all(
-                                            color: Colors.amber, width: 5),
-                                        borderRadius: BorderRadius.only(
-                                            bottomLeft: Radius.circular(5),
-                                            bottomRight: Radius.circular(5),
-                                            topRight: Radius.circular(5)),
-                                      ),
-                                      child: ListView.builder(
-                                          physics:
-                                              NeverScrollableScrollPhysics(),
-                                          shrinkWrap: true,
-                                          itemCount: postData['attachment']
-                                                  ['taskList']
-                                              .length,
-                                          itemBuilder: (context, index) {
-                                            return SizedBox(
-                                              height: 5.h,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color:
-                                                        postData['attachment']
-                                                                    ['taskList']
-                                                                [
-                                                                index]['status']
-                                                            ? Colors
-                                                                .lightGreen[400]
-                                                            : null),
-                                                child: Row(
-                                                  children: [
-                                                    Checkbox(
-                                                      shape: CircleBorder(),
-                                                      activeColor: Colors
-                                                          .lightGreen[700],
-                                                      value:
+                                              bottomLeft: Radius.circular(5),
+                                              bottomRight: Radius.circular(5),
+                                              topRight: Radius.circular(5)),
+                                        ),
+                                        child: ListView.builder(
+                                            physics:
+                                                NeverScrollableScrollPhysics(),
+                                            shrinkWrap: true,
+                                            itemCount: postData['attachment']
+                                                    ['taskList']
+                                                .length,
+                                            itemBuilder: (context, index) {
+                                              return SizedBox(
+                                                height: 5.h,
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                      color: postData['attachment']
+                                                                  ['taskList']
+                                                              [index]['status']
+                                                          ? Colors
+                                                              .lightGreen[400]
+                                                          : null),
+                                                  child: Row(
+                                                    children: [
+                                                      Checkbox(
+                                                        shape: CircleBorder(),
+                                                        activeColor: Colors
+                                                            .lightGreen[700],
+                                                        value: postData[
+                                                                    'attachment']
+                                                                ['taskList']
+                                                            [index]['status'],
+                                                        onChanged: (value) {},
+                                                      ),
+                                                      Text(
                                                           postData['attachment']
                                                                   ['taskList']
-                                                              [index]['status'],
-                                                      onChanged: (value) {},
-                                                    ),
-                                                    Text(
-                                                        postData['attachment']
-                                                                ['taskList']
-                                                            [index]['task'],
-                                                        softWrap: false,
-                                                        style: TextStyle(
-                                                            decoration: postData[
-                                                                            'attachment']
-                                                                        [
-                                                                        'taskList'][index]
-                                                                    ['status']
-                                                                ? TextDecoration
-                                                                    .lineThrough
-                                                                : null)),
-                                                  ],
+                                                              [index]['task'],
+                                                          softWrap: false,
+                                                          style: TextStyle(
+                                                              decoration: postData['attachment']
+                                                                              [
+                                                                              'taskList']
+                                                                          [
+                                                                          index]
+                                                                      ['status']
+                                                                  ? TextDecoration
+                                                                      .lineThrough
+                                                                  : null)),
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-                                          }))),
-                            ],
+                                              );
+                                            }))),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -554,9 +585,8 @@ class CommentPage extends HookWidget {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).uid;
-    final isAdded = useState(0);
-    final future =
-        useMemoized(() => Database(uid).getComments(pid), [isAdded.value]);
+    final future = useMemoized(() => Database(uid).getComments(pid),
+        [Provider.of<TabProvider>(context).comment]);
     final snapshot = useFuture(future);
     final commentController = useTextEditingController();
     if (snapshot.hasData) {
@@ -653,7 +683,9 @@ class CommentPage extends HookWidget {
                                             .then((value) {
                                           commentCount.value += 1;
                                         });
-                                        isAdded.value += 1;
+                                        Provider.of<TabProvider>(context,
+                                                listen: false)
+                                            .rebuildPage('comment');
                                       }
                                     },
                                     icon: Icon(Icons.send),

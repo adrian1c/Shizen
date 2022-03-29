@@ -10,8 +10,16 @@ import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(ChangeNotifierProvider<UserProvider>(
-      lazy: false, create: (context) => UserProvider(), child: MyApp()));
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider<UserProvider>(
+        lazy: false,
+        create: (context) => UserProvider(),
+      ),
+      ChangeNotifierProvider(create: (context) => TabProvider())
+    ],
+    child: MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {

@@ -1,15 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:shizen_app/widgets/field.dart';
 import './addtodo.dart';
 import '../../utils/allUtils.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class ToDoTask extends HookWidget {
-  const ToDoTask({Key? key, required this.uid, required this.todoChanged})
-      : super(key: key);
+  const ToDoTask({Key? key, required this.uid}) : super(key: key);
 
   final String uid;
-  final todoChanged;
 
   static DateTime? convertTimestamp(Timestamp? _stamp) {
     if (_stamp != null) {
@@ -21,8 +20,8 @@ class ToDoTask extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final future =
-        useMemoized(() => Database(uid).getToDoTasks(), [todoChanged.value]);
+    final future = useMemoized(() => Database(uid).getToDoTasks(),
+        [Provider.of<TabProvider>(context).todo]);
     final snapshot = useFuture(future);
     return Container(
         child: !snapshot.hasData
@@ -39,7 +38,6 @@ class ToDoTask extends HookWidget {
                           var taskDoc = snapshot.data.docs[index];
 
                           return TodoTaskDisplay(
-                              todoChanged: todoChanged,
                               taskId: taskDoc.id,
                               title: taskDoc['title'],
                               taskList: taskDoc['desc'],
@@ -56,14 +54,12 @@ class ToDoTask extends HookWidget {
 class TodoTaskDisplay extends HookWidget {
   const TodoTaskDisplay(
       {Key? key,
-      required this.todoChanged,
       required this.taskId,
       required this.title,
       required this.taskList,
       required this.recur,
       required this.reminder});
 
-  final ValueNotifier<int> todoChanged;
   final String taskId;
   final String title;
   final taskList;
@@ -76,12 +72,24 @@ class TodoTaskDisplay extends HookWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
       child: InkWell(
+        onLongPress: () => StyledPopup(
+                context: context,
+                title: 'Delete To Do Task',
+                children: [Text('Are you sure you want to delete this task?')],
+                textButton: TextButton(
+                    onPressed: () async {
+                      await Database(uid).deleteToDoTask(taskId);
+                      Provider.of<TabProvider>(context, listen: false)
+                          .rebuildPage('todo');
+                      Navigator.pop(context);
+                    },
+                    child: Text('Delete')))
+            .showPopup(),
         onTap: () {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) =>
-                      AddToDoTask(todoChanged: todoChanged, editParams: {
+                  builder: (context) => AddToDoTask(editParams: {
                         'id': taskId,
                         'title': title,
                         'desc': taskList,
@@ -171,7 +179,9 @@ class TodoTaskDisplay extends HookWidget {
                                           : await Database(uid)
                                               .completeTask(taskId, taskList);
 
-                                      todoChanged.value += 1;
+                                      Provider.of<TabProvider>(context,
+                                              listen: false)
+                                          .rebuildPage('todo');
                                       // StyledSnackbar(
                                       //         message:
                                       //             'Congratulations! I\'m proud of you')

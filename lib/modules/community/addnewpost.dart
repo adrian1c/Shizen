@@ -272,7 +272,11 @@ class AddNewPost extends HookWidget {
                           await Database(uid)
                               .addNewPost(newPost, visibilityValue.value,
                                   attachmentType.value)
-                              .then((value) => Navigator.of(context).pop());
+                              .then((value) {
+                            Provider.of<TabProvider>(context, listen: false)
+                                .rebuildPage('profilePosts');
+                            Navigator.of(context).pop();
+                          });
                         },
                         isValid: isValid,
                       ),

@@ -82,12 +82,9 @@ class TaskPage extends HookWidget {
                         KeepAlivePage(
                           child: ToDoTask(
                             uid: uid,
-                            todoChanged: todoChanged,
                           ),
                         ),
-                        KeepAlivePage(
-                            child: TrackerTask(
-                                uid: uid, trackerChanged: trackerChanged)),
+                        KeepAlivePage(child: TrackerTask(uid: uid)),
                       ]),
                 ),
               ],
@@ -100,9 +97,8 @@ class TaskPage extends HookWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) => isSwitching.value
-                              ? AddToDoTask(todoChanged: todoChanged)
-                              : AddTrackerTask(
-                                  trackerChanged: trackerChanged)));
+                              ? AddToDoTask()
+                              : AddTrackerTask()));
                 },
                 child: ValueListenableBuilder(
                     valueListenable: isSwitching,
