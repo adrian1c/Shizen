@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:shizen_app/modules/messaging/instantmessaging.dart';
 import 'package:shizen_app/modules/profile/profile.dart';
 import 'package:shizen_app/widgets/field.dart';
 
@@ -30,7 +31,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
+    String uid = Provider.of<UserProvider>(context).user.uid;
     return SafeArea(
         minimum: EdgeInsets.fromLTRB(20, 20, 20, 0),
         child: Column(children: [
@@ -39,7 +40,12 @@ class _FriendsPageState extends State<FriendsPage> {
             children: [
               searchField(uid, context),
               IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => InstantMessagingPage()));
+                  },
                   icon: Icon(
                     Icons.message_outlined,
                     color: Colors.blueGrey[700],
@@ -227,7 +233,6 @@ class _FriendsPageState extends State<FriendsPage> {
               children: [
                 IconButton(
                   onPressed: () async {
-                    print("Decline");
                     await Database(uid)
                         .declineFriendReq(itemList[index].id)
                         .then((value) =>
@@ -237,13 +242,11 @@ class _FriendsPageState extends State<FriendsPage> {
                 ),
                 IconButton(
                   onPressed: () async {
-                    print("Accept");
                     await Database(uid).acceptFriendReq(itemList[index].id);
                     setState(() {
                       itemList.removeAt(index);
                       friendsList = friendsList;
                     });
-                    print(friendsList);
                   },
                   icon: Icon(Icons.check),
                 ),
@@ -333,12 +336,10 @@ class _FriendsPageState extends State<FriendsPage> {
                           child: Text("View Profile")),
                       TextButton(
                           onPressed: () async {
-                            print("Remove");
                             await Database(uid)
                                 .declineFriendReq(itemList[index].id)
                                 .then((value) =>
                                     setState(() => itemList.removeAt(index)));
-                            print(itemList);
 
                             Navigator.pop(context);
                           },

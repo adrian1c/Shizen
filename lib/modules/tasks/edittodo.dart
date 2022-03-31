@@ -45,7 +45,7 @@ class EditToDoTask extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final _formKey = GlobalKey<FormState>();
-    String uid = Provider.of<UserProvider>(context).uid;
+    String uid = Provider.of<UserProvider>(context).user.uid;
     final tid = todoTask.id;
     final TextEditingController titleController =
         useTextEditingController(text: todoTask['title']);

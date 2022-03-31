@@ -29,8 +29,17 @@ class TrackerTask extends HookWidget {
                     physics: BouncingScrollPhysics(),
                     itemCount: snapshot.data.docs.length,
                     itemBuilder: (context, index) {
-                      return TrackerTile(
-                          uid: uid, task: snapshot.data.docs[index]);
+                      if (index == 0) {
+                        return TrackerTile(
+                            uid: uid, task: snapshot.data.docs[index]);
+                      }
+                      return Column(
+                        children: [
+                          Divider(),
+                          TrackerTile(
+                              uid: uid, task: snapshot.data.docs[index]),
+                        ],
+                      );
                     }))
             : Center(
                 child: Text(
@@ -134,7 +143,7 @@ class TrackerTile extends HookWidget {
     final checkInController = useTextEditingController();
     final isExpanded = useState(false);
     final noteController = useTextEditingController();
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final future = useMemoized(
         () => Database(uid).getCheckInButtonData(task.id),
         [Provider.of<TabProvider>(context).tracker]);
@@ -235,12 +244,16 @@ class TrackerTile extends HookWidget {
                             ],
                             textButton: TextButton(
                               onPressed: () async {
-                                await Database(uid).deleteTrackerTask(task.id);
-                                Navigator.pop(context);
-                                StyledToast(msg: 'Tracker deleted')
-                                    .showDeletedToast();
+                                await LoaderWithToast(
+                                        context: context,
+                                        api: Database(uid)
+                                            .deleteTrackerTask(task.id),
+                                        msg: 'Tracker deleted',
+                                        isSuccess: false)
+                                    .show();
                                 Provider.of<TabProvider>(context, listen: false)
                                     .rebuildPage('tracker');
+                                Navigator.pop(context);
                               },
                               child: Text('Delete'),
                             )).showPopup();
@@ -266,13 +279,14 @@ class TrackerTile extends HookWidget {
                           Row(
                             children: [
                               Text(
-                                  'Day ${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}'),
-                              Icon(Icons.brush)
+                                  '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              Icon(Icons.park, color: Colors.lightGreen[700])
                             ],
                           )
                         ],
                       ),
-                      Divider(),
                       Divider(),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -417,9 +431,34 @@ class ExpandedTracker extends HookWidget {
 
   final task;
 
+  Widget dividerLabel(msg) {
+    return Row(children: <Widget>[
+      Expanded(
+        child: new Container(
+            margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+            child: Divider(
+              height: 4.h,
+              thickness: 3,
+            )),
+      ),
+      Text(
+        msg,
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      Expanded(
+        child: new Container(
+            margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+            child: Divider(
+              height: 4.h,
+              thickness: 3,
+            )),
+      ),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final future = useMemoized(
         () => Database(uid).getExpandedTrackerData(task.id),
         [Provider.of<TabProvider>(context).tracker]);
@@ -429,55 +468,50 @@ class ExpandedTracker extends HookWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Divider(),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Personal Note',
-                textAlign: TextAlign.justify,
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            Divider(),
+            dividerLabel('PERSONAL NOTE'),
             Text(
               task['note'],
+              textAlign: TextAlign.justify,
             )
           ]),
-          Divider(),
-          Divider(),
+          Divider(color: Colors.transparent, height: 3.h),
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text('Start Date', style: TextStyle(fontWeight: FontWeight.bold)),
-              Divider(),
+              dividerLabel('START DATE'),
               Text(
-                  '${DateFormat('dd MMM yy hh:mm a').format((task['startDate'] as Timestamp).toDate())}'),
+                '${DateFormat('dd MMM yy\t\t\t\t\t\thh:mm a').format((task['startDate'] as Timestamp).toDate())}',
+              ),
             ],
           ),
-          Divider(),
-          Divider(),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Resets', style: TextStyle(fontWeight: FontWeight.bold)),
-            Divider(),
+          Divider(color: Colors.transparent, height: 3.h),
+          Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            dividerLabel('RESETS'),
             snapshot.hasData
-                ? ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: snapshot.data['resets'].length,
-                    itemBuilder: (context, index) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                '${DateFormat('dd MMM yy').format((snapshot.data['resets'][index]['resetDate'] as Timestamp).toDate())}'),
-                            Text(snapshot.data['resets'][index]['note'] != ''
-                                ? '${snapshot.data['resets'][index]['note']}'
-                                : '-')
-                          ],
-                        ))
+                ? snapshot.data['resets'].length > 0
+                    ? ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: snapshot.data['resets'].length,
+                        itemBuilder: (context, index) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    '${DateFormat('dd MMM yy').format((snapshot.data['resets'][index]['resetDate'] as Timestamp).toDate())}'),
+                                Text(snapshot.data['resets'][index]['note'] !=
+                                        ''
+                                    ? '${snapshot.data['resets'][index]['note']}'
+                                    : '-')
+                              ],
+                            ))
+                    : Text('You have no resets')
                 : CircularProgressIndicator(),
           ]),
-          Divider(),
-          Divider(),
+          Divider(color: Colors.transparent, height: 3.h),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Check-in', style: TextStyle(fontWeight: FontWeight.bold)),
-              Divider(),
+              dividerLabel('CHECK-IN'),
               snapshot.hasData
                   ? CheckInList(
                       checkinList: snapshot.data['checkin'], task: task)
@@ -510,8 +544,7 @@ class CheckInList extends HookWidget {
         'note': checkInData[i]['note']
       };
     }
-
-    return daysList;
+    return daysList.reversed.toList();
   }
 
   IndicatorStyle indicatorCheckedIn(timeline) {
@@ -548,14 +581,13 @@ class CheckInList extends HookWidget {
     final timelineData = generateDays(checkinList);
     return ConstrainedBox(
       constraints:
-          BoxConstraints(minWidth: 100.w, minHeight: 10.h, maxHeight: 30.h),
+          BoxConstraints(minWidth: 100.w, minHeight: 10.h, maxHeight: 20.h),
       child: ShaderMask(
         shaderCallback: (Rect bounds) {
           return LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: <Color>[
-              Colors.red,
               Colors.transparent,
               Colors.transparent,
               Colors.transparent,
@@ -569,17 +601,16 @@ class CheckInList extends HookWidget {
         child: ListView.builder(
             physics: BouncingScrollPhysics(),
             shrinkWrap: true,
-            reverse: true,
             itemCount: timelineData.length,
             itemBuilder: (context, index) {
               final timeline = timelineData[index];
               return GestureDetector(
                 onTap: timeline != null ? () {} : () {},
                 child: TimelineTile(
-                  isLast: index == 0 ? true : false,
-                  isFirst: index == timelineData.length - 1 ? true : false,
+                  isFirst: index == 0 ? true : false,
+                  isLast: index == timelineData.length - 1 ? true : false,
                   alignment: TimelineAlign.manual,
-                  lineXY: 0.25,
+                  lineXY: 0.2,
                   indicatorStyle: indicatorCheckedIn(timeline),
                   endChild: Container(
                       alignment: Alignment.topLeft,
@@ -595,7 +626,7 @@ class CheckInList extends HookWidget {
                       padding: const EdgeInsets.only(top: 3),
                       constraints: BoxConstraints(minHeight: 40),
                       color: Colors.transparent,
-                      child: Text('${index + 1}')),
+                      child: Text('${timelineData.length - index}')),
                 ),
               );
             }),

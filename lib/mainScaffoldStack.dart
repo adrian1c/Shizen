@@ -1,5 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:provider/provider.dart';
+import 'package:shizen_app/models/user.dart';
+import 'package:shizen_app/modules/community/addnewpost.dart';
+import 'package:shizen_app/modules/tasks/addtodo.dart';
+import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import './modules/tasks/tasks.dart';
@@ -9,6 +15,7 @@ import './modules/progress/progress.dart';
 import './modules/profile/profile.dart';
 import './models/provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:floating_action_bubble/floating_action_bubble.dart';
 
 class MainScaffoldStack extends HookWidget {
   final List<GButton> screens = [
@@ -44,13 +51,33 @@ class MainScaffoldStack extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ValueNotifier<bool> isSwitching = useState(true);
     return Scaffold(
         appBar: AppBar(
           title: Text(title[
               Provider.of<TabProvider>(context, listen: false).selectedIndex]),
           centerTitle: true,
+          actions:
+              Provider.of<TabProvider>(context, listen: false).selectedIndex ==
+                      2
+                  ? [
+                      TextButton(
+                          onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AddNewPost())),
+                          child: Text('POST',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)))
+                    ]
+                  : null,
         ),
         drawer: NavDrawer(),
+        floatingActionButton:
+            Provider.of<TabProvider>(context, listen: false).selectedIndex == 0
+                ? FABubble()
+                : null,
         bottomNavigationBar: GNav(
             backgroundColor: Colors.grey[400]!,
             rippleColor: Colors.grey[300]!,
@@ -87,7 +114,7 @@ class MainScaffoldStack extends HookWidget {
                   .pageController,
               physics: NeverScrollableScrollPhysics(),
               children: <Widget>[
-                KeepAlivePage(child: TaskPage()),
+                KeepAlivePage(child: TaskPage(isSwitching: isSwitching)),
                 KeepAlivePage(child: FriendsPage()),
                 KeepAlivePage(child: CommunityPage()),
                 KeepAlivePage(child: ProgressPage()),
@@ -96,34 +123,126 @@ class MainScaffoldStack extends HookWidget {
         ));
   }
 }
+// child: Icon(Icons.add),
+// shape: RoundedRectangleBorder(
+//     borderRadius: BorderRadius.all(Radius.circular(10.0))),
+// backgroundColor: Color(0xff233141),
+// onPressed: () {
+
+// },
+
+class FABubble extends StatefulWidget {
+  FABubble({Key? key}) : super(key: key);
+
+  @override
+  _FABubbleState createState() => _FABubbleState();
+}
+
+class _FABubbleState extends State<FABubble>
+    with SingleTickerProviderStateMixin {
+  late Animation<double> _animation;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 260),
+    );
+
+    final curvedAnimation =
+        CurvedAnimation(curve: Curves.easeInOut, parent: _animationController);
+    _animation = Tween<double>(begin: 0, end: 1).animate(curvedAnimation);
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionBubble(
+      // Menu items
+      items: <Bubble>[
+        // Floating action menu item
+        Bubble(
+          title: "Add To Do Task",
+          iconColor: Colors.white,
+          bubbleColor: Colors.blue,
+          icon: Icons.people,
+          titleStyle: TextStyle(fontSize: 16, color: Colors.white),
+          onPress: () async {
+            _animationController.reverse();
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => AddToDoTask()));
+          },
+        ),
+        //Floating action menu item
+        Bubble(
+          title: "Add Daily Tracker",
+          iconColor: Colors.white,
+          bubbleColor: Colors.blue,
+          icon: Icons.home,
+          titleStyle: TextStyle(fontSize: 16, color: Colors.white),
+          onPress: () {
+            _animationController.reverse();
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => AddTrackerTask()));
+          },
+        ),
+      ],
+
+      // animation controller
+      animation: _animation,
+
+      // On pressed change animation state
+      onPress: () => _animationController.isCompleted
+          ? _animationController.reverse()
+          : _animationController.forward(),
+
+      // Floating Action button Icon color
+      iconColor: Colors.blue,
+
+      // Flaoting Action button Icon
+      iconData: Icons.add,
+      backGroundColor: Colors.white,
+    );
+  }
+}
 
 class NavDrawer extends HookWidget {
   const NavDrawer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
-    final future = useMemoized(() => Database(uid).getCurrentUserData(), []);
-    final snapshot = useFuture(future);
+    final UserModel user = Provider.of<UserProvider>(context).user;
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
           UserAccountsDrawerHeader(
-            accountEmail: !snapshot.hasData
-                ? CircularProgressIndicator()
-                : Text(snapshot.data!['email'],
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w300,
-                        fontSize: 10)),
-            accountName: !snapshot.hasData
-                ? CircularProgressIndicator()
-                : Text(snapshot.data!['name'],
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.normal,
-                        fontSize: 20)),
+            accountEmail: Text(user.email,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w300,
+                    fontSize: 10)),
+            accountName: Text(user.name,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal,
+                    fontSize: 20)),
+            currentAccountPicture: InkWell(
+              child: CircleAvatar(
+                foregroundImage: user.image == ''
+                    ? Images.defaultPic.image
+                    : CachedNetworkImageProvider(user.image),
+                backgroundColor: Colors.grey,
+                radius: 3.h,
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Provider.of<TabProvider>(context, listen: false)
+                    .changeTabPage(4);
+              },
+            ),
             decoration: BoxDecoration(
               color: Color(0xff233141),
             ),

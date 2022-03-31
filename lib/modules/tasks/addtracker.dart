@@ -14,7 +14,7 @@ class AddTrackerTask extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final titleController = useTextEditingController(
         text: editParams != null ? editParams['title'] : '');
     final noteController = useTextEditingController(
@@ -29,7 +29,8 @@ class AddTrackerTask extends HookWidget {
         useState(editParams != null ? editParams['milestones'] : []);
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add Daily Tracker"),
+        title: Text(
+            editParams != null ? 'Edit Daily Tracker' : 'Add Daily Tracker'),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -215,12 +216,17 @@ class AddTrackerTask extends HookWidget {
                                                 noteController.text,
                                                 milestones.value,
                                                 startDate.value);
-                                            await Database(uid).editTrackerTask(
-                                                tracker, editParams['taskId']);
-                                            StyledToast(
+                                            await LoaderWithToast(
+                                                    context: context,
+                                                    api: Database(uid)
+                                                        .editTrackerTask(
+                                                            tracker,
+                                                            editParams[
+                                                                'taskId']),
                                                     msg:
-                                                        'The changes have been saved!')
-                                                .showSuccessToast();
+                                                        'The changes have been saved!',
+                                                    isSuccess: true)
+                                                .show();
                                             Provider.of<TabProvider>(context,
                                                     listen: false)
                                                 .rebuildPage('tracker');
@@ -235,9 +241,13 @@ class AddTrackerTask extends HookWidget {
                                   noteController.text,
                                   milestones.value,
                                   startDate.value);
-                              await Database(uid).addTrackerTask(tracker);
-                              StyledToast(msg: 'Tracker Created Successfully')
-                                  .showSuccessToast();
+                              await LoaderWithToast(
+                                      context: context,
+                                      api:
+                                          Database(uid).addTrackerTask(tracker),
+                                      msg: 'Tracker Created Successfully',
+                                      isSuccess: true)
+                                  .show();
                               Provider.of<TabProvider>(context, listen: false)
                                   .rebuildPage('tracker');
                               Navigator.of(context).pop();
@@ -274,13 +284,11 @@ class MilestoneList extends HookWidget {
 
   static bool checkDuplicate(List milestoneList, value) {
     var isValid = true;
-    print(milestoneList);
     for (var i = 0; i < milestoneList.length; i++) {
       if (milestoneList[i]['day'].toString() == value) {
         isValid = false;
       }
     }
-    print(isValid);
     return isValid;
   }
 

@@ -1,12 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:shizen_app/utils/allUtils.dart';
+import 'package:shizen_app/widgets/loaderOverlay.dart';
 
 import './modules/signup/signup.dart';
 import './modules/login/login.dart';
 import './mainScaffoldStack.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:double_back_to_close_app/double_back_to_close_app.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +46,10 @@ class MyApp extends StatelessWidget {
                   title: 'Shizen',
                   theme: CustomTheme.lightTheme,
                   home: Provider.of<UserProvider>(context).checkLoggedIn()
-                      ? MainScaffoldStack()
+                      ? LoaderOverlay(
+                          useDefaultLoading: false,
+                          overlayWidget: Loader(),
+                          child: MainScaffoldStack())
                       : WelcomePage(),
                 );
               },

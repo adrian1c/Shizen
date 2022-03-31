@@ -1,20 +1,31 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:shizen_app/main.dart';
 import 'package:shizen_app/mainscaffoldstack.dart';
+import 'package:shizen_app/models/user.dart';
 
 class UserProvider extends ChangeNotifier {
-  String uid = '';
+  UserModel user = UserModel('', '', '', '', '');
 
   bool checkLoggedIn() {
-    var user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      print("Logged in");
-      uid = user.uid;
+    var currUser = FirebaseAuth.instance.currentUser;
+    if (currUser != null) {
+      user.uid = currUser.uid;
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(this.user.uid)
+          .get()
+          .then((value) {
+        var data = value.data();
+        user.name = data!['name'];
+        user.email = data['email'];
+        user.age = data['age'];
+        user.image = data['image'];
+      });
       return true;
     }
-    print("Not logged in");
     return false;
   }
 
@@ -27,9 +38,19 @@ class UserProvider extends ChangeNotifier {
 
     await firebaseAuth
         .signInWithEmailAndPassword(email: email, password: password)
-        .then((result) {
-      this.uid = result.user!.uid;
-      print("Nice ${this.uid}");
+        .then((result) async {
+      user.uid = result.user!.uid;
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(this.user.uid)
+          .get()
+          .then((value) {
+        var data = value.data();
+        user.name = data!['name'];
+        user.email = data['email'];
+        user.age = data['age'];
+        user.image = data['image'];
+      });
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -59,7 +80,7 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> signOut(context) async {
     await FirebaseAuth.instance.signOut().then((result) {
-      this.uid = '';
+      user = UserModel('', '', '', '', '');
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => WelcomePage()),
@@ -131,6 +152,5 @@ class TabProvider extends ChangeNotifier {
         print('Not a valid page');
     }
     notifyListeners();
-    print(todo);
   }
 }

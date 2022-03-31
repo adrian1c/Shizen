@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 
 class StyledContainerField extends StatelessWidget {
   const StyledContainerField(
@@ -147,7 +148,7 @@ class StyledToast {
     Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.TOP,
+        gravity: ToastGravity.CENTER,
         timeInSecForIosWeb: 1,
         backgroundColor: Colors.green[400],
         textColor: Colors.white,
@@ -158,10 +159,39 @@ class StyledToast {
     Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.TOP,
+        gravity: ToastGravity.CENTER,
         timeInSecForIosWeb: 1,
         backgroundColor: Colors.red[400],
         textColor: Colors.white,
         fontSize: 16.0);
+  }
+}
+
+class LoaderWithToast {
+  const LoaderWithToast(
+      {Key? key,
+      required this.context,
+      required this.api,
+      required this.msg,
+      required this.isSuccess});
+
+  final BuildContext context;
+  final Future api;
+  final String msg;
+  final bool isSuccess;
+
+  show() async {
+    context.loaderOverlay.show();
+    await api.then((value) {
+      context.loaderOverlay.hide();
+      if (isSuccess) {
+        StyledToast(msg: msg).showSuccessToast();
+      } else {
+        StyledToast(msg: msg).showDeletedToast();
+      }
+    }).onError((error, stackTrace) {
+      context.loaderOverlay.hide();
+      StyledToast(msg: 'Oops, something went wrong').showDeletedToast();
+    });
   }
 }

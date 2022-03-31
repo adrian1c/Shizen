@@ -18,7 +18,7 @@ class ProfilePage extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final String uid =
-        viewId != null ? viewId! : Provider.of<UserProvider>(context).uid;
+        viewId != null ? viewId! : Provider.of<UserProvider>(context).user.uid;
     final TextEditingController nameController = useTextEditingController();
     final futureUserProfileData = useMemoized(
         () => Database(uid).getCurrentUserData(),
@@ -30,6 +30,14 @@ class ProfilePage extends HookWidget {
             : Database(uid).getUserPostsOwnProfile(uid),
         [Provider.of<TabProvider>(context).profilePosts]);
     final snapshotUserPosts = useFuture(futureUserPosts);
+    final postScrollController = useScrollController();
+    postScrollController.addListener(() {
+      if (postScrollController.offset >=
+              postScrollController.position.maxScrollExtent &&
+          !postScrollController.position.outOfRange) {
+        print("at the end of list");
+      }
+    });
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -86,14 +94,36 @@ class ProfilePage extends HookWidget {
                         ],
                       ),
                     )),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Align(alignment: Alignment.topLeft, child: Text('Posts')),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Row(children: <Widget>[
+              Expanded(
+                child: new Container(
+                    margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+                    child: Divider(
+                      color: Colors.black,
+                      height: 5.h,
+                    )),
+              ),
+              Text(
+                "POSTS",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Expanded(
+                child: new Container(
+                    margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+                    child: Divider(
+                      color: Colors.black,
+                      height: 5.h,
+                    )),
+              ),
+            ]),
           ),
           snapshotUserPosts.hasData
               ? snapshotUserPosts.data!.length > 0
                   ? ListView.builder(
                       physics: BouncingScrollPhysics(),
+                      controller: postScrollController,
                       shrinkWrap: true,
                       itemCount: snapshotUserPosts.data!.length,
                       itemBuilder: (context, index) {
@@ -209,19 +239,20 @@ class UserProfileData extends StatelessWidget {
                                       onPressed: () async {
                                         if (_form.currentState!.validate()) {
                                           var newName = nameController.text;
-                                          Navigator.pop(context);
-                                          await Database(uid)
-                                              .editUserName(newName);
+                                          await LoaderWithToast(
+                                                  context: context,
+                                                  api: Database(uid)
+                                                      .editUserName(newName),
+                                                  msg: 'New name who dis',
+                                                  isSuccess: true)
+                                              .show();
                                           Provider.of<TabProvider>(context,
                                                   listen: false)
                                               .rebuildPage('profileUser');
                                           Provider.of<TabProvider>(context,
                                                   listen: false)
                                               .rebuildPage('profilePosts');
-                                          // StyledSnackbar(
-                                          //         message:
-                                          //             'Your display name has been changed!')
-                                          //     .showSuccess();
+                                          Navigator.pop(context);
                                         }
                                       },
                                       child: Text('Save')))
@@ -263,7 +294,8 @@ class UserProfileData extends StatelessWidget {
             lockAspectRatio: false),
         iosUiSettings: IOSUiSettings(
           title: 'Crop Image',
-        ));
+        ),
+        compressQuality: 100);
     if (croppedFile != null) {
       imageFile = croppedFile;
     }
@@ -290,12 +322,23 @@ class UserProfileData extends StatelessWidget {
                         builder: (context) {
                           return AlertDialog(
                             title: Text("Upload Profile Picture"),
-                            content: Image(image: FileImage(image)),
+                            content: CircleAvatar(
+                              foregroundImage: FileImage(image),
+                              backgroundColor: Colors.grey,
+                              radius: 50.w,
+                            ),
                             actions: [
                               TextButton(
                                   onPressed: () async {
-                                    await Database(uid).uploadProfilePic(image,
-                                        hasPic: true, currPicUrl: currPicUrl);
+                                    await LoaderWithToast(
+                                            context: context,
+                                            api: Database(uid).uploadProfilePic(
+                                                image,
+                                                hasPic: true,
+                                                currPicUrl: currPicUrl),
+                                            msg: 'What a glowup',
+                                            isSuccess: true)
+                                        .show();
                                     Provider.of<TabProvider>(context,
                                             listen: false)
                                         .rebuildPage('profileUser');
@@ -328,7 +371,12 @@ class UserProfileData extends StatelessWidget {
                           ],
                           textButton: TextButton(
                               onPressed: () async {
-                                await Database(uid).removeProfilePic();
+                                await LoaderWithToast(
+                                        context: context,
+                                        api: Database(uid).removeProfilePic(),
+                                        msg: 'The world is less beautiful now',
+                                        isSuccess: true)
+                                    .show();
                                 Provider.of<TabProvider>(context, listen: false)
                                     .rebuildPage('profileUser');
                                 Provider.of<TabProvider>(context, listen: false)
@@ -360,7 +408,13 @@ class UserProfileData extends StatelessWidget {
                             actions: [
                               TextButton(
                                   onPressed: () async {
-                                    await Database(uid).uploadProfilePic(image);
+                                    await LoaderWithToast(
+                                            context: context,
+                                            api: Database(uid)
+                                                .uploadProfilePic(image),
+                                            msg: '*Inserts cheesy pickup line*',
+                                            isSuccess: true)
+                                        .show();
                                     Provider.of<TabProvider>(context,
                                             listen: false)
                                         .rebuildPage('profileUser');

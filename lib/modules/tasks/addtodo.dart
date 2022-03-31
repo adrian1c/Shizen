@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:shizen_app/widgets/field.dart';
 
 class AddToDoTask extends HookWidget {
-  const AddToDoTask({Key? key, this.editParams, this.isEdit}) : super(key: key);
+  const AddToDoTask({Key? key, this.editParams, this.isEdit = false})
+      : super(key: key);
 
   final editParams;
   final isEdit;
@@ -19,7 +20,7 @@ class AddToDoTask extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
+    String uid = Provider.of<UserProvider>(context).user.uid;
 
     final TextEditingController titleController = useTextEditingController();
     final TextEditingController taskController = useTextEditingController();
@@ -40,7 +41,7 @@ class AddToDoTask extends HookWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit == null ? "Edit Task" : "Add Task"),
+        title: Text(isEdit ? "Edit Task" : "Add Task"),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -74,10 +75,21 @@ class AddToDoTask extends HookWidget {
                               taskList.value,
                               recurValue.value,
                               reminderValue.value);
-                          isEdit == null
-                              ? await Database(uid)
-                                  .editToDoTask(editParams['id'], newTask)
-                              : await Database(uid).addToDoTask(newTask);
+                          isEdit
+                              ? await LoaderWithToast(
+                                      context: context,
+                                      api: Database(uid).editToDoTask(
+                                          editParams['id'], newTask),
+                                      msg: 'Success',
+                                      isSuccess: true)
+                                  .show()
+                              : await LoaderWithToast(
+                                      context: context,
+                                      api: Database(uid).addToDoTask(newTask),
+                                      msg: 'Success',
+                                      isSuccess: true)
+                                  .show();
+
                           Provider.of<TabProvider>(context, listen: false)
                               .rebuildPage('todo');
                           Provider.of<TabProvider>(context, listen: false)
@@ -86,7 +98,7 @@ class AddToDoTask extends HookWidget {
                         }
                       },
                       isValid: isValid,
-                      buttonLabel: isEdit == null ? 'Save' : 'Create',
+                      buttonLabel: isEdit ? 'Save' : 'Create',
                     ),
                     const CancelButton(),
                   ],

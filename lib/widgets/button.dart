@@ -5,7 +5,6 @@ class CancelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Built cancelbutton");
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         primary: Color(0xffF24C4C),
@@ -34,7 +33,6 @@ class CreateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Built CreateButton");
     return ValueListenableBuilder(
         valueListenable: isValid,
         builder: (context, data, _) {
@@ -45,11 +43,7 @@ class CreateButton extends StatelessWidget {
                   borderRadius: BorderRadius.all(Radius.circular(10))),
               minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
             ),
-            onPressed: data != false
-                ? onPressed
-                : () {
-                    print("Not valid");
-                  },
+            onPressed: data != false ? onPressed : () {},
             child: Text(buttonLabel != null ? buttonLabel! : "Create",
                 style: Theme.of(context).textTheme.bodyText1),
           );

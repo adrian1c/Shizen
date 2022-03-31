@@ -6,7 +6,6 @@ class ToDoTaskModel {
   List<bool> recur = [false, false, false, false, false, false, false];
   DateTime? reminder;
   bool allComplete = false;
-  List? descEdit;
 
   ToDoTaskModel(this.title, this.desc, this.recur, this.reminder);
 

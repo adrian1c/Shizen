@@ -68,7 +68,7 @@ class TodoTaskDisplay extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
+    String uid = Provider.of<UserProvider>(context).user.uid;
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
       child: InkWell(
@@ -78,7 +78,12 @@ class TodoTaskDisplay extends HookWidget {
                 children: [Text('Are you sure you want to delete this task?')],
                 textButton: TextButton(
                     onPressed: () async {
-                      await Database(uid).deleteToDoTask(taskId);
+                      await LoaderWithToast(
+                              context: context,
+                              api: Database(uid).deleteToDoTask(taskId),
+                              msg: 'Task Deleted',
+                              isSuccess: false)
+                          .show();
                       Provider.of<TabProvider>(context, listen: false)
                           .rebuildPage('todo');
                       Navigator.pop(context);
@@ -95,7 +100,7 @@ class TodoTaskDisplay extends HookWidget {
                         'desc': taskList,
                         'recur': recur,
                         'reminder': reminder
-                      })));
+                      }, isEdit: true)));
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,11 +179,24 @@ class TodoTaskDisplay extends HookWidget {
                                         }
                                       }
                                       allComplete
-                                          ? await Database(uid)
-                                              .completeTaskAll(taskId, taskList)
-                                          : await Database(uid)
-                                              .completeTask(taskId, taskList);
-
+                                          ? await LoaderWithToast(
+                                                  context: context,
+                                                  api: Database(uid)
+                                                      .completeTaskAll(
+                                                          taskId, taskList),
+                                                  msg:
+                                                      'Congratulations! I\'m proud of you',
+                                                  isSuccess: true)
+                                              .show()
+                                          : await LoaderWithToast(
+                                                  context: context,
+                                                  api: Database(uid)
+                                                      .completeTask(
+                                                          taskId, taskList),
+                                                  msg:
+                                                      'Congratulations! I\'m proud of you',
+                                                  isSuccess: true)
+                                              .show();
                                       Provider.of<TabProvider>(context,
                                               listen: false)
                                           .rebuildPage('todo');

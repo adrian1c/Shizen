@@ -9,6 +9,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shizen_app/widgets/field.dart';
 import 'package:shizen_app/utils/dateTimeAgo.dart';
 import 'package:intl/intl.dart';
+import 'package:paginate_firestore/paginate_firestore.dart';
 
 import './addnewpost.dart';
 
@@ -23,9 +24,9 @@ class CommunityPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
+    String uid = Provider.of<UserProvider>(context).user.uid;
     final hashtagController = useTextEditingController();
-    final visibilityValue = useState('Friends Only');
+    final visibilityValue = useState('Everyone');
     final hashtagValue = useState('');
     final isFocus = useFocusNode();
     isFocus.addListener(() {
@@ -33,7 +34,6 @@ class CommunityPage extends HookWidget {
         hashtagValue.value = hashtagController.text;
       }
     });
-    final scrollController = useScrollController();
 
     return Stack(
         fit: StackFit.expand,
@@ -63,10 +63,10 @@ class CommunityPage extends HookWidget {
                               visibilityValue.value = value;
                             }),
                         HashtagFilter(
-                            hashtagController: hashtagController,
-                            hashtagValue: hashtagValue,
-                            isFocus: isFocus,
-                            scrollController: scrollController),
+                          hashtagController: hashtagController,
+                          hashtagValue: hashtagValue,
+                          isFocus: isFocus,
+                        ),
                       ],
                     ),
                   ),
@@ -78,20 +78,9 @@ class CommunityPage extends HookWidget {
                   visibilityValue: visibilityValue,
                   hashtag: hashtagValue,
                   hashtagController: hashtagController,
-                  scrollController: scrollController,
                 );
               }, childCount: 1))
             ],
-          ),
-          Positioned(
-            bottom: 0,
-            child: ElevatedButton(
-              child: Text("New Post"),
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => AddNewPost()));
-              },
-            ),
           ),
         ]);
   }
@@ -101,7 +90,6 @@ class CommunityPostList extends HookWidget {
   CommunityPostList({
     Key? key,
     required this.visibilityValue,
-    required this.scrollController,
     this.hashtag,
     this.hashtagController,
   }) : super(key: key);
@@ -109,11 +97,10 @@ class CommunityPostList extends HookWidget {
   final visibilityValue;
   final hashtag;
   final hashtagController;
-  final scrollController;
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final future = useMemoized(
         () => Database(uid)
             .getCommunityPost(visibilityValue.value, hashtag.value),
@@ -123,7 +110,6 @@ class CommunityPostList extends HookWidget {
       return Container(
           child: ListView.builder(
               physics: BouncingScrollPhysics(),
-              controller: scrollController,
               shrinkWrap: true,
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
@@ -155,7 +141,7 @@ class PostListTile extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final commentController = useTextEditingController();
     final commentCount = useState(postData['commentCount']);
     return Padding(
@@ -258,10 +244,17 @@ class PostListTile extends HookWidget {
                           scale: 0.9,
                           child: InkWell(
                             onTap: () {
-                              var undoTaskList =
-                                  List.from(postData['attachment']['taskList']);
-                              for (var i = 0; i < undoTaskList.length; i++) {
-                                undoTaskList[i]['status'] = false;
+                              List task = [];
+
+                              for (var i = 0;
+                                  i < postData['attachment']['taskList'].length;
+                                  i++) {
+                                var tempMap = {
+                                  'task': postData['attachment']['taskList'][i]
+                                      ['task'],
+                                  'status': false
+                                };
+                                task.add(tempMap);
                               }
                               Navigator.push(
                                   context,
@@ -271,7 +264,7 @@ class PostListTile extends HookWidget {
                                             'id': null,
                                             'title': postData['attachment']
                                                 ['title'],
-                                            'desc': undoTaskList,
+                                            'desc': task,
                                             'recur': [
                                               false,
                                               false,
@@ -310,7 +303,7 @@ class PostListTile extends HookWidget {
                                     Text(postData['attachment']
                                                 ['timeCompleted'] !=
                                             null
-                                        ? 'Completed at ${DateFormat("hh:MM a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
+                                        ? 'Completed at ${DateFormat("hh:mm a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
                                         : '')
                                   ],
                                 ),
@@ -541,16 +534,14 @@ class CommentList extends HookWidget {
 }
 
 class HashtagFilter extends StatelessWidget {
-  const HashtagFilter(
-      {Key? key,
-      required this.hashtagController,
-      required this.hashtagValue,
-      required this.isFocus,
-      required this.scrollController})
-      : super(key: key);
+  const HashtagFilter({
+    Key? key,
+    required this.hashtagController,
+    required this.hashtagValue,
+    required this.isFocus,
+  }) : super(key: key);
 
   final TextEditingController hashtagController;
-  final scrollController;
   final hashtagValue;
   final isFocus;
 
@@ -584,7 +575,7 @@ class CommentPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    String uid = Provider.of<UserProvider>(context).uid;
+    String uid = Provider.of<UserProvider>(context).user.uid;
     final future = useMemoized(() => Database(uid).getComments(pid),
         [Provider.of<TabProvider>(context).comment]);
     final snapshot = useFuture(future);

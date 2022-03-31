@@ -299,7 +299,8 @@ class Database {
     return;
   }
 
-  Future<List<Map<String, dynamic>>> getCommunityPost(filter, hashtag) async {
+  Future<List<Map<String, dynamic>>> getCommunityPost(filter, hashtag,
+      {loadMore = false}) async {
     // Can add parameter for lazy loading, count number of reloads then
     //postIds sublist accordingly
     print("Firing getCommunityPost");
@@ -311,7 +312,9 @@ class Database {
         if (hashtag != '') {
           QuerySnapshot<Map<String, dynamic>> query = await postCol
               .where('uid', isNotEqualTo: uid)
-              .where('hashtags', arrayContainsAny: hashtag)
+              .where('hashtags', arrayContains: hashtag)
+              .orderBy('uid')
+              .orderBy('dateCreated', descending: true)
               .get();
           query.docs.forEach((doc) {
             var data = doc.data();
@@ -319,8 +322,11 @@ class Database {
             results.add(data);
           });
         } else {
-          QuerySnapshot<Map<String, dynamic>> query =
-              await postCol.where('uid', isNotEqualTo: uid).get();
+          QuerySnapshot<Map<String, dynamic>> query = await postCol
+              .where('uid', isNotEqualTo: uid)
+              .orderBy('uid')
+              .orderBy('dateCreated', descending: true)
+              .get();
           query.docs.forEach((doc) {
             var data = doc.data();
             data['postId'] = doc.id;
@@ -367,6 +373,7 @@ class Database {
             });
           }
         }
+        results.sort((a, b) => b['dateCreated'].compareTo(a['dateCreated']));
         return results;
       case 'Anonymous':
         if (hashtag != '') {
@@ -542,7 +549,7 @@ class Database {
     await batch.commit();
   }
 
-  Future getUserPostsOwnProfile(uid) async {
+  Future getUserPostsOwnProfile(uid, {loadMore = false}) async {
     print("Firing getUserPosts");
 
     var results = [];
@@ -780,5 +787,72 @@ class Database {
     // List test = [];
 
     // groupByDate.forEach((k, v) => test.add([k, v]));
+  }
+
+  //-----------------------------------------------------
+  //------------  INSTANT MESSAGING  --------------------
+  //-----------------------------------------------------
+  //
+
+  Stream getChats() {
+    return userDoc
+        .collection('chats')
+        .orderBy('lastMsgTime', descending: true)
+        .snapshots();
+  }
+
+  Stream getMessages(chatId) {
+    return firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('dateCreated', descending: true)
+        .snapshots();
+  }
+
+  Future newChat(chatId, peerId) async {
+    var user = await Database(uid).getUserProfileData(peerId);
+    var userData = user.data()!;
+    await userDoc.collection('chats').doc(peerId).set({
+      'chatId': chatId,
+      'peerId': peerId,
+      'lastMsg': '',
+      'lastMsgTime': '',
+      'user': {
+        'name': userData['name'],
+        'email': userData['email'],
+        'image': userData['image']
+      }
+    });
+
+    var self = await Database(uid).getCurrentUserData();
+    var selfData = self.data()!;
+    await userCol.doc(peerId).collection('chats').doc(uid).set({
+      'chatId': chatId,
+      'peerId': uid,
+      'lastMsg': '',
+      'lastMsgTime': '',
+      'user': {
+        'name': selfData['name'],
+        'email': selfData['email'],
+        'image': selfData['image']
+      }
+    });
+  }
+
+  Future sendMessage(chatId, message, idFrom, idTo) async {
+    await firestore.collection('chats').doc(chatId).collection('messages').add({
+      'message': message,
+      'idFrom': idFrom,
+      'idTo': idTo,
+      'dateCreated': DateTime.now()
+    }).then((value) {
+      userDoc.collection('chats').doc(idTo).set(
+          {'lastMsg': message, 'lastMsgTime': DateTime.now()},
+          SetOptions(merge: true));
+      userCol.doc(idTo).collection('chats').doc(idFrom).set(
+          {'lastMsg': message, 'lastMsgTime': DateTime.now()},
+          SetOptions(merge: true));
+    });
   }
 }

@@ -107,7 +107,7 @@ class TodoTaskProgressList extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final future = useMemoized(
         () => Database(uid)
             .getTodoProgressList(filterValue.value, searchValue.value),
@@ -253,7 +253,7 @@ class TrackerProgressList extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final future =
         useMemoized(() => Database(uid).getTrackerProgressList(), []);
     final snapshot = useFuture(future);
@@ -311,23 +311,38 @@ class TrackerProgressTile extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final future =
         useMemoized(() => Database(uid).getTrackerData(trackerId), []);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
       final tracker = snapshot.data;
-      print('$tracker nice nice ');
       return Padding(
         padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-                'Checked-in at ${DateFormat("hh:mm a").format(timeCompleted)}'),
-            Text(tracker['title']),
-            Text(note)
-          ],
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.blueGrey, width: 5),
+              borderRadius: BorderRadius.circular(10)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(tracker['title'],
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                      'Checked-in at \n${DateFormat("hh:mm a").format(timeCompleted)}',
+                      style: TextStyle(fontSize: 13.sp),
+                      textAlign: TextAlign.right),
+                ],
+              ),
+              Padding(padding: EdgeInsets.symmetric(vertical: 5)),
+              Text(note)
+            ],
+          ),
         ),
       );
     }

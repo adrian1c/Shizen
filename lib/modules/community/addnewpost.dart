@@ -10,6 +10,7 @@ import 'package:shizen_app/widgets/button.dart';
 import 'package:shizen_app/widgets/dropdown.dart';
 import 'package:shizen_app/models/communityPost.dart';
 import 'package:intl/intl.dart';
+import 'package:shizen_app/widgets/field.dart';
 
 class AddNewPost extends HookWidget {
   final List<String> items = [
@@ -20,7 +21,7 @@ class AddNewPost extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ValueNotifier visibilityValue = useValueNotifier('Friends Only');
+    final ValueNotifier visibilityValue = useValueNotifier('Everyone');
     final ValueNotifier isValid = useValueNotifier(false);
     final TextEditingController postDescController = useTextEditingController();
     final List<TextEditingController> hashtagController = [
@@ -28,7 +29,7 @@ class AddNewPost extends HookWidget {
       useTextEditingController(),
       useTextEditingController(),
     ];
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final ValueNotifier attachment = useState(null);
     final ValueNotifier<String?> attachmentType = useState(null);
     return Scaffold(
@@ -136,7 +137,7 @@ class AddNewPost extends HookWidget {
                                             Text(attachment.value[
                                                         'timeCompleted'] !=
                                                     null
-                                                ? 'Completed at ${DateFormat("hh:MM a").format(attachment.value['timeCompleted'])}'
+                                                ? 'Completed at ${DateFormat("hh:mm a").format(attachment.value['timeCompleted'])}'
                                                 : '')
                                           ],
                                         ),
@@ -269,14 +270,18 @@ class AddNewPost extends HookWidget {
                                   attachment.value,
                                   attachmentType.value)
                               .toJson();
-                          await Database(uid)
-                              .addNewPost(newPost, visibilityValue.value,
-                                  attachmentType.value)
-                              .then((value) {
-                            Provider.of<TabProvider>(context, listen: false)
-                                .rebuildPage('profilePosts');
-                            Navigator.of(context).pop();
-                          });
+                          await LoaderWithToast(
+                                  context: context,
+                                  api: Database(uid).addNewPost(
+                                      newPost,
+                                      visibilityValue.value,
+                                      attachmentType.value),
+                                  msg: 'Posted',
+                                  isSuccess: true)
+                              .show();
+                          Provider.of<TabProvider>(context, listen: false)
+                              .rebuildPage('profilePosts');
+                          Navigator.of(context).pop();
                         },
                         isValid: isValid,
                       ),
@@ -575,7 +580,7 @@ class SelectTaskPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).uid;
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     final selectedIndex = useState(-1);
     final selectedTaskMap = useState({});
     final future = useMemoized(() => Database(uid).getAllTasks());
@@ -657,7 +662,7 @@ class SelectTaskPage extends HookWidget {
                                       child: Text(title),
                                     ))),
                                 Text(timeCompleted != null
-                                    ? 'Completed at ${DateFormat("hh:MM a").format(timeCompleted)}'
+                                    ? 'Completed at ${DateFormat("hh:mm a").format(timeCompleted)}'
                                     : '')
                               ],
                             ),
