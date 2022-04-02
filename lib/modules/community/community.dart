@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:shizen_app/modules/profile/profile.dart';
 import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/utils/allUtils.dart';
@@ -108,20 +109,43 @@ class CommunityPostList extends HookWidget {
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
       return Container(
-          child: ListView.builder(
-              physics: BouncingScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                return PostListTile(
-                  postData: snapshot.data![index],
-                  hashtag: hashtag,
-                  hashtagController: hashtagController,
-                );
-              }));
+          child: snapshot.data!.length > 0
+              ? ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    return PostListTile(
+                      postData: snapshot.data![index],
+                      hashtag: hashtag,
+                      hashtagController: hashtagController,
+                    );
+                  })
+              : Center(
+                  child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    'No posts found. \nConsider switching the visibility or using a different hashtag.',
+                    textAlign: TextAlign.center,
+                  ),
+                )));
     }
 
-    return Container(child: const Text('Loading'));
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+          physics: BouncingScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: 10,
+          itemBuilder: (context, index) {
+            return Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                width: 80.w,
+                height: 30.h,
+                color: Colors.white);
+          }),
+    );
   }
 }
 
@@ -217,9 +241,13 @@ class PostListTile extends HookWidget {
                         ),
                       ),
                     ),
+                    Divider(
+                      thickness: 2,
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(10),
-                      child: Text(postData['desc']),
+                      child: Text(postData['desc'],
+                          style: Theme.of(context).textTheme.headline4),
                     ),
                     if (postData['attachmentType'] != null)
                       if (postData['attachmentType'] == 'image')
@@ -405,9 +433,8 @@ class PostListTile extends HookWidget {
                                   borderRadius: BorderRadius.circular(20)),
                               child: Center(
                                 child: Text('#${postData['hashtags'][index]}',
-                                    style: TextStyle(
-                                        fontSize: 13.sp,
-                                        decoration: TextDecoration.underline)),
+                                    style:
+                                        Theme.of(context).textTheme.overline),
                               ),
                             ),
                           ),

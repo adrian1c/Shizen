@@ -24,23 +24,21 @@ class TrackerTask extends HookWidget {
 
     return Container(
         child: snapshot.data.docs.length > 0
-            ? Material(
-                child: ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return TrackerTile(
-                            uid: uid, task: snapshot.data.docs[index]);
-                      }
-                      return Column(
-                        children: [
-                          Divider(),
-                          TrackerTile(
-                              uid: uid, task: snapshot.data.docs[index]),
-                        ],
-                      );
-                    }))
+            ? ListView.builder(
+                physics: BouncingScrollPhysics(),
+                itemCount: snapshot.data.docs.length,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return TrackerTile(
+                        uid: uid, task: snapshot.data.docs[index]);
+                  }
+                  return Column(
+                    children: [
+                      Divider(),
+                      TrackerTile(uid: uid, task: snapshot.data.docs[index]),
+                    ],
+                  );
+                })
             : Center(
                 child: Text(
                     'You have no Daily Trackers.\n\nYou can create tasks by\nhitting the button below!',
@@ -268,7 +266,8 @@ class TrackerTile extends HookWidget {
                   padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
                       border: Border.all(color: Colors.blueGrey, width: 5),
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.lightBlue[50]),
                   child: Column(
                     children: [
                       Row(
@@ -331,12 +330,12 @@ class TrackerTile extends HookWidget {
                                                                 [index],
                                                             index: index,
                                                             minDay: DateTime
-                                                                    .now()
-                                                                .difference((task[
-                                                                            'startDate']
-                                                                        as Timestamp)
-                                                                    .toDate())
-                                                                .inDays,
+                                                                        .now()
+                                                                    .difference((task['startDate']
+                                                                            as Timestamp)
+                                                                        .toDate())
+                                                                    .inDays +
+                                                                1,
                                                           );
                                                         })
                                                     : Text(
@@ -355,49 +354,59 @@ class TrackerTile extends HookWidget {
                           ],
                         ),
                       ),
-                      if (snapshot.hasData)
-                        Center(
-                            child: ElevatedButton(
-                                onPressed: currentDayCheckIn(snapshot.data.docs) !=
-                                        null
-                                    ? () {
-                                        checkInController.text =
-                                            currentDayCheckIn(
-                                                snapshot.data.docs)!['note'];
-                                        checkInPopup(context, checkInController,
-                                            snapshot.data.docs);
-                                      }
-                                    : () {
-                                        checkInPopup(context, checkInController,
-                                            snapshot.data.docs);
-                                      },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.check_circle_outline_rounded),
-                                    Text(
-                                        currentDayCheckIn(snapshot.data.docs) !=
-                                                null
-                                            ? 'Checked-in Today'
-                                            : 'Check-in Today',
-                                        style: TextStyle(color: Colors.white)),
-                                  ],
-                                ),
-                                style: ButtonStyle(
-                                    backgroundColor:
-                                        currentDayCheckIn(snapshot.data.docs) !=
-                                                null
-                                            ? MaterialStateProperty.all(
-                                                Colors.lightGreen[400])
-                                            : MaterialStateProperty.all(
-                                                Colors.grey[400]),
-                                    shape: MaterialStateProperty.all<
-                                            RoundedRectangleBorder>(
-                                        RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(18.0),
-                                            side:
-                                                BorderSide(color: Colors.grey)))))),
+                      Center(
+                          child: ElevatedButton(
+                              onPressed: snapshot.hasData
+                                  ? currentDayCheckIn(snapshot.data.docs) !=
+                                          null
+                                      ? () {
+                                          checkInController.text =
+                                              currentDayCheckIn(
+                                                  snapshot.data.docs)!['note'];
+                                          checkInPopup(
+                                              context,
+                                              checkInController,
+                                              snapshot.data.docs);
+                                        }
+                                      : () {
+                                          checkInPopup(
+                                              context,
+                                              checkInController,
+                                              snapshot.data.docs);
+                                        }
+                                  : () {},
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle_outline_rounded),
+                                  Text(
+                                      snapshot.hasData
+                                          ? currentDayCheckIn(
+                                                      snapshot.data.docs) !=
+                                                  null
+                                              ? 'Checked-in Today'
+                                              : 'Check-in Today'
+                                          : 'Check-in Today',
+                                      style: TextStyle(color: Colors.white)),
+                                ],
+                              ),
+                              style: ButtonStyle(
+                                  backgroundColor: snapshot.hasData
+                                      ? currentDayCheckIn(snapshot.data.docs) !=
+                                              null
+                                          ? MaterialStateProperty.all(
+                                              Colors.lightGreen[400])
+                                          : MaterialStateProperty.all(
+                                              Colors.grey[400])
+                                      : MaterialStateProperty.all(
+                                          Colors.grey[400]),
+                                  shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(18.0),
+                                          side: BorderSide(
+                                              color: Colors.grey)))))),
                       Center(
                           child: IconButton(
                               icon: Icon(
@@ -661,7 +670,9 @@ class MilestonePopupTile extends StatelessWidget {
                   width: 30.w,
                   height: 5.h,
                   decoration: BoxDecoration(
-                      color: Colors.amber,
+                      color: minDay < milestone['day']
+                          ? Colors.amber
+                          : Colors.lightGreen,
                       borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(15),
                           topRight: Radius.circular(15))),
@@ -672,8 +683,14 @@ class MilestonePopupTile extends StatelessWidget {
               width: 100.w,
               height: 7.h,
               decoration: BoxDecoration(
-                color: Colors.amber[200],
-                border: Border.all(color: Colors.amber, width: 5),
+                color: minDay < milestone['day']
+                    ? Colors.amber[200]
+                    : Colors.lightGreen[200],
+                border: Border.all(
+                    color: minDay < milestone['day']
+                        ? Colors.amber
+                        : Colors.lightGreen,
+                    width: 5),
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5),

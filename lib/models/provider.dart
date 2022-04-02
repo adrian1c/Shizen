@@ -154,3 +154,12 @@ class TabProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+class AppTheme extends ChangeNotifier {
+  bool darkTheme = false;
+
+  void toggleTheme() {
+    darkTheme = darkTheme ? false : true;
+    notifyListeners();
+  }
+}

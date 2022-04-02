@@ -135,6 +135,7 @@ class TodoTaskList extends HookWidget {
         children: [
           InkWell(
             onTap: () {
+              titleController.text = title.value;
               StyledPopup(
                   context: context,
                   title: 'Task Title',
@@ -177,8 +178,9 @@ class TodoTaskList extends HookWidget {
                     child: Center(
                         child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child:
-                          Text(title.value == '' ? 'Enter Title' : title.value),
+                      child: Text(
+                          title.value == '' ? 'Enter Title' : title.value,
+                          style: Theme.of(context).textTheme.headline1),
                     ))),
               ],
             ),

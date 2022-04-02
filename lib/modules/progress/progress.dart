@@ -1,3 +1,4 @@
+import 'package:shimmer/shimmer.dart';
 import 'package:shizen_app/modules/tasks/tasks.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -346,6 +347,16 @@ class TrackerProgressTile extends HookWidget {
         ),
       );
     }
-    return Text('Loading');
+    return Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+          child: Container(
+              padding: const EdgeInsets.all(5),
+              width: 100.w,
+              height: 30.h,
+              color: Colors.white),
+        ));
   }
 }

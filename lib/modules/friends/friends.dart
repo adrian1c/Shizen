@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shizen_app/modules/messaging/instantmessaging.dart';
 import 'package:shizen_app/modules/profile/profile.dart';
 import 'package:shizen_app/widgets/field.dart';
+import 'package:badges/badges.dart';
 
 import '../../utils/allUtils.dart';
 
@@ -46,9 +47,13 @@ class _FriendsPageState extends State<FriendsPage> {
                         MaterialPageRoute(
                             builder: (context) => InstantMessagingPage()));
                   },
-                  icon: Icon(
-                    Icons.message_outlined,
-                    color: Colors.blueGrey[700],
+                  icon: Badge(
+                    badgeContent:
+                        Text('3', style: TextStyle(color: Colors.white)),
+                    child: Icon(
+                      Icons.message_outlined,
+                      color: Colors.blueGrey[700],
+                    ),
                   ))
             ],
           ),

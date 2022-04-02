@@ -16,7 +16,8 @@ void main() {
         lazy: false,
         create: (context) => UserProvider(),
       ),
-      ChangeNotifierProvider(create: (context) => TabProvider())
+      ChangeNotifierProvider(create: (context) => TabProvider()),
+      ChangeNotifierProvider(create: (context) => AppTheme())
     ],
     child: MyApp(),
   ));
@@ -44,7 +45,9 @@ class MyApp extends StatelessWidget {
                 return MaterialApp(
                   debugShowCheckedModeBanner: false,
                   title: 'Shizen',
-                  theme: CustomTheme.lightTheme,
+                  theme: Provider.of<AppTheme>(context).darkTheme
+                      ? CustomTheme.darkTheme
+                      : CustomTheme.lightTheme,
                   home: Provider.of<UserProvider>(context).checkLoggedIn()
                       ? LoaderOverlay(
                           useDefaultLoading: false,

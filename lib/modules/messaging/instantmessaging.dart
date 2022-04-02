@@ -30,7 +30,6 @@ class InstantMessagingPage extends HookWidget {
         ),
         body: Column(
           children: [
-            Text('Chats'),
             chatStream.hasData
                 ? chatStream.data.docs.length > 0
                     ? ListView.builder(
@@ -39,56 +38,71 @@ class InstantMessagingPage extends HookWidget {
                         itemBuilder: (context, index) {
                           final friend = chatStream.data.docs[index];
                           return Padding(
-                            padding: const EdgeInsets.all(15.0),
-                            child: ListTile(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => ChatPage(
-                                            peerId: friend['peerId'],
-                                            peerName: friend['user']['name'])));
-                              },
-                              leading: Padding(
-                                padding: const EdgeInsets.only(right: 10.0),
-                                child: CircleAvatar(
-                                  foregroundImage: CachedNetworkImageProvider(
-                                      friend['user']['image']),
-                                  backgroundColor: Colors.grey,
-                                  radius: 3.h,
-                                ),
-                              ),
-                              title: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "${friend['user']['name']}",
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 20.sp),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 15.0),
+                            child: Column(
+                              children: [
+                                Divider(),
+                                ListTile(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => ChatPage(
+                                                peerId: friend['peerId'],
+                                                peerName: friend['user']
+                                                    ['name'])));
+                                  },
+                                  leading: Padding(
+                                    padding: const EdgeInsets.only(right: 10.0),
+                                    child: CircleAvatar(
+                                      foregroundImage:
+                                          CachedNetworkImageProvider(
+                                              friend['user']['image']),
+                                      backgroundColor: Colors.grey,
+                                      radius: 3.h,
+                                    ),
                                   ),
-                                  Text(
-                                    DateFormat("hh:mm a")
-                                        .format(
-                                            (friend['lastMsgTime'] as Timestamp)
+                                  title: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "${friend['user']['name']}",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 20.sp),
+                                      ),
+                                      Text(
+                                        DateFormat("hh:mm a")
+                                            .format((friend['lastMsgTime']
+                                                    as Timestamp)
                                                 .toDate())
-                                        .toString(),
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 12.sp),
+                                            .toString(),
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 12.sp),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              subtitle: Text(
-                                "${friend['lastMsg']}",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 13.sp),
-                              ),
-                              horizontalTitleGap: 0,
-                              tileColor: Colors.blueGrey[600],
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
+                                  subtitle: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "${friend['lastMsg']}",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 13.sp),
+                                      ),
+                                    ],
+                                  ),
+                                  horizontalTitleGap: 0,
+                                  tileColor: Colors.transparent,
+                                ),
+                              ],
                             ),
                           );
                         })

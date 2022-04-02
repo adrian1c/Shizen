@@ -30,20 +30,19 @@ class ToDoTask extends HookWidget {
                 size: 75.0,
               )
             : snapshot.data.docs.length > 0
-                ? Material(
-                    child: ListView.builder(
-                        physics: BouncingScrollPhysics(),
-                        itemCount: snapshot.data.docs.length,
-                        itemBuilder: (context, index) {
-                          var taskDoc = snapshot.data.docs[index];
+                ? ListView.builder(
+                    physics: BouncingScrollPhysics(),
+                    itemCount: snapshot.data.docs.length,
+                    itemBuilder: (context, index) {
+                      var taskDoc = snapshot.data.docs[index];
 
-                          return TodoTaskDisplay(
-                              taskId: taskDoc.id,
-                              title: taskDoc['title'],
-                              taskList: taskDoc['desc'],
-                              recur: List<bool>.from(taskDoc['recur']),
-                              reminder: convertTimestamp(taskDoc['reminder']));
-                        }))
+                      return TodoTaskDisplay(
+                          taskId: taskDoc.id,
+                          title: taskDoc['title'],
+                          taskList: taskDoc['desc'],
+                          recur: List<bool>.from(taskDoc['recur']),
+                          reminder: convertTimestamp(taskDoc['reminder']));
+                    })
                 : Center(
                     child: Text(
                         'You have no To Do tasks.\n\nYou can create tasks by\nhitting the button below!',
@@ -119,7 +118,8 @@ class TodoTaskDisplay extends HookWidget {
                     child: Center(
                         child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child: Text(title),
+                      child: Text(title,
+                          style: Theme.of(context).textTheme.headline1),
                     ))),
                 Row(
                   children: [

@@ -338,7 +338,18 @@ class SettingsPage extends StatelessWidget {
           title: Text('SETTINGS'),
           centerTitle: true,
         ),
-        body: Text('Settings Page yeet'));
+        body: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Dark Theme'),
+            Switch(
+              onChanged: (value) {
+                Provider.of<AppTheme>(context, listen: false).toggleTheme();
+              },
+              value: Provider.of<AppTheme>(context, listen: false).darkTheme,
+            )
+          ],
+        ));
   }
 }
 
