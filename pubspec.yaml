@@ -54,6 +54,8 @@ dependencies:
   floating_action_bubble: ^1.1.4
   paginate_firestore: ^1.0.3
   badges: ^2.0.2
+  firebase_messaging: ^11.2.7
+  flutter_local_notifications: ^9.4.0
 
 dev_dependencies:
   flutter_test:

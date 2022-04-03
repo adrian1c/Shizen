@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -50,6 +51,13 @@ class UserProvider extends ChangeNotifier {
         user.email = data['email'];
         user.age = data['age'];
         user.image = data['image'];
+      });
+      await FirebaseMessaging.instance.getToken().then((value) {
+        String? token = value;
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({'pushToken': token}, SetOptions(merge: true));
       });
       Navigator.pushAndRemoveUntil(
         context,

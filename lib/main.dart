@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/loaderOverlay.dart';
@@ -7,6 +10,7 @@ import './modules/signup/signup.dart';
 import './modules/login/login.dart';
 import './mainScaffoldStack.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,11 +29,58 @@ void main() {
 
 class MyApp extends StatelessWidget {
   final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+  Future initNotifications() async {
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      if (message.notification != null) {
+        FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+            FlutterLocalNotificationsPlugin();
+        var initializationSettingsAndroid =
+            new AndroidInitializationSettings('ic_launcher');
+        var initializationSettingsIOS = new IOSInitializationSettings();
+        var initializationSettings = new InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS);
+        flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+        var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
+          Platform.isAndroid
+              ? 'com.example.shizen_app'
+              : 'com.example.shizen_app',
+          'Flutter chat demo',
+          channelDescription: 'your channel description',
+          playSound: true,
+          enableVibration: true,
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+        var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
+        var platformChannelSpecifics = new NotificationDetails(
+            android: androidPlatformChannelSpecifics,
+            iOS: iOSPlatformChannelSpecifics);
+        await flutterLocalNotificationsPlugin.show(
+            0,
+            message.notification!.title,
+            message.notification!.body,
+            platformChannelSpecifics,
+            payload: 'test');
+      }
+    });
+  }
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: _initialization,
+      future: Future.wait([_initialization, initNotifications()]),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           //TODO: Make error display

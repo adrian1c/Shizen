@@ -323,6 +323,7 @@ class TrackerProgressTile extends HookWidget {
         child: Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
+              color: Colors.lightBlue[50],
               border: Border.all(color: Colors.blueGrey, width: 5),
               borderRadius: BorderRadius.circular(10)),
           child: Column(

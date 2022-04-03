@@ -44,7 +44,9 @@ class InstantMessagingPage extends HookWidget {
                               children: [
                                 Divider(),
                                 ListTile(
-                                  onTap: () {
+                                  onTap: () async {
+                                    await Database(uid)
+                                        .chattingWith(friend['peerId']);
                                     Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -212,23 +214,74 @@ class ChatPage extends HookWidget {
             title: Text(peerName),
             centerTitle: true,
           ),
-          body: Column(mainAxisSize: MainAxisSize.max, children: [
-            Expanded(
-              child: Container(
-                  padding: const EdgeInsets.all(10),
-                  child: ListView.builder(
-                      shrinkWrap: true,
-                      reverse: true,
-                      itemCount: msgList.docs.length,
-                      itemBuilder: (context, index) {
-                        var msg = msgList.docs[index];
-                        if (msg['idFrom'] == uid) {
+          body: WillPopScope(
+            onWillPop: () {
+              Database(uid).chattingWith(null);
+              Navigator.pop(context);
+              return Future.value(false);
+            },
+            child: Column(mainAxisSize: MainAxisSize.max, children: [
+              Expanded(
+                child: Container(
+                    padding: const EdgeInsets.all(10),
+                    child: ListView.builder(
+                        shrinkWrap: true,
+                        reverse: true,
+                        itemCount: msgList.docs.length,
+                        itemBuilder: (context, index) {
+                          var msg = msgList.docs[index];
+                          if (msg['idFrom'] == uid) {
+                            return Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5.0),
+                                    child: Text(
+                                        DateFormat("hh:mm a")
+                                            .format((msg['dateCreated']
+                                                    as Timestamp)
+                                                .toDate())
+                                            .toString(),
+                                        style: TextStyle(fontSize: 12.sp)),
+                                  ),
+                                  Container(
+                                      padding: const EdgeInsets.all(10),
+                                      constraints:
+                                          BoxConstraints(maxWidth: 75.w),
+                                      decoration: BoxDecoration(
+                                          color: Colors.blue[200],
+                                          borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(15),
+                                              topRight: Radius.circular(15),
+                                              bottomLeft: Radius.circular(15))),
+                                      child: Text(msg['message'],
+                                          style:
+                                              TextStyle(color: Colors.white))),
+                                ],
+                              ),
+                            );
+                          }
                           return Padding(
                             padding: const EdgeInsets.all(5.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
+                                Container(
+                                    padding: const EdgeInsets.all(10),
+                                    constraints: BoxConstraints(maxWidth: 75.w),
+                                    decoration: BoxDecoration(
+                                        color: Colors.blueGrey[700],
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(15),
+                                            topRight: Radius.circular(15),
+                                            bottomRight: Radius.circular(15))),
+                                    child: Text(msg['message'],
+                                        style: TextStyle(color: Colors.white))),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 5.0),
@@ -240,98 +293,56 @@ class ChatPage extends HookWidget {
                                           .toString(),
                                       style: TextStyle(fontSize: 12.sp)),
                                 ),
-                                Container(
-                                    padding: const EdgeInsets.all(10),
-                                    constraints: BoxConstraints(maxWidth: 75.w),
-                                    decoration: BoxDecoration(
-                                        color: Colors.blue[200],
-                                        borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(15),
-                                            topRight: Radius.circular(15),
-                                            bottomLeft: Radius.circular(15))),
-                                    child: Text(msg['message'],
-                                        style: TextStyle(color: Colors.white))),
                               ],
                             ),
                           );
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Container(
-                                  padding: const EdgeInsets.all(10),
-                                  constraints: BoxConstraints(maxWidth: 75.w),
-                                  decoration: BoxDecoration(
-                                      color: Colors.blueGrey[700],
-                                      borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(15),
-                                          topRight: Radius.circular(15),
-                                          bottomRight: Radius.circular(15))),
-                                  child: Text(msg['message'],
-                                      style: TextStyle(color: Colors.white))),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: Text(
-                                    DateFormat("hh:mm a")
-                                        .format(
-                                            (msg['dateCreated'] as Timestamp)
-                                                .toDate())
-                                        .toString(),
-                                    style: TextStyle(fontSize: 12.sp)),
-                              ),
-                            ],
-                          ),
-                        );
-                      })),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: 10.h,
-                width: 100.w,
-                color: Colors.grey[200],
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextField(
-                          controller: msgController,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            hintText: 'Message',
-                            suffixIcon: IconButton(
-                              onPressed: () async {
-                                if (msgController.text.length != 0) {
-                                  final msg = msgController.text;
-                                  msgController.clear();
-                                  if (mustInitializeDoc) {
+                        })),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: 10.h,
+                  width: 100.w,
+                  color: Colors.grey[200],
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            controller: msgController,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                              hintText: 'Message',
+                              suffixIcon: IconButton(
+                                onPressed: () async {
+                                  if (msgController.text.length != 0) {
+                                    final msg = msgController.text;
+                                    msgController.clear();
+                                    if (mustInitializeDoc) {
+                                      await Database(uid)
+                                          .newChat(chatId, peerId)
+                                          .then((value) =>
+                                              mustInitializeDoc = false);
+                                    }
                                     await Database(uid)
-                                        .newChat(chatId, peerId)
-                                        .then((value) =>
-                                            mustInitializeDoc = false);
+                                        .sendMessage(chatId, msg, uid, peerId);
                                   }
-                                  await Database(uid)
-                                      .sendMessage(chatId, msg, uid, peerId);
-                                }
-                              },
-                              icon: Icon(Icons.send),
+                                },
+                                icon: Icon(Icons.send),
+                              ),
                             ),
                           ),
-                        ),
-                      )
-                    ],
+                        )
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            )
-          ]));
+              )
+            ]),
+          ));
     }
     return Scaffold(
         appBar: AppBar(

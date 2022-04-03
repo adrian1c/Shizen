@@ -855,4 +855,8 @@ class Database {
           SetOptions(merge: true));
     });
   }
+
+  Future chattingWith(value) async {
+    await userDoc.set({'chattingWith': value}, SetOptions(merge: true));
+  }
 }
