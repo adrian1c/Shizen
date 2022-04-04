@@ -27,60 +27,60 @@ void main() {
   ));
 }
 
+Future initNotifications() async {
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    if (message.notification != null) {
+      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+          FlutterLocalNotificationsPlugin();
+      var initializationSettingsAndroid =
+          new AndroidInitializationSettings('shizen_launcher');
+      var initializationSettingsIOS = new IOSInitializationSettings();
+      var initializationSettings = new InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS);
+      flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+      var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
+        Platform.isAndroid
+            ? 'com.example.shizen_app'
+            : 'com.example.shizen_app',
+        'Shizen Notification',
+        channelDescription: 'Notification for Shizen App',
+        playSound: true,
+        enableVibration: true,
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+      var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
+      var platformChannelSpecifics = new NotificationDetails(
+          android: androidPlatformChannelSpecifics,
+          iOS: iOSPlatformChannelSpecifics);
+      await flutterLocalNotificationsPlugin.show(0, message.notification!.title,
+          message.notification!.body, platformChannelSpecifics,
+          payload: 'test');
+    }
+  });
+}
+
 class MyApp extends StatelessWidget {
   final Future<FirebaseApp> _initialization = Firebase.initializeApp();
-  Future initNotifications() async {
-    await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      if (message.notification != null) {
-        FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-            FlutterLocalNotificationsPlugin();
-        var initializationSettingsAndroid =
-            new AndroidInitializationSettings('ic_launcher');
-        var initializationSettingsIOS = new IOSInitializationSettings();
-        var initializationSettings = new InitializationSettings(
-            android: initializationSettingsAndroid,
-            iOS: initializationSettingsIOS);
-        flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-        var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
-          Platform.isAndroid
-              ? 'com.example.shizen_app'
-              : 'com.example.shizen_app',
-          'Flutter chat demo',
-          channelDescription: 'your channel description',
-          playSound: true,
-          enableVibration: true,
-          importance: Importance.max,
-          priority: Priority.high,
-        );
-        var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
-        var platformChannelSpecifics = new NotificationDetails(
-            android: androidPlatformChannelSpecifics,
-            iOS: iOSPlatformChannelSpecifics);
-        await flutterLocalNotificationsPlugin.show(
-            0,
-            message.notification!.title,
-            message.notification!.body,
-            platformChannelSpecifics,
-            payload: 'test');
-      }
-    });
-  }
+  final Future _initNotif = initNotifications();
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: Future.wait([_initialization, initNotifications()]),
+      future: _initialization,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           //TODO: Make error display
@@ -93,18 +93,28 @@ class MyApp extends StatelessWidget {
             onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
             child: Sizer(
               builder: (context, orientation, deviceType) {
-                return MaterialApp(
-                  debugShowCheckedModeBanner: false,
-                  title: 'Shizen',
-                  theme: Provider.of<AppTheme>(context).darkTheme
-                      ? CustomTheme.darkTheme
-                      : CustomTheme.lightTheme,
-                  home: Provider.of<UserProvider>(context).checkLoggedIn()
-                      ? LoaderOverlay(
-                          useDefaultLoading: false,
-                          overlayWidget: Loader(),
-                          child: MainScaffoldStack())
-                      : WelcomePage(),
+                return GlobalLoaderOverlay(
+                  useDefaultLoading: false,
+                  overlayWidget: Loader(),
+                  child: MaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    title: 'Shizen',
+                    theme: Provider.of<AppTheme>(context).darkTheme
+                        ? CustomTheme.darkTheme
+                        : CustomTheme.lightTheme,
+                    home: Provider.of<UserProvider>(context).checkLoggedIn()
+                        ? FutureBuilder(
+                            future: _initialization,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                return MainScaffoldStack();
+                              }
+
+                              return Center(child: Container());
+                            })
+                        : WelcomePage(),
+                  ),
                 );
               },
             ),

@@ -3,7 +3,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shizen_app/widgets/field.dart';
 import './addtodo.dart';
 import '../../utils/allUtils.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class ToDoTask extends HookWidget {
   const ToDoTask({Key? key, required this.uid}) : super(key: key);
@@ -190,9 +189,11 @@ class TodoTaskDisplay extends HookWidget {
                                               .show()
                                           : await LoaderWithToast(
                                                   context: context,
-                                                  api: Database(uid)
-                                                      .completeTask(
-                                                          taskId, taskList),
+                                                  api: Future.delayed(
+                                                      Duration(seconds: 5)),
+                                                  // api: Database(uid)
+                                                  //     .completeTask(
+                                                  //         taskId, taskList),
                                                   msg:
                                                       'Congratulations! I\'m proud of you',
                                                   isSuccess: true)

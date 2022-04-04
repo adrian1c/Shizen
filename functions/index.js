@@ -20,11 +20,7 @@ admin.initializeApp();
 exports.sendNotification = functions.firestore
     .document("chats/{chatId}/messages/{message}")
     .onCreate((snap, context) => {
-      console.log("----------------start function--------------------");
-
       const doc = snap.data();
-      console.log(doc);
-
       const idFrom = doc.idFrom;
       const idTo = doc.idTo;
       const contentMessage = doc.message;
@@ -36,11 +32,7 @@ exports.sendNotification = functions.firestore
           .where(admin.firestore.FieldPath.documentId(), "==", idTo)
           .get()
           .then((querySnapshot) => {
-            if (querySnapshot.docs.length < 1) {
-              console.log("No user found");
-            }
             querySnapshot.forEach((userTo) => {
-              console.log(`Found user to: ${userTo.data().name}`);
               if (userTo.data().pushToken &&
               userTo.data().chattingWith !== idFrom) {
                 // Get info user from (sent)
@@ -51,7 +43,6 @@ exports.sendNotification = functions.firestore
                     .get()
                     .then((querySnapshot2) => {
                       querySnapshot2.forEach((userFrom) => {
-                        console.log(`Found user from: ${userFrom.data().name}`);
                         const payload = {
                           notification: {
                             title:

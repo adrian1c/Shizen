@@ -12,6 +12,7 @@ class InstantMessagingPage extends HookWidget {
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final stream = useMemoized(() => Database(uid).getChats(), []);
     final chatStream = useStream(stream);
+    final test = useAppLifecycleState();
     return Scaffold(
         appBar: AppBar(
           title: Text('CHATS'),
@@ -203,6 +204,14 @@ class ChatPage extends HookWidget {
     final stream = useMemoized(() => Database(uid).getMessages(chatId), []);
     final messageStream = useStream(stream);
     final msgController = useTextEditingController();
+
+    useEffect(() {
+      final observer = MyObserver(
+          detachedCallBack: () async => await Database(uid).chattingWith(null),
+          resumeCallBack: () async => await Database(uid).chattingWith(peerId));
+      WidgetsBinding.instance!.addObserver(observer);
+      return () => WidgetsBinding.instance!.removeObserver(observer);
+    }, const []);
     if (messageStream.hasData) {
       var msgList = messageStream.data;
       var mustInitializeDoc = false;
@@ -354,5 +363,74 @@ class ChatPage extends HookWidget {
             Text('Invalid'),
           ],
         ));
+  }
+}
+
+class MyObserver implements WidgetsBindingObserver {
+  MyObserver({required this.detachedCallBack, required this.resumeCallBack});
+
+  final resumeCallBack;
+  final detachedCallBack;
+
+  @override
+  void didChangeAccessibilityFeatures() {
+    // TODO: implement didChangeAccessibilityFeatures
+  }
+
+  @override
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        await detachedCallBack();
+        break;
+      case AppLifecycleState.resumed:
+        await resumeCallBack();
+        break;
+    }
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    // TODO: implement didChangeLocales
+  }
+
+  @override
+  void didChangeMetrics() {
+    // TODO: implement didChangeMetrics
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    // TODO: implement didChangePlatformBrightness
+  }
+
+  @override
+  void didChangeTextScaleFactor() {
+    // TODO: implement didChangeTextScaleFactor
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    // TODO: implement didHaveMemoryPressure
+  }
+
+  @override
+  Future<bool> didPopRoute() {
+    // TODO: implement didPopRoute
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> didPushRoute(String route) {
+    // TODO: implement didPushRoute
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> didPushRouteInformation(RouteInformation routeInformation) {
+    // TODO: implement didPushRouteInformation
+    throw UnimplementedError();
   }
 }

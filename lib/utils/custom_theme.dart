@@ -21,19 +21,19 @@ class CustomTheme {
       overline: _hashtagText,
       headline4: _headline4);
 
-  static final TextStyle _headline1 = GoogleFonts.sourceSansPro(
+  static final TextStyle _headline1 = TextStyle(
       color: Colors.black87, fontSize: 16.sp, fontWeight: FontWeight.w600);
 
-  static final TextStyle _headline2 = GoogleFonts.sourceSansPro(
+  static final TextStyle _headline2 = TextStyle(
       color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w400);
 
-  static final TextStyle _headline4 = GoogleFonts.sourceSansPro(
+  static final TextStyle _headline4 = TextStyle(
       color: Colors.black54, fontSize: 15.sp, fontWeight: FontWeight.w400);
 
-  static final TextStyle _bodyText1 = GoogleFonts.sourceSansPro(
+  static final TextStyle _bodyText1 = TextStyle(
       color: Colors.white, fontSize: 15.sp, fontWeight: FontWeight.w600);
 
-  static final TextStyle _hashtagText = GoogleFonts.sourceSansPro(
+  static final TextStyle _hashtagText = TextStyle(
       color: Colors.blue[800],
       fontSize: 13.sp,
       fontWeight: FontWeight.w400,
@@ -44,6 +44,7 @@ class CustomTheme {
     return ThemeData(
       primaryColor: _lightPrimaryColor,
       backgroundColor: Color(0xffFFFFFF),
+      appBarTheme: AppBarTheme(backgroundColor: Colors.blueGrey[800]),
       scaffoldBackgroundColor: _lightSecondaryColor,
       fontFamily: GoogleFonts.sourceSansPro().fontFamily,
       textTheme: _lightTextTheme,

@@ -1,21 +1,20 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
-import 'package:provider/provider.dart';
 import 'package:shizen_app/models/user.dart';
 import 'package:shizen_app/modules/community/addnewpost.dart';
 import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
+import 'package:shizen_app/widgets/field.dart';
 import './modules/tasks/tasks.dart';
 import './modules/friends/friends.dart';
 import './modules/community/community.dart';
 import './modules/progress/progress.dart';
 import './modules/profile/profile.dart';
-import './models/provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:floating_action_bubble/floating_action_bubble.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 
 class MainScaffoldStack extends HookWidget {
   final List<GButton> screens = [
@@ -268,7 +267,7 @@ class NavDrawer extends HookWidget {
           ListTile(
             leading: new Icon(Icons.info_outline_rounded, color: Colors.black),
             title: Text(
-              'About Us',
+              'About Shizen',
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.w700,
@@ -353,16 +352,182 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-class AboutUsPage extends StatelessWidget {
-  const AboutUsPage({Key? key}) : super(key: key);
+class AboutUsPage extends HookWidget {
+  AboutUsPage({Key? key}) : super(key: key);
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
+    final feedbackController = useTextEditingController();
     return Scaffold(
         appBar: AppBar(
           title: Text('ABOUT US'),
           centerTitle: true,
         ),
-        body: Text('About Us Page yote'));
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Significance')),
+                ),
+                Divider(),
+                Text('''
+Defined as nature, natural, spontaneous. This seemingly minimalistic word is integrated as a part of Japanese culture with the influence of Zen Buddhism. The concept of this word symbolizes the idea of human beings intertwined with nature, or the environment around them. The Japanese accept that shizen allows for the interpretation of the human touch with their surroundings, to produce something that is a fusion between human and nature. This is a stark contrast to the Western ideologies of nature, where something is only considered natural when it is pure and untouched by man.
+
+By applying the concept of shizen to human behaviour, the intention is not to replicate nature. It is to eventually become one with nature. The beauty of shizen in human behaviour is appreciated when someone does or performs an action that seems to come with no conscious effort. Their actions have been internalized to be seen as something naturally occurring. It is a sight to behold and is held to a high regard because it takes tremendous amounts of effort and practice, repetition after repetition, before eventually achieving this state.
+
+When incorporating a new habit, or starting our journey on self-improvement, it will feel unnatural and forced. The results will not be pleasant. However, by taking it one step at a time on the inclined hill, going through repetitive motion day after day, eventually you look back and realize that you have arrived at a place where you never imagined possible on the first day of the journey. The best part? Your body and mind have acclimated to said actions. Therefore, the rest of the journey to the peak of the hill will feel natural, or rather, shizen.''',
+                    textAlign: TextAlign.justify),
+                Divider(),
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: Align(
+                      alignment: Alignment.centerLeft, child: Text('Purpose')),
+                ),
+                Divider(),
+                Text(
+                    '''Shizen is developed initially as a Final Year Project. It aims to provide a platform for personal productivity where like-minded individuals from all walks of life can gather to discuss and share about their stories.''',
+                    textAlign: TextAlign.justify),
+                Divider(),
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: Text('We\'d love to hear feedback from you!'),
+                ),
+                Form(
+                  key: _formKey,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        // Padding(
+                        //   padding: const EdgeInsets.symmetric(vertical: 10.0),
+                        //   child: TextFormField(
+                        //     controller: nameController,
+                        //     textCapitalization: TextCapitalization.words,
+                        //     decoration: InputDecoration(
+                        //       filled: true,
+                        //       border: OutlineInputBorder(
+                        //           borderRadius: BorderRadius.circular(5)),
+                        //       floatingLabelBehavior:
+                        //           FloatingLabelBehavior.always,
+                        //       labelText: 'Name',
+                        //       hintText: 'Enter your name',
+                        //       prefixIcon: Icon(Icons.person),
+                        //     ),
+                        //     validator: (String? value) {
+                        //       String valueString = value as String;
+                        //       if (valueString.isEmpty) {
+                        //         return "You have not filled anything in";
+                        //       } else {
+                        //         return null;
+                        //       }
+                        //     },
+                        //   ),
+                        // ),
+                        // Padding(
+                        //   padding: const EdgeInsets.symmetric(vertical: 10.0),
+                        //   child: TextFormField(
+                        //     controller: emailController,
+                        //     keyboardType: TextInputType.emailAddress,
+                        //     decoration: InputDecoration(
+                        //       filled: true,
+                        //       border: OutlineInputBorder(
+                        //           borderRadius: BorderRadius.circular(5)),
+                        //       floatingLabelBehavior:
+                        //           FloatingLabelBehavior.always,
+                        //       labelText: 'Email',
+                        //       hintText: 'Email that you want us to respond to',
+                        //       prefixIcon: Icon(Icons.email),
+                        //     ),
+                        //     validator: (String? value) {
+                        //       String valueString = value as String;
+                        //       if (valueString.isEmpty) {
+                        //         return "Enter an Email Address";
+                        //       } else if (!valueString.contains('@')) {
+                        //         return "Please enter a valid email address";
+                        //       }
+                        //       return null;
+                        //     },
+                        //   ),
+                        // ),
+                        TextFormField(
+                          controller: feedbackController,
+                          textCapitalization: TextCapitalization.sentences,
+                          maxLines: 10,
+                          decoration: InputDecoration(
+                            filled: true,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5)),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            hintText: 'Share your thoughts with us!',
+                          ),
+                          validator: (String? value) {
+                            String valueString = value as String;
+                            if (valueString.isEmpty) {
+                              return "You have not filled anything in";
+                            } else {
+                              return null;
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors.blue[400],
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25))),
+                    minimumSize:
+                        Size((MediaQuery.of(context).size.width * 0.25), 45),
+                  ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final bodyText =
+                          '''Hello, I am ${Provider.of<UserProvider>(context, listen: false).user.name}. 
+This is my feedback:
+
+${feedbackController.text}''';
+                      final Email email = Email(
+                        body: bodyText,
+                        subject: 'Feedback for Shizen',
+                        recipients: ['adrianching1@gmail.com'],
+                        cc: [],
+                        bcc: [],
+                        isHTML: false,
+                      );
+                      await LoaderWithToast(
+                              context: context,
+                              api: FlutterEmailSender.send(email),
+                              msg: 'Success',
+                              isSuccess: true)
+                          .show();
+                      feedbackController.clear();
+                    }
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Icon(Icons.send),
+                      ),
+                      Text("Send Feedback",
+                          style: Theme.of(context).textTheme.bodyText1),
+                    ],
+                  ),
+                ),
+                Padding(padding: const EdgeInsets.only(bottom: 30.0))
+              ],
+            ),
+          ),
+        ));
   }
 }

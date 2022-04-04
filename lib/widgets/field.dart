@@ -191,6 +191,7 @@ class LoaderWithToast {
       }
     }).onError((error, stackTrace) {
       context.loaderOverlay.hide();
+      print(error);
       StyledToast(msg: 'Oops, something went wrong').showDeletedToast();
     });
   }

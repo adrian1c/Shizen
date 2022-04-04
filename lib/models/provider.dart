@@ -87,12 +87,17 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> signOut(context) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .set({'pushToken': null}, SetOptions(merge: true));
     await FirebaseAuth.instance.signOut().then((result) {
       user = UserModel('', '', '', '', '');
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => WelcomePage()),
           (route) => route is WelcomePage);
+
       Provider.of<TabProvider>(context, listen: false).resetPageIndex();
     }).catchError((err) {
       showDialog(

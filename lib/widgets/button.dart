@@ -44,7 +44,7 @@ class CreateButton extends StatelessWidget {
               minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
             ),
             onPressed: data != false ? onPressed : () {},
-            child: Text(buttonLabel != null ? buttonLabel! : "Create",
+            child: Text(buttonLabel ?? "Create",
                 style: Theme.of(context).textTheme.bodyText1),
           );
         });
