@@ -40,7 +40,8 @@ class ToDoTask extends HookWidget {
                           title: taskDoc['title'],
                           taskList: taskDoc['desc'],
                           recur: List<bool>.from(taskDoc['recur']),
-                          reminder: convertTimestamp(taskDoc['reminder']));
+                          reminder: convertTimestamp(taskDoc['reminder']),
+                          isPublic: taskDoc['isPublic']);
                     })
                 : Center(
                     child: Text(
@@ -56,13 +57,15 @@ class TodoTaskDisplay extends HookWidget {
       required this.title,
       required this.taskList,
       required this.recur,
-      required this.reminder});
+      required this.reminder,
+      required this.isPublic});
 
   final String taskId;
   final String title;
   final taskList;
   final List<bool> recur;
   final DateTime? reminder;
+  final bool isPublic;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +100,8 @@ class TodoTaskDisplay extends HookWidget {
                         'title': title,
                         'desc': taskList,
                         'recur': recur,
-                        'reminder': reminder
+                        'reminder': reminder,
+                        'isPublic': isPublic,
                       }, isEdit: true)));
         },
         child: Column(
@@ -132,7 +136,14 @@ class TodoTaskDisplay extends HookWidget {
                               color: Colors.blue, size: 25)
                           : Icon(Icons.notifications_active,
                               color: Colors.black26, size: 25),
-                    )
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: isPublic
+                          ? Icon(Icons.visibility, color: Colors.blue, size: 25)
+                          : Icon(Icons.visibility,
+                              color: Colors.black26, size: 25),
+                    ),
                   ],
                 ),
               ],
@@ -189,11 +200,9 @@ class TodoTaskDisplay extends HookWidget {
                                               .show()
                                           : await LoaderWithToast(
                                                   context: context,
-                                                  api: Future.delayed(
-                                                      Duration(seconds: 5)),
-                                                  // api: Database(uid)
-                                                  //     .completeTask(
-                                                  //         taskId, taskList),
+                                                  api: Database(uid)
+                                                      .completeTask(
+                                                          taskId, taskList),
                                                   msg:
                                                       'Congratulations! I\'m proud of you',
                                                   isSuccess: true)

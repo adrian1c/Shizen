@@ -302,7 +302,8 @@ class PostListTile extends HookWidget {
                                               false,
                                               false
                                             ],
-                                            'reminder': null
+                                            'reminder': null,
+                                            'isPublic': false,
                                           }, isEdit: true)));
                             },
                             child: Column(

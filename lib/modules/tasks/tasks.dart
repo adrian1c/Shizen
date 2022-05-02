@@ -24,7 +24,6 @@ class TaskPage extends HookWidget {
           children: [
             Container(
               width: 60.w,
-              height: 5.h,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(

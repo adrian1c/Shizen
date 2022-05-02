@@ -609,6 +609,18 @@ class Database {
     return results;
   }
 
+  Stream getPublicToDo(uid) {
+    print("Firing getPublicToDo");
+
+    return userCol
+        .doc(uid)
+        .collection('todo')
+        .where('allComplete', isEqualTo: false)
+        .where('isPublic', isEqualTo: true)
+        .orderBy('dateCreated', descending: true)
+        .snapshots();
+  }
+
   //-----------------------------------------------------
   //--------------  TRACKER TASK  -----------------------
   //-----------------------------------------------------
@@ -822,7 +834,8 @@ class Database {
         'name': userData['name'],
         'email': userData['email'],
         'image': userData['image']
-      }
+      },
+      'unreadCount': 0
     });
 
     var self = await Database(uid).getCurrentUserData();
@@ -836,7 +849,8 @@ class Database {
         'name': selfData['name'],
         'email': selfData['email'],
         'image': selfData['image']
-      }
+      },
+      'unreadCount': 0
     });
   }
 
@@ -858,5 +872,12 @@ class Database {
 
   Future chattingWith(value) async {
     await userDoc.set({'chattingWith': value}, SetOptions(merge: true));
+  }
+
+  Future resetUnread(peerId) async {
+    await userDoc
+        .collection('chats')
+        .doc(peerId)
+        .set({'unreadCount': 0}, SetOptions(merge: true));
   }
 }

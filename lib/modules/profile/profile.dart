@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:shizen_app/modules/community/community.dart';
+import 'package:shizen_app/modules/tasks/addtodo.dart';
+import 'package:shizen_app/modules/tasks/todoTab.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/field.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -17,15 +20,127 @@ class ProfilePage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid =
-        viewId != null ? viewId! : Provider.of<UserProvider>(context).user.uid;
+    final String uid = viewId ?? Provider.of<UserProvider>(context).user.uid;
     final TextEditingController nameController = useTextEditingController();
     final futureUserProfileData = useMemoized(
         () => Database(uid).getCurrentUserData(),
         [Provider.of<TabProvider>(context).profileUser]);
     final snapshotUserProfileData = useFuture(futureUserProfileData);
+    final tabController = useTabController(
+      initialLength: 3,
+      initialIndex: 0,
+    );
+
+    return Column(
+      children: [
+        Container(
+            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.only(bottom: 20),
+            width: double.infinity,
+            height: 15.h,
+            color: Color(0xff80ceff),
+            child: snapshotUserProfileData.hasData
+                ? UserProfileData(
+                    data: snapshotUserProfileData.data,
+                    uid: uid,
+                    nameController: nameController,
+                    viewId: viewId,
+                  )
+                : Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 25.w,
+                          height: 25.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(width: 1),
+                            color: Colors.white,
+                          ),
+                        ),
+                        Padding(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 50.w,
+                                    height: 14.sp,
+                                    color: Colors.white,
+                                  ),
+                                  Spacer(),
+                                  Container(
+                                    width: 50.w,
+                                    height: 14.sp,
+                                    color: Colors.white,
+                                  ),
+                                  Spacer(),
+                                  Container(
+                                    width: 50.w,
+                                    height: 14.sp,
+                                    color: Colors.white,
+                                  ),
+                                ])),
+                      ],
+                    ),
+                  )),
+        Container(
+          width: 80.w,
+          child: TabBar(
+            controller: tabController,
+            // give the indicator a decoration (color and border radius)
+            indicator: BoxDecoration(
+              borderRadius: BorderRadius.circular(
+                25.0,
+              ),
+              color: Colors.blueGrey[700],
+            ),
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.blueGrey[700],
+            tabs: [
+              Tab(
+                child: Icon(Icons.list),
+              ),
+              Tab(
+                child: Icon(Icons.repeat),
+              ),
+              Tab(
+                child: Icon(Icons.feed),
+              )
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+        ),
+        Expanded(
+          child: TabBarView(controller: tabController, children: <Widget>[
+            KeepAlivePage(child: ProfileToDo(uid: uid)),
+            KeepAlivePage(child: Text('Tracker')),
+            KeepAlivePage(
+              child: ProfilePosts(
+                  uid: uid, ownProfile: viewId != null ? false : true),
+            )
+          ]),
+        ),
+      ],
+    );
+  }
+}
+
+class ProfilePosts extends HookWidget {
+  const ProfilePosts({Key? key, required this.uid, required this.ownProfile})
+      : super(key: key);
+
+  final uid;
+  final ownProfile;
+
+  @override
+  Widget build(BuildContext context) {
     final futureUserPosts = useMemoized(
-        () => viewId != null
+        () => !ownProfile
             ? Database(uid).getUserPostsOtherProfile(uid)
             : Database(uid).getUserPostsOwnProfile(uid),
         [Provider.of<TabProvider>(context).profilePosts]);
@@ -41,59 +156,6 @@ class ProfilePage extends HookWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          Container(
-              padding: const EdgeInsets.all(20),
-              margin: const EdgeInsets.only(bottom: 20),
-              width: double.infinity,
-              height: 15.h,
-              color: Color(0xff80ceff),
-              child: snapshotUserProfileData.hasData
-                  ? UserProfileData(
-                      data: snapshotUserProfileData.data,
-                      uid: uid,
-                      nameController: nameController,
-                      viewId: viewId,
-                    )
-                  : Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 25.w,
-                            height: 25.w,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(width: 1),
-                              color: Colors.white,
-                            ),
-                          ),
-                          Padding(
-                              padding: const EdgeInsets.only(left: 20),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      width: 50.w,
-                                      height: 14.sp,
-                                      color: Colors.white,
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 50.w,
-                                      height: 14.sp,
-                                      color: Colors.white,
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 50.w,
-                                      height: 14.sp,
-                                      color: Colors.white,
-                                    ),
-                                  ])),
-                        ],
-                      ),
-                    )),
           Align(
             alignment: Alignment.topCenter,
             child: Row(children: <Widget>[
@@ -132,7 +194,7 @@ class ProfilePage extends HookWidget {
                           isProfile: true,
                         );
                       })
-                  : Text('You don\'t have any posts.')
+                  : Text('No Posts :(')
               : Shimmer.fromColors(
                   baseColor: Colors.grey[300]!,
                   highlightColor: Colors.grey[100]!,
@@ -151,6 +213,155 @@ class ProfilePage extends HookWidget {
         ],
       ),
     );
+  }
+}
+
+class ProfileToDo extends HookWidget {
+  const ProfileToDo({
+    Key? key,
+    required this.uid,
+  }) : super(key: key);
+
+  final String uid;
+
+  @override
+  Widget build(BuildContext context) {
+    final stream = useMemoized(() => Database(uid).getPublicToDo(uid), []);
+    final snapshot = useStream(stream);
+    return Container(
+        child: !snapshot.hasData
+            ? SpinKitWanderingCubes(
+                color: Colors.blueGrey,
+                size: 75.0,
+              )
+            : snapshot.data.docs.length > 0
+                ? ListView.builder(
+                    itemCount: snapshot.data.docs.length,
+                    itemBuilder: ((context, index) {
+                      var taskDoc = snapshot.data.docs[index];
+                      var taskId = taskDoc.id;
+                      var title = taskDoc['title'];
+                      var taskList = taskDoc['desc'];
+                      var recur = List<bool>.from(taskDoc['recur']);
+                      var reminder =
+                          ToDoTask.convertTimestamp(taskDoc['reminder']);
+
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                        child: InkWell(
+                          onTap: () {
+                            List task = [];
+
+                            for (var i = 0; i < taskList.length; i++) {
+                              var tempMap = {
+                                'task': taskList[i]['task'],
+                                'status': false
+                              };
+                              task.add(tempMap);
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddToDoTask(editParams: {
+                                  'id': null,
+                                  'title': title,
+                                  'desc': task,
+                                  'recur': [
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    false
+                                  ],
+                                  'reminder': null,
+                                  'isPublic': false,
+                                }, isEdit: true),
+                              ),
+                            );
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                  constraints: BoxConstraints(minWidth: 25.w),
+                                  height: 5.h,
+                                  decoration: BoxDecoration(
+                                      color: Colors.amber,
+                                      borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(15),
+                                          topRight: Radius.circular(15))),
+                                  child: Center(
+                                      child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0),
+                                    child: Text(title,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline1),
+                                  ))),
+                              ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                      minHeight: 5.h, minWidth: 100.w),
+                                  child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber[200],
+                                        border: Border.all(
+                                            color: Colors.amber, width: 5),
+                                        borderRadius: BorderRadius.only(
+                                            bottomLeft: Radius.circular(5),
+                                            bottomRight: Radius.circular(5),
+                                            topRight: Radius.circular(5)),
+                                      ),
+                                      child: ListView.builder(
+                                          physics:
+                                              NeverScrollableScrollPhysics(),
+                                          shrinkWrap: true,
+                                          itemCount: taskList.length,
+                                          itemBuilder: (context, index) {
+                                            return SizedBox(
+                                              height: 5.h,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: taskList[index]
+                                                            ['status']
+                                                        ? Colors.lightGreen[400]
+                                                        : null),
+                                                child: Row(
+                                                  children: [
+                                                    Checkbox(
+                                                      shape: CircleBorder(),
+                                                      activeColor: Colors
+                                                          .lightGreen[700],
+                                                      value: taskList[index]
+                                                          ['status'],
+                                                      onChanged:
+                                                          (value) async {},
+                                                    ),
+                                                    Text(
+                                                        taskList[index]['task'],
+                                                        softWrap: false,
+                                                        style: TextStyle(
+                                                            decoration: taskList[
+                                                                        index]
+                                                                    ['status']
+                                                                ? TextDecoration
+                                                                    .lineThrough
+                                                                : null)),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }))),
+                            ],
+                          ),
+                        ),
+                      );
+                    }))
+                : Center(
+                    child: Text('No To Do tasks to show',
+                        textAlign: TextAlign.center)));
   }
 }
 

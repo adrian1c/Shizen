@@ -39,6 +39,14 @@ exports.sendNotification = functions.firestore
                 admin
                     .firestore()
                     .collection("users")
+                    .doc(idTo)
+                    .collection("chats")
+                    .doc(idFrom)
+                    .update({unreadCount:
+                        admin.firestore.FieldValue.increment(1)});
+                admin
+                    .firestore()
+                    .collection("users")
                     .where(admin.firestore.FieldPath.documentId(), "==", idFrom)
                     .get()
                     .then((querySnapshot2) => {

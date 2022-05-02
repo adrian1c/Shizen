@@ -38,7 +38,8 @@ class AddToDoTask extends HookWidget {
         : [false, false, false, false, false, false, false]);
     final ValueNotifier<DateTime?> reminderValue =
         useState(editParams != null ? editParams['reminder'] : null);
-
+    final ValueNotifier<bool> isPublic =
+        useState(editParams != null ? editParams['isPublic'] : false);
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? "Edit Task" : "Add Task"),
@@ -55,6 +56,16 @@ class AddToDoTask extends HookWidget {
                 title: title,
                 taskList: taskList,
                 isValid: isValid,
+              ),
+              Row(
+                children: [
+                  Text('Share with Friends'),
+                  Switch(
+                    value: isPublic.value,
+                    onChanged: (value) =>
+                        isPublic.value = isPublic.value ? false : true,
+                  )
+                ],
               ),
               RecurButton(
                 taskList: taskList,
@@ -74,7 +85,8 @@ class AddToDoTask extends HookWidget {
                               title.value,
                               taskList.value,
                               recurValue.value,
-                              reminderValue.value);
+                              reminderValue.value,
+                              isPublic.value);
                           isEdit
                               ? await LoaderWithToast(
                                       context: context,

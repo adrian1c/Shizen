@@ -46,7 +46,6 @@ class ProgressPage extends HookWidget {
           padding: EdgeInsets.symmetric(vertical: 8),
           child: Container(
             width: 60.w,
-            height: 5.h,
             decoration: BoxDecoration(
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(

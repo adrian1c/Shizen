@@ -6,8 +6,9 @@ class ToDoTaskModel {
   List<bool> recur = [false, false, false, false, false, false, false];
   DateTime? reminder;
   bool allComplete = false;
+  bool isPublic = false;
 
-  ToDoTaskModel(this.title, this.desc, this.recur, this.reminder);
+  ToDoTaskModel(this.title, this.desc, this.recur, this.reminder, this.isPublic);
 
   toJson() {
     if (title == '') {
@@ -21,6 +22,7 @@ class ToDoTaskModel {
       'recur': recur,
       'reminder': reminder,
       'allComplete': allComplete,
+      'isPublic': isPublic,
     };
   }
 }

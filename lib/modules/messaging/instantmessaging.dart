@@ -12,7 +12,6 @@ class InstantMessagingPage extends HookWidget {
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final stream = useMemoized(() => Database(uid).getChats(), []);
     final chatStream = useStream(stream);
-    final test = useAppLifecycleState();
     return Scaffold(
         appBar: AppBar(
           title: Text('CHATS'),
@@ -46,8 +45,12 @@ class InstantMessagingPage extends HookWidget {
                                 Divider(),
                                 ListTile(
                                   onTap: () async {
-                                    await Database(uid)
+                                    Database(uid)
                                         .chattingWith(friend['peerId']);
+                                    if (friend['unreadCount'] > 0) {
+                                      Database(uid)
+                                          .resetUnread(friend['peerId']);
+                                    }
                                     Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -89,19 +92,28 @@ class InstantMessagingPage extends HookWidget {
                                       ),
                                     ],
                                   ),
-                                  subtitle: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "${friend['lastMsg']}",
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 13.sp),
-                                      ),
-                                    ],
+                                  subtitle: Text(
+                                    "${friend['lastMsg']}",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        color: Colors.black, fontSize: 13.sp),
                                   ),
+                                  trailing: friend['unreadCount'] > 0
+                                      ? Container(
+                                          alignment: Alignment.center,
+                                          width: 7.w,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.blueGrey[
+                                                800], // inner circle color
+                                          ),
+                                          child: Text(
+                                              friend['unreadCount'].toString(),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText1), // inner content
+                                        )
+                                      : null,
                                   horizontalTitleGap: 0,
                                   tileColor: Colors.transparent,
                                 ),
@@ -260,7 +272,7 @@ class ChatPage extends HookWidget {
                                   Container(
                                       padding: const EdgeInsets.all(10),
                                       constraints:
-                                          BoxConstraints(maxWidth: 75.w),
+                                          BoxConstraints(maxWidth: 70.w),
                                       decoration: BoxDecoration(
                                           color: Colors.blue[200],
                                           borderRadius: BorderRadius.only(
