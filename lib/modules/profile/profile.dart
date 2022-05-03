@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -118,7 +119,9 @@ class ProfilePage extends HookWidget {
         Expanded(
           child: TabBarView(controller: tabController, children: <Widget>[
             KeepAlivePage(child: ProfileToDo(uid: uid)),
-            KeepAlivePage(child: Text('Tracker')),
+            KeepAlivePage(
+                child: ProfileTracker(
+                    uid: uid, ownProfile: viewId != null ? false : true)),
             KeepAlivePage(
               child: ProfilePosts(
                   uid: uid, ownProfile: viewId != null ? false : true),
@@ -127,6 +130,461 @@ class ProfilePage extends HookWidget {
         ),
       ],
     );
+  }
+}
+
+class ProfileToDo extends HookWidget {
+  const ProfileToDo({
+    Key? key,
+    required this.uid,
+  }) : super(key: key);
+
+  final String uid;
+
+  @override
+  Widget build(BuildContext context) {
+    final stream = useMemoized(() => Database(uid).getPublicToDo(uid), []);
+    final snapshot = useStream(stream);
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.topCenter,
+            child: Row(children: <Widget>[
+              Expanded(
+                child: new Container(
+                    margin: const EdgeInsets.only(left: 0.0, right: 10.0),
+                    child: Divider(
+                      color: Colors.black,
+                      height: 5.h,
+                    )),
+              ),
+              Text(
+                "TO DO TASKS",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Expanded(
+                child: new Container(
+                    margin: const EdgeInsets.only(left: 10.0, right: 0.0),
+                    child: Divider(
+                      color: Colors.black,
+                      height: 5.h,
+                    )),
+              ),
+            ]),
+          ),
+          Container(
+              child: !snapshot.hasData
+                  ? SpinKitWanderingCubes(
+                      color: Colors.blueGrey,
+                      size: 75.0,
+                    )
+                  : snapshot.data.docs.length > 0
+                      ? ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.docs.length,
+                          itemBuilder: ((context, index) {
+                            var taskDoc = snapshot.data.docs[index];
+                            var title = taskDoc['title'];
+                            var taskList = taskDoc['desc'];
+
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                              child: InkWell(
+                                onTap: () {
+                                  List task = [];
+
+                                  for (var i = 0; i < taskList.length; i++) {
+                                    var tempMap = {
+                                      'task': taskList[i]['task'],
+                                      'status': false
+                                    };
+                                    task.add(tempMap);
+                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          AddToDoTask(editParams: {
+                                        'id': null,
+                                        'title': title,
+                                        'desc': task,
+                                        'recur': [
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false,
+                                          false
+                                        ],
+                                        'reminder': null,
+                                        'isPublic': false,
+                                      }, isEdit: true),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                        constraints:
+                                            BoxConstraints(minWidth: 25.w),
+                                        height: 5.h,
+                                        decoration: BoxDecoration(
+                                            color: Colors.amber,
+                                            borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(15),
+                                                topRight: Radius.circular(15))),
+                                        child: Center(
+                                            child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 15.0),
+                                          child: Text(title,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headline1),
+                                        ))),
+                                    ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                            minHeight: 5.h, minWidth: 100.w),
+                                        child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber[200],
+                                              border: Border.all(
+                                                  color: Colors.amber,
+                                                  width: 5),
+                                              borderRadius: BorderRadius.only(
+                                                  bottomLeft:
+                                                      Radius.circular(5),
+                                                  bottomRight:
+                                                      Radius.circular(5),
+                                                  topRight: Radius.circular(5)),
+                                            ),
+                                            child: ListView.builder(
+                                                physics:
+                                                    NeverScrollableScrollPhysics(),
+                                                shrinkWrap: true,
+                                                itemCount: taskList.length,
+                                                itemBuilder: (context, index) {
+                                                  return SizedBox(
+                                                    height: 5.h,
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                          color: taskList[index]
+                                                                  ['status']
+                                                              ? Colors
+                                                                  .lightGreen[400]
+                                                              : null),
+                                                      child: Row(
+                                                        children: [
+                                                          Checkbox(
+                                                            shape:
+                                                                CircleBorder(),
+                                                            activeColor: Colors
+                                                                    .lightGreen[
+                                                                700],
+                                                            value:
+                                                                taskList[index]
+                                                                    ['status'],
+                                                            onChanged:
+                                                                (value) async {},
+                                                          ),
+                                                          Text(
+                                                              taskList[index]
+                                                                  ['task'],
+                                                              softWrap: false,
+                                                              style: TextStyle(
+                                                                  decoration: taskList[
+                                                                              index]
+                                                                          [
+                                                                          'status']
+                                                                      ? TextDecoration
+                                                                          .lineThrough
+                                                                      : null)),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                }))),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }))
+                      : Center(
+                          child: Text('No To Do tasks to show',
+                              textAlign: TextAlign.center))),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfileTracker extends HookWidget {
+  const ProfileTracker({Key? key, required this.uid, required this.ownProfile})
+      : super(key: key);
+
+  final uid;
+  final ownProfile;
+
+  @override
+  Widget build(BuildContext context) {
+    // Add a field in user called highlightTracker or something
+    // Add button to change the highlightTracker value.
+    // Open page to select tracker when button is clicked.
+    // If highlightTracker is null, show no tracker.
+    // Else, show the tracker data.
+
+    final future =
+        useMemoized(() => Database(uid).getHighlightTracker(uid), []);
+    final snapshot = useFuture(future);
+
+    if (snapshot.connectionState == ConnectionState.done) {
+      var task;
+      if (snapshot.data != null) {
+        task = snapshot.data;
+      }
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: Row(children: <Widget>[
+                Expanded(
+                  child: new Container(
+                      margin: const EdgeInsets.only(left: 0.0, right: 10.0),
+                      child: Divider(
+                        color: Colors.black,
+                        height: 5.h,
+                      )),
+                ),
+                Text(
+                  "DAILY TRACKER",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Expanded(
+                  child: new Container(
+                      margin: const EdgeInsets.only(left: 10.0, right: 0.0),
+                      child: Divider(
+                        color: Colors.black,
+                        height: 5.h,
+                      )),
+                ),
+              ]),
+            ),
+            ownProfile
+                ? IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfileSelectTracker(),
+                          ));
+                    },
+                    icon: Icon(Icons.edit),
+                  )
+                : Container(),
+            task != null
+                ? Container(
+                    padding: const EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.blueGrey, width: 5),
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.lightBlue[50]),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(task['title'],
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            Row(
+                              children: [
+                                Text(
+                                    '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                Icon(Icons.park, color: Colors.lightGreen[700])
+                              ],
+                            )
+                          ],
+                        ),
+                        Divider(),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Next Milestone',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Text(task['milestones'].isEmpty
+                                      ? 'No milestone'
+                                      : 'Day ${task['milestones'][0]['day']} - ${task['milestones'][0]['reward']}'),
+                                ],
+                              ),
+                              // ElevatedButton(
+                              //   onPressed: () {
+                              //     StyledPopup(
+                              //             context: context,
+                              //             title: 'Milestones',
+                              //             children: [
+                              //               StatefulBuilder(
+                              //                   builder: (context, _setState) {
+                              //                 return Column(
+                              //                   children: [
+                              //                     task['milestones'].length > 0
+                              //                         ? ListView.builder(
+                              //                             physics:
+                              //                                 NeverScrollableScrollPhysics(),
+                              //                             shrinkWrap: true,
+                              //                             itemCount:
+                              //                                 task['milestones']
+                              //                                     .length,
+                              //                             itemBuilder:
+                              //                                 (context, index) {
+                              //                               return MilestonePopupTile(
+                              //                                 milestone: task[
+                              //                                         'milestones']
+                              //                                     [index],
+                              //                                 index: index,
+                              //                                 minDay: DateTime
+                              //                                             .now()
+                              //                                         .difference((task['startDate']
+                              //                                                 as Timestamp)
+                              //                                             .toDate())
+                              //                                         .inDays +
+                              //                                     1,
+                              //                               );
+                              //                             })
+                              //                         : Text(
+                              //                             'You dont have any milestones.'),
+                              //                   ],
+                              //                 );
+                              //               }),
+                              //             ],
+                              //             cancelText: 'Done')
+                              //         .showPopup();
+                              //   },
+                              //   child: Icon(Icons.flag),
+                              //   style: ElevatedButton.styleFrom(
+                              //       shape: CircleBorder(),
+                              //       primary: Colors.amber),
+                              // ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ))
+                : Center(child: Text('No highlighted tracker'))
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.topCenter,
+            child: Row(children: <Widget>[
+              Expanded(
+                child: new Container(
+                    margin: const EdgeInsets.only(left: 0.0, right: 10.0),
+                    child: Divider(
+                      color: Colors.black,
+                      height: 5.h,
+                    )),
+              ),
+              Text(
+                "DAILY TRACKER",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Expanded(
+                child: new Container(
+                    margin: const EdgeInsets.only(left: 10.0, right: 0.0),
+                    child: Divider(
+                      color: Colors.black,
+                      height: 5.h,
+                    )),
+              ),
+            ]),
+          ),
+          SpinKitWanderingCubes(
+            color: Colors.blueGrey,
+            size: 75.0,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfileSelectTracker extends HookWidget {
+  const ProfileSelectTracker({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).user.uid;
+    final selectedIndex = useState(-1);
+    final future = useMemoized(() => Database(uid).getTrackerTasks());
+    final snapshot = useFuture(future);
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Select Tracker'),
+          centerTitle: true,
+          actions: [
+            TextButton(
+                onPressed: () async {
+                  if (selectedIndex.value != -1) {
+                    await Database(uid).setHighlightTracker(
+                        snapshot.data.docs[selectedIndex.value].id);
+                    Navigator.pop(context);
+                  } else {
+                    showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                              content: Text('Please select at least one task.'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text('OK'))
+                              ],
+                            ));
+                  }
+                },
+                child: Text('OK', style: TextStyle(color: Colors.white)))
+          ],
+        ),
+        body: snapshot.hasData
+            ? ListView.builder(
+                itemCount: snapshot.data.docs.length,
+                itemBuilder: (context, index) {
+                  final task = snapshot.data.docs[index];
+                  return InkWell(
+                      onTap: () {
+                        selectedIndex.value = index;
+                      },
+                      child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: selectedIndex.value == index
+                                ? Colors.lightBlueAccent[100]
+                                : Colors.transparent,
+                          ),
+                          padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                          child: Transform.scale(
+                              scale: selectedIndex.value == index ? 0.9 : 1,
+                              child: Text('${task.id}'))));
+                },
+              )
+            : SpinKitWanderingCubes(color: Colors.blueGrey, size: 75));
   }
 }
 
@@ -161,7 +619,7 @@ class ProfilePosts extends HookWidget {
             child: Row(children: <Widget>[
               Expanded(
                 child: new Container(
-                    margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+                    margin: const EdgeInsets.only(left: 0.0, right: 10.0),
                     child: Divider(
                       color: Colors.black,
                       height: 5.h,
@@ -173,7 +631,7 @@ class ProfilePosts extends HookWidget {
               ),
               Expanded(
                 child: new Container(
-                    margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+                    margin: const EdgeInsets.only(left: 10.0, right: 0.0),
                     child: Divider(
                       color: Colors.black,
                       height: 5.h,
@@ -213,155 +671,6 @@ class ProfilePosts extends HookWidget {
         ],
       ),
     );
-  }
-}
-
-class ProfileToDo extends HookWidget {
-  const ProfileToDo({
-    Key? key,
-    required this.uid,
-  }) : super(key: key);
-
-  final String uid;
-
-  @override
-  Widget build(BuildContext context) {
-    final stream = useMemoized(() => Database(uid).getPublicToDo(uid), []);
-    final snapshot = useStream(stream);
-    return Container(
-        child: !snapshot.hasData
-            ? SpinKitWanderingCubes(
-                color: Colors.blueGrey,
-                size: 75.0,
-              )
-            : snapshot.data.docs.length > 0
-                ? ListView.builder(
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: ((context, index) {
-                      var taskDoc = snapshot.data.docs[index];
-                      var taskId = taskDoc.id;
-                      var title = taskDoc['title'];
-                      var taskList = taskDoc['desc'];
-                      var recur = List<bool>.from(taskDoc['recur']);
-                      var reminder =
-                          ToDoTask.convertTimestamp(taskDoc['reminder']);
-
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
-                        child: InkWell(
-                          onTap: () {
-                            List task = [];
-
-                            for (var i = 0; i < taskList.length; i++) {
-                              var tempMap = {
-                                'task': taskList[i]['task'],
-                                'status': false
-                              };
-                              task.add(tempMap);
-                            }
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddToDoTask(editParams: {
-                                  'id': null,
-                                  'title': title,
-                                  'desc': task,
-                                  'recur': [
-                                    false,
-                                    false,
-                                    false,
-                                    false,
-                                    false,
-                                    false,
-                                    false
-                                  ],
-                                  'reminder': null,
-                                  'isPublic': false,
-                                }, isEdit: true),
-                              ),
-                            );
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                  constraints: BoxConstraints(minWidth: 25.w),
-                                  height: 5.h,
-                                  decoration: BoxDecoration(
-                                      color: Colors.amber,
-                                      borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(15),
-                                          topRight: Radius.circular(15))),
-                                  child: Center(
-                                      child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15.0),
-                                    child: Text(title,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headline1),
-                                  ))),
-                              ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                      minHeight: 5.h, minWidth: 100.w),
-                                  child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber[200],
-                                        border: Border.all(
-                                            color: Colors.amber, width: 5),
-                                        borderRadius: BorderRadius.only(
-                                            bottomLeft: Radius.circular(5),
-                                            bottomRight: Radius.circular(5),
-                                            topRight: Radius.circular(5)),
-                                      ),
-                                      child: ListView.builder(
-                                          physics:
-                                              NeverScrollableScrollPhysics(),
-                                          shrinkWrap: true,
-                                          itemCount: taskList.length,
-                                          itemBuilder: (context, index) {
-                                            return SizedBox(
-                                              height: 5.h,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: taskList[index]
-                                                            ['status']
-                                                        ? Colors.lightGreen[400]
-                                                        : null),
-                                                child: Row(
-                                                  children: [
-                                                    Checkbox(
-                                                      shape: CircleBorder(),
-                                                      activeColor: Colors
-                                                          .lightGreen[700],
-                                                      value: taskList[index]
-                                                          ['status'],
-                                                      onChanged:
-                                                          (value) async {},
-                                                    ),
-                                                    Text(
-                                                        taskList[index]['task'],
-                                                        softWrap: false,
-                                                        style: TextStyle(
-                                                            decoration: taskList[
-                                                                        index]
-                                                                    ['status']
-                                                                ? TextDecoration
-                                                                    .lineThrough
-                                                                : null)),
-                                                  ],
-                                                ),
-                                              ),
-                                            );
-                                          }))),
-                            ],
-                          ),
-                        ),
-                      );
-                    }))
-                : Center(
-                    child: Text('No To Do tasks to show',
-                        textAlign: TextAlign.center)));
   }
 }
 

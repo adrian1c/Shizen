@@ -621,6 +621,29 @@ class Database {
         .snapshots();
   }
 
+  Future getHighlightTracker(uid) async {
+    print("Firing getHighlightTracker");
+
+    var result;
+    await userCol.doc(uid).get().then((value) async {
+      var data = value.data();
+      if (data!.containsKey('highlightTracker')) {
+        if (data['highlightTracker'] != null) {
+          result = await getTrackerData(data['highlightTracker']);
+        }
+      }
+    });
+    return result;
+  }
+
+  Future setHighlightTracker(tid) async {
+    print("Firing setHightlightTracker");
+
+    await userCol
+        .doc(uid)
+        .set({'highlightTracker': tid}, SetOptions(merge: true));
+  }
+
   //-----------------------------------------------------
   //--------------  TRACKER TASK  -----------------------
   //-----------------------------------------------------
