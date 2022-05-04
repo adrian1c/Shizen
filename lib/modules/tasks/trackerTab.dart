@@ -26,6 +26,7 @@ class TrackerTask extends HookWidget {
         child: snapshot.data.docs.length > 0
             ? ListView.builder(
                 physics: BouncingScrollPhysics(),
+                shrinkWrap: true,
                 itemCount: snapshot.data.docs.length,
                 itemBuilder: (context, index) {
                   if (index == 0) {
@@ -338,8 +339,7 @@ class TrackerTile extends HookWidget {
                                                                 1,
                                                           );
                                                         })
-                                                    : Text(
-                                                        'You dont have any milestones.'),
+                                                    : Text('No milestones.'),
                                               ],
                                             );
                                           }),

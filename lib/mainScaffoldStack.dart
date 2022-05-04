@@ -27,11 +27,11 @@ class MainScaffoldStack extends HookWidget {
       text: 'Friends',
     ),
     GButton(
-      icon: Icons.handyman,
+      icon: Icons.handshake,
       text: 'Community',
     ),
     GButton(
-      icon: Icons.insert_chart_outlined_outlined,
+      icon: Icons.insert_chart_rounded,
       text: 'Progress',
     ),
     GButton(
@@ -41,11 +41,11 @@ class MainScaffoldStack extends HookWidget {
   ];
 
   final List<String> title = [
-    "HOME",
-    "FRIENDS",
-    "COMMUNITY",
-    "PROGRESS",
-    "PROFILE"
+    'Home',
+    'Friends',
+    'Community',
+    'Progress',
+    'Profile'
   ];
 
   @override

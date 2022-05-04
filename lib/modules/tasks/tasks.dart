@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shizen_app/modules/tasks/todoTab.dart';
 import 'package:shizen_app/modules/tasks/trackerTab.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
+import 'package:shizen_app/widgets/divider.dart';
 import '../../utils/allUtils.dart';
 
 class TaskPage extends HookWidget {
@@ -43,11 +44,10 @@ class TaskPage extends HookWidget {
                 unselectedLabelColor: Colors.blueGrey[700],
                 tabs: [
                   Tab(
-                    child: Text('To Do', style: TextStyle(fontSize: 12.sp)),
+                    child: Icon(Icons.task_alt),
                   ),
                   Tab(
-                    child: Text('Daily Tracker',
-                        style: TextStyle(fontSize: 12.sp)),
+                    child: Icon(Icons.track_changes),
                   ),
                 ],
               ),
@@ -61,11 +61,26 @@ class TaskPage extends HookWidget {
                   controller: tabController,
                   children: <Widget>[
                     KeepAlivePage(
-                      child: ToDoTask(
-                        uid: uid,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            TextDivider('TO DO TASKS'),
+                            ToDoTask(
+                              uid: uid,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    KeepAlivePage(child: TrackerTask(uid: uid)),
+                    KeepAlivePage(
+                        child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          TextDivider('DAILY TRACKER'),
+                          TrackerTask(uid: uid),
+                        ],
+                      ),
+                    )),
                   ]),
             ),
           ],

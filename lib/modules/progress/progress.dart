@@ -5,6 +5,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
+import 'package:shizen_app/widgets/divider.dart';
 
 class ProgressPage extends HookWidget {
   const ProgressPage({Key? key}) : super(key: key);
@@ -66,12 +67,12 @@ class ProgressPage extends HookWidget {
               tabs: [
                 // first tab [you can add an icon using the icon property]
                 Tab(
-                  text: 'To Do',
+                  child: Icon(Icons.task_alt),
                 ),
 
                 // second tab [you can add an icon using the icon property]
                 Tab(
-                  text: 'Daily Tracker',
+                  child: Icon(Icons.track_changes),
                 ),
               ],
             ),
@@ -83,12 +84,22 @@ class ProgressPage extends HookWidget {
               controller: tabController,
               children: [
                 KeepAlivePage(
-                  child: TodoTaskProgressList(
-                      filterValue: filterValue, searchValue: searchValue),
+                  child: Column(
+                    children: [
+                      TextDivider('TO DO TASKS'),
+                      TodoTaskProgressList(
+                          filterValue: filterValue, searchValue: searchValue),
+                    ],
+                  ),
                 ),
                 KeepAlivePage(
-                  child: TrackerProgressList(
-                      filterValue: filterValue, searchValue: searchValue),
+                  child: Column(
+                    children: [
+                      TextDivider('DAILY TRACKER'),
+                      TrackerProgressList(
+                          filterValue: filterValue, searchValue: searchValue),
+                    ],
+                  ),
                 )
               ]),
         ),

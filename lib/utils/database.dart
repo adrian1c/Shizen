@@ -625,15 +625,17 @@ class Database {
     print("Firing getHighlightTracker");
 
     var result;
+    var taskId;
     await userCol.doc(uid).get().then((value) async {
       var data = value.data();
       if (data!.containsKey('highlightTracker')) {
         if (data['highlightTracker'] != null) {
           result = await getTrackerData(data['highlightTracker']);
+          taskId = data['highlightTracker'];
         }
       }
     });
-    return result;
+    return [result, taskId];
   }
 
   Future setHighlightTracker(tid) async {
@@ -682,18 +684,19 @@ class Database {
           userDoc.collection('trackers').doc(tid).collection('checkin').doc();
     }
 
-    await newCheckInDoc
-        .set({'day': day, 'note': note, 'attachment': attachment}).then(
-            (value) async => await userDoc
-                    .collection('trackerCheckIn')
-                    .doc(newCheckInDoc.id)
-                    .set({
-                  'dateCreated': DateTime.now(),
-                  'day': day,
-                  'note': note,
-                  'attachment': attachment,
-                  'trackerId': tid
-                }));
+    await newCheckInDoc.set({
+      'dateCreated': DateTime.now(),
+      'day': day,
+      'note': note,
+      'attachment': attachment
+    }).then((value) async =>
+        await userDoc.collection('trackerCheckIn').doc(newCheckInDoc.id).set({
+          'dateCreated': DateTime.now(),
+          'day': day,
+          'note': note,
+          'attachment': attachment,
+          'trackerId': tid
+        }));
     print(newCheckInDoc.id);
   }
 
@@ -764,6 +767,16 @@ class Database {
 
   Future getCheckInButtonData(tid) async {
     return userDoc.collection('trackers').doc(tid).collection('checkin').get();
+  }
+
+  Future getLatestCheckInData(tid) async {
+    return userDoc
+        .collection('trackers')
+        .doc(tid)
+        .collection('checkin')
+        .orderBy('dateCreated', descending: true)
+        .limit(1)
+        .get();
   }
 
   Future getTrackerProgressList() async {

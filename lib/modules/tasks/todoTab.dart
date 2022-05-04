@@ -31,6 +31,7 @@ class ToDoTask extends HookWidget {
             : snapshot.data.docs.length > 0
                 ? ListView.builder(
                     physics: BouncingScrollPhysics(),
+                    shrinkWrap: true,
                     itemCount: snapshot.data.docs.length,
                     itemBuilder: (context, index) {
                       var taskDoc = snapshot.data.docs[index];
@@ -178,7 +179,10 @@ class TodoTaskDisplay extends HookWidget {
                                     activeColor: Colors.lightGreen[700],
                                     value: taskList[index]['status'],
                                     onChanged: (value) async {
-                                      taskList[index]['status'] = true;
+                                      taskList[index]['status'] =
+                                          taskList[index]['status']
+                                              ? false
+                                              : true;
                                       var allComplete = true;
                                       for (var i = 0;
                                           i < taskList.length;

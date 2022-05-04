@@ -272,39 +272,66 @@ class PostListTile extends HookWidget {
                           scale: 0.9,
                           child: InkWell(
                             onTap: () {
-                              List task = [];
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                        title: Text('Create Similar Task?'),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () async {
+                                                Navigator.pop(context);
+                                                List task = [];
+                                                var taskList =
+                                                    postData['attachment']
+                                                        ['taskList'];
+                                                var title =
+                                                    postData['attachment']
+                                                        ['title'];
 
-                              for (var i = 0;
-                                  i < postData['attachment']['taskList'].length;
-                                  i++) {
-                                var tempMap = {
-                                  'task': postData['attachment']['taskList'][i]
-                                      ['task'],
-                                  'status': false
-                                };
-                                task.add(tempMap);
-                              }
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          AddToDoTask(editParams: {
-                                            'id': null,
-                                            'title': postData['attachment']
-                                                ['title'],
-                                            'desc': task,
-                                            'recur': [
-                                              false,
-                                              false,
-                                              false,
-                                              false,
-                                              false,
-                                              false,
-                                              false
-                                            ],
-                                            'reminder': null,
-                                            'isPublic': false,
-                                          }, isEdit: true)));
+                                                for (var i = 0;
+                                                    i < taskList.length;
+                                                    i++) {
+                                                  var tempMap = {
+                                                    'task': taskList[i]['task'],
+                                                    'status': false
+                                                  };
+                                                  task.add(tempMap);
+                                                }
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        AddToDoTask(
+                                                            editParams: {
+                                                          'id': null,
+                                                          'title': title,
+                                                          'desc': task,
+                                                          'recur': [
+                                                            false,
+                                                            false,
+                                                            false,
+                                                            false,
+                                                            false,
+                                                            false,
+                                                            false
+                                                          ],
+                                                          'reminder': null,
+                                                          'isPublic': false,
+                                                        },
+                                                            isEdit: false),
+                                                  ),
+                                                );
+                                              },
+                                              child: Text("Yes")),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text("Cancel"),
+                                          ),
+                                        ]);
+                                  });
                             },
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

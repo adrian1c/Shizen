@@ -128,6 +128,8 @@ class TabProvider extends ChangeNotifier {
   int community = 0;
   int comment = 0;
   int profileUser = 0;
+  int profileTracker = 0;
+  int profileTodo = 0;
   int profilePosts = 0;
 
   void changeTabPage(index) {
@@ -157,6 +159,12 @@ class TabProvider extends ChangeNotifier {
         break;
       case 'profileUser':
         profileUser++;
+        break;
+      case 'profileTodo':
+        profileTodo++;
+        break;
+      case 'profileTracker':
+        profileTracker++;
         break;
       case 'profilePosts':
         profilePosts++;

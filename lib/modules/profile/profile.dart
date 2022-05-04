@@ -10,7 +10,9 @@ import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/modules/tasks/todoTab.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shizen_app/utils/dateTimeAgo.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
+import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -36,7 +38,6 @@ class ProfilePage extends HookWidget {
       children: [
         Container(
             padding: const EdgeInsets.all(20),
-            margin: const EdgeInsets.only(bottom: 20),
             width: double.infinity,
             height: 15.h,
             color: Color(0xff80ceff),
@@ -87,6 +88,9 @@ class ProfilePage extends HookWidget {
                       ],
                     ),
                   )),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+        ),
         Container(
           width: 80.w,
           child: TabBar(
@@ -102,13 +106,13 @@ class ProfilePage extends HookWidget {
             unselectedLabelColor: Colors.blueGrey[700],
             tabs: [
               Tab(
-                child: Icon(Icons.list),
+                child: Icon(Icons.task_alt),
               ),
               Tab(
-                child: Icon(Icons.repeat),
+                child: Icon(Icons.track_changes),
               ),
               Tab(
-                child: Icon(Icons.feed),
+                child: Icon(Icons.dynamic_feed),
               )
             ],
           ),
@@ -118,7 +122,9 @@ class ProfilePage extends HookWidget {
         ),
         Expanded(
           child: TabBarView(controller: tabController, children: <Widget>[
-            KeepAlivePage(child: ProfileToDo(uid: uid)),
+            KeepAlivePage(
+                child: ProfileToDo(
+                    uid: uid, ownProfile: viewId != null ? false : true)),
             KeepAlivePage(
                 child: ProfileTracker(
                     uid: uid, ownProfile: viewId != null ? false : true)),
@@ -137,9 +143,11 @@ class ProfileToDo extends HookWidget {
   const ProfileToDo({
     Key? key,
     required this.uid,
+    required this.ownProfile,
   }) : super(key: key);
 
   final String uid;
+  final bool ownProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -148,31 +156,7 @@ class ProfileToDo extends HookWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: Row(children: <Widget>[
-              Expanded(
-                child: new Container(
-                    margin: const EdgeInsets.only(left: 0.0, right: 10.0),
-                    child: Divider(
-                      color: Colors.black,
-                      height: 5.h,
-                    )),
-              ),
-              Text(
-                "TO DO TASKS",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Expanded(
-                child: new Container(
-                    margin: const EdgeInsets.only(left: 10.0, right: 0.0),
-                    child: Divider(
-                      color: Colors.black,
-                      height: 5.h,
-                    )),
-              ),
-            ]),
-          ),
+          TextDivider('TO DO TASKS'),
           Container(
               child: !snapshot.hasData
                   ? SpinKitWanderingCubes(
@@ -192,39 +176,93 @@ class ProfileToDo extends HookWidget {
                               padding:
                                   const EdgeInsets.fromLTRB(10, 15, 10, 15),
                               child: InkWell(
-                                onTap: () {
-                                  List task = [];
+                                onTap: ownProfile
+                                    ? () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                AddToDoTask(editParams: {
+                                              'id': taskDoc.id,
+                                              'title': taskDoc['title'],
+                                              'desc': taskList,
+                                              'recur': List<bool>.from(
+                                                  taskDoc['recur']),
+                                              'reminder':
+                                                  ToDoTask.convertTimestamp(
+                                                      taskDoc['reminder']),
+                                              'isPublic': taskDoc['isPublic'],
+                                            }, isEdit: true),
+                                          ),
+                                        );
+                                      }
+                                    : () async {
+                                        showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return AlertDialog(
+                                                  title: Text(
+                                                      'Create Similar Task?'),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () async {
+                                                          Navigator.pop(
+                                                              context);
+                                                          List task = [];
 
-                                  for (var i = 0; i < taskList.length; i++) {
-                                    var tempMap = {
-                                      'task': taskList[i]['task'],
-                                      'status': false
-                                    };
-                                    task.add(tempMap);
-                                  }
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          AddToDoTask(editParams: {
-                                        'id': null,
-                                        'title': title,
-                                        'desc': task,
-                                        'recur': [
-                                          false,
-                                          false,
-                                          false,
-                                          false,
-                                          false,
-                                          false,
-                                          false
-                                        ],
-                                        'reminder': null,
-                                        'isPublic': false,
-                                      }, isEdit: true),
-                                    ),
-                                  );
-                                },
+                                                          for (var i = 0;
+                                                              i <
+                                                                  taskList
+                                                                      .length;
+                                                              i++) {
+                                                            var tempMap = {
+                                                              'task':
+                                                                  taskList[i]
+                                                                      ['task'],
+                                                              'status': false
+                                                            };
+                                                            task.add(tempMap);
+                                                          }
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  AddToDoTask(
+                                                                      editParams: {
+                                                                    'id': null,
+                                                                    'title':
+                                                                        title,
+                                                                    'desc':
+                                                                        task,
+                                                                    'recur': [
+                                                                      false,
+                                                                      false,
+                                                                      false,
+                                                                      false,
+                                                                      false,
+                                                                      false,
+                                                                      false
+                                                                    ],
+                                                                    'reminder':
+                                                                        null,
+                                                                    'isPublic':
+                                                                        false,
+                                                                  },
+                                                                      isEdit:
+                                                                          false),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: Text("Yes")),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: Text("Cancel"),
+                                                    ),
+                                                  ]);
+                                            });
+                                      },
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -337,151 +375,75 @@ class ProfileTracker extends HookWidget {
     // If highlightTracker is null, show no tracker.
     // Else, show the tracker data.
 
-    final future =
-        useMemoized(() => Database(uid).getHighlightTracker(uid), []);
+    final future = useMemoized(() => Database(uid).getHighlightTracker(uid),
+        [Provider.of<TabProvider>(context).profileTracker]);
     final snapshot = useFuture(future);
 
     if (snapshot.connectionState == ConnectionState.done) {
       var task;
+      var taskId;
       if (snapshot.data != null) {
-        task = snapshot.data;
+        task = snapshot.data[0];
+        taskId = snapshot.data[1];
       }
       return SingleChildScrollView(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: Row(children: <Widget>[
-                Expanded(
-                  child: new Container(
-                      margin: const EdgeInsets.only(left: 0.0, right: 10.0),
-                      child: Divider(
-                        color: Colors.black,
-                        height: 5.h,
-                      )),
-                ),
-                Text(
-                  "DAILY TRACKER",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Expanded(
-                  child: new Container(
-                      margin: const EdgeInsets.only(left: 10.0, right: 0.0),
-                      child: Divider(
-                        color: Colors.black,
-                        height: 5.h,
-                      )),
-                ),
-              ]),
-            ),
+            TextDivider('DAILY TRACKER'),
             ownProfile
-                ? IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProfileSelectTracker(),
-                          ));
-                    },
-                    icon: Icon(Icons.edit),
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfileSelectTracker(),
+                              ));
+                        },
+                        icon: Icon(Icons.edit),
+                      ),
+                      task != null
+                          ? IconButton(
+                              onPressed: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                          content: Text(
+                                              'Do you want to stop displaying this tracker in your profile?'),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () async {
+                                                  await Database(uid)
+                                                      .setHighlightTracker(
+                                                          null);
+                                                  Provider.of<TabProvider>(
+                                                          context,
+                                                          listen: false)
+                                                      .rebuildPage(
+                                                          'profileTracker');
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text('Remove')),
+                                            TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: Text('Cancel')),
+                                          ],
+                                        ));
+                              },
+                              icon: Icon(Icons.remove_circle),
+                            )
+                          : Container()
+                    ],
                   )
                 : Container(),
             task != null
-                ? Container(
-                    padding: const EdgeInsets.all(10.0),
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.blueGrey, width: 5),
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.lightBlue[50]),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(task['title'],
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            Row(
-                              children: [
-                                Text(
-                                    '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                Icon(Icons.park, color: Colors.lightGreen[700])
-                              ],
-                            )
-                          ],
-                        ),
-                        Divider(),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Next Milestone',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  Text(task['milestones'].isEmpty
-                                      ? 'No milestone'
-                                      : 'Day ${task['milestones'][0]['day']} - ${task['milestones'][0]['reward']}'),
-                                ],
-                              ),
-                              // ElevatedButton(
-                              //   onPressed: () {
-                              //     StyledPopup(
-                              //             context: context,
-                              //             title: 'Milestones',
-                              //             children: [
-                              //               StatefulBuilder(
-                              //                   builder: (context, _setState) {
-                              //                 return Column(
-                              //                   children: [
-                              //                     task['milestones'].length > 0
-                              //                         ? ListView.builder(
-                              //                             physics:
-                              //                                 NeverScrollableScrollPhysics(),
-                              //                             shrinkWrap: true,
-                              //                             itemCount:
-                              //                                 task['milestones']
-                              //                                     .length,
-                              //                             itemBuilder:
-                              //                                 (context, index) {
-                              //                               return MilestonePopupTile(
-                              //                                 milestone: task[
-                              //                                         'milestones']
-                              //                                     [index],
-                              //                                 index: index,
-                              //                                 minDay: DateTime
-                              //                                             .now()
-                              //                                         .difference((task['startDate']
-                              //                                                 as Timestamp)
-                              //                                             .toDate())
-                              //                                         .inDays +
-                              //                                     1,
-                              //                               );
-                              //                             })
-                              //                         : Text(
-                              //                             'You dont have any milestones.'),
-                              //                   ],
-                              //                 );
-                              //               }),
-                              //             ],
-                              //             cancelText: 'Done')
-                              //         .showPopup();
-                              //   },
-                              //   child: Icon(Icons.flag),
-                              //   style: ElevatedButton.styleFrom(
-                              //       shape: CircleBorder(),
-                              //       primary: Colors.amber),
-                              // ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ))
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                    child: ProfileSelectTrackerTile(task: task, taskId: taskId),
+                  )
                 : Center(child: Text('No highlighted tracker'))
           ],
         ),
@@ -491,31 +453,7 @@ class ProfileTracker extends HookWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: Row(children: <Widget>[
-              Expanded(
-                child: new Container(
-                    margin: const EdgeInsets.only(left: 0.0, right: 10.0),
-                    child: Divider(
-                      color: Colors.black,
-                      height: 5.h,
-                    )),
-              ),
-              Text(
-                "DAILY TRACKER",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Expanded(
-                child: new Container(
-                    margin: const EdgeInsets.only(left: 10.0, right: 0.0),
-                    child: Divider(
-                      color: Colors.black,
-                      height: 5.h,
-                    )),
-              ),
-            ]),
-          ),
+          TextDivider('DAILY TRACKER'),
           SpinKitWanderingCubes(
             color: Colors.blueGrey,
             size: 75.0,
@@ -533,7 +471,8 @@ class ProfileSelectTracker extends HookWidget {
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final selectedIndex = useState(-1);
-    final future = useMemoized(() => Database(uid).getTrackerTasks());
+    final future = useMemoized(() => Database(uid).getTrackerTasks(),
+        [Provider.of<TabProvider>(context).profileTracker]);
     final snapshot = useFuture(future);
     return Scaffold(
         appBar: AppBar(
@@ -545,6 +484,8 @@ class ProfileSelectTracker extends HookWidget {
                   if (selectedIndex.value != -1) {
                     await Database(uid).setHighlightTracker(
                         snapshot.data.docs[selectedIndex.value].id);
+                    Provider.of<TabProvider>(context, listen: false)
+                        .rebuildPage('profileTracker');
                     Navigator.pop(context);
                   } else {
                     showDialog(
@@ -553,7 +494,9 @@ class ProfileSelectTracker extends HookWidget {
                               content: Text('Please select at least one task.'),
                               actions: [
                                 TextButton(
-                                    onPressed: () => Navigator.pop(context),
+                                    onPressed: () async {
+                                      Navigator.pop(context);
+                                    },
                                     child: Text('OK'))
                               ],
                             ));
@@ -581,10 +524,223 @@ class ProfileSelectTracker extends HookWidget {
                           padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
                           child: Transform.scale(
                               scale: selectedIndex.value == index ? 0.9 : 1,
-                              child: Text('${task.id}'))));
+                              child: ProfileSelectTrackerTile(
+                                  task: task, taskId: task.id))));
                 },
               )
             : SpinKitWanderingCubes(color: Colors.blueGrey, size: 75));
+  }
+}
+
+class ProfileSelectTrackerTile extends HookWidget {
+  const ProfileSelectTrackerTile({
+    Key? key,
+    required this.task,
+    required this.taskId,
+  }) : super(key: key);
+
+  final task;
+  final taskId;
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).user.uid;
+    final future = useMemoized(() => Database(uid).getLatestCheckInData(taskId),
+        [Provider.of<TabProvider>(context).profileTracker]);
+    final snapshot = useFuture(future);
+    return Container(
+        padding: const EdgeInsets.all(10.0),
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.blueGrey, width: 5),
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.lightBlue[50]),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(task['title'],
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    Text(
+                        '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Icon(Icons.park, color: Colors.lightGreen[700])
+                  ],
+                )
+              ],
+            ),
+            Divider(),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Next Milestone',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(task['milestones'].isEmpty
+                          ? '-'
+                          : 'Day ${task['milestones'][0]['day']} - ${task['milestones'][0]['reward']}'),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      StyledPopup(
+                              context: context,
+                              title: 'Milestones',
+                              children: [
+                                StatefulBuilder(builder: (context, _setState) {
+                                  return Column(
+                                    children: [
+                                      task['milestones'].length > 0
+                                          ? ListView.builder(
+                                              physics:
+                                                  NeverScrollableScrollPhysics(),
+                                              shrinkWrap: true,
+                                              itemCount:
+                                                  task['milestones'].length,
+                                              itemBuilder: (context, index) {
+                                                var milestone =
+                                                    task['milestones'][index];
+                                                var minDay = DateTime.now()
+                                                        .difference((task[
+                                                                    'startDate']
+                                                                as Timestamp)
+                                                            .toDate())
+                                                        .inDays +
+                                                    1;
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.fromLTRB(
+                                                          0, 20, 0, 20),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Container(
+                                                              width: 30.w,
+                                                              height: 5.h,
+                                                              decoration: BoxDecoration(
+                                                                  color: minDay <
+                                                                          milestone[
+                                                                              'day']
+                                                                      ? Colors
+                                                                          .amber
+                                                                      : Colors
+                                                                          .lightGreen,
+                                                                  borderRadius: BorderRadius.only(
+                                                                      topLeft: Radius
+                                                                          .circular(
+                                                                              15),
+                                                                      topRight:
+                                                                          Radius.circular(
+                                                                              15))),
+                                                              child: Center(
+                                                                  child: Text(
+                                                                      'Day ${milestone['day']}'))),
+                                                        ],
+                                                      ),
+                                                      Container(
+                                                          width: 100.w,
+                                                          height: 7.h,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: minDay <
+                                                                    milestone[
+                                                                        'day']
+                                                                ? Colors
+                                                                    .amber[200]
+                                                                : Colors.lightGreen[
+                                                                    200],
+                                                            border: Border.all(
+                                                                color: minDay <
+                                                                        milestone[
+                                                                            'day']
+                                                                    ? Colors
+                                                                        .amber
+                                                                    : Colors
+                                                                        .lightGreen,
+                                                                width: 5),
+                                                            borderRadius: BorderRadius.only(
+                                                                bottomLeft: Radius
+                                                                    .circular(
+                                                                        5),
+                                                                bottomRight:
+                                                                    Radius
+                                                                        .circular(
+                                                                            5),
+                                                                topRight: Radius
+                                                                    .circular(
+                                                                        5)),
+                                                          ),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                        .fromLTRB(
+                                                                    20,
+                                                                    0,
+                                                                    20,
+                                                                    0),
+                                                            child: Align(
+                                                                alignment: Alignment
+                                                                    .centerLeft,
+                                                                child: Text(
+                                                                    milestone[
+                                                                        'reward'])),
+                                                          )),
+                                                    ],
+                                                  ),
+                                                );
+                                              })
+                                          : Text('No milestones'),
+                                    ],
+                                  );
+                                }),
+                              ],
+                              cancelText: 'Done')
+                          .showPopup();
+                    },
+                    child: Icon(Icons.flag),
+                    style: ElevatedButton.styleFrom(
+                        shape: CircleBorder(), primary: Colors.amber),
+                  ),
+                ],
+              ),
+            ),
+            Divider(),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Last checked-in',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  snapshot.hasData
+                      ? snapshot.data.docs.length != 0
+                          ? Text((snapshot.data.docs[0]['dateCreated']
+                                  as Timestamp)
+                              .toDate()
+                              .timeAgo())
+                          : Text('-')
+                      : Text('-')
+                ],
+              ),
+            ),
+          ],
+        ));
   }
 }
 
@@ -614,31 +770,7 @@ class ProfilePosts extends HookWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: Row(children: <Widget>[
-              Expanded(
-                child: new Container(
-                    margin: const EdgeInsets.only(left: 0.0, right: 10.0),
-                    child: Divider(
-                      color: Colors.black,
-                      height: 5.h,
-                    )),
-              ),
-              Text(
-                "POSTS",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Expanded(
-                child: new Container(
-                    margin: const EdgeInsets.only(left: 10.0, right: 0.0),
-                    child: Divider(
-                      color: Colors.black,
-                      height: 5.h,
-                    )),
-              ),
-            ]),
-          ),
+          TextDivider('POSTS'),
           snapshotUserPosts.hasData
               ? snapshotUserPosts.data!.length > 0
                   ? ListView.builder(
