@@ -169,391 +169,368 @@ class PostListTile extends HookWidget {
     final commentController = useTextEditingController();
     final commentCount = useState(postData['commentCount']);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.only(top: 15, bottom: 15),
-            decoration: BoxDecoration(
-                color: Colors.blueGrey[100],
-                borderRadius: BorderRadius.circular(20)),
-            child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
+      child: Container(
+        padding: const EdgeInsets.only(top: 15, bottom: 15),
+        decoration: BoxDecoration(
+            color: Colors.blueGrey[100],
+            borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: InkWell(
+                    onTap: isProfile
+                        ? () {}
+                        : () {
+                            if (postData['visibility'] == 'Anonymous') {
+                              return;
+                            }
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) {
+                              return Scaffold(
+                                  appBar: AppBar(
+                                    title:
+                                        Text('${postData['name']}\'s Profile'),
+                                    centerTitle: true,
+                                  ),
+                                  body: ProfilePage(viewId: postData['uid']));
+                            }));
+                          },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Container(
+                            width: 5.h,
+                            height: 5.h,
+                            child: postData['image'] != ''
+                                ? CircleAvatar(
+                                    foregroundImage: CachedNetworkImageProvider(
+                                        postData!['image']),
+                                    backgroundColor: Colors.grey,
+                                    radius: 3.h,
+                                  )
+                                : CircleAvatar(
+                                    foregroundImage: Images.defaultPic.image,
+                                    backgroundColor: Colors.grey,
+                                    radius: 3.h,
+                                  )),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(postData['name']),
+                              Text(postData['email']),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Divider(
+                  thickness: 2,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Text(postData['desc'],
+                      style: Theme.of(context).textTheme.headline4),
+                ),
+                if (postData['attachmentType'] != null)
+                  if (postData['attachmentType'] == 'image')
+                    CachedNetworkImage(
+                        width: 100.w,
+                        imageUrl: postData['attachment'],
+                        progressIndicatorBuilder:
+                            (context, url, downloadProgress) => SizedBox(
+                                  width: 100.w,
+                                  height: 100.w,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black26,
+                                    ),
+                                  ),
+                                ),
+                        fit: BoxFit.fitWidth),
+                if (postData['attachmentType'] == 'task')
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Transform.scale(
+                      scale: 0.9,
                       child: InkWell(
-                        onTap: isProfile
-                            ? () {}
-                            : () {
-                                if (postData['visibility'] == 'Anonymous') {
-                                  return;
-                                }
-                                Navigator.push(context,
-                                    MaterialPageRoute(builder: (context) {
-                                  return Scaffold(
-                                      appBar: AppBar(
-                                        title: Text(
-                                            '${postData['name']}\'s Profile'),
-                                        centerTitle: true,
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                    title: Text('Create Similar Task?'),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+                                            List task = [];
+                                            var taskList =
+                                                postData['attachment']
+                                                    ['taskList'];
+                                            var title =
+                                                postData['attachment']['title'];
+
+                                            for (var i = 0;
+                                                i < taskList.length;
+                                                i++) {
+                                              var tempMap = {
+                                                'task': taskList[i]['task'],
+                                                'status': false
+                                              };
+                                              task.add(tempMap);
+                                            }
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AddToDoTask(
+                                                  editParams: {
+                                                    'id': null,
+                                                    'title': title,
+                                                    'desc': task,
+                                                    'recur': [
+                                                      false,
+                                                      false,
+                                                      false,
+                                                      false,
+                                                      false,
+                                                      false,
+                                                      false
+                                                    ],
+                                                    'reminder': null,
+                                                    'isPublic': false,
+                                                  },
+                                                  isEdit: false,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          child: Text("Yes")),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Text("Cancel"),
                                       ),
-                                      body:
-                                          ProfilePage(viewId: postData['uid']));
-                                }));
-                              },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                                    ]);
+                              });
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                                width: 5.h,
-                                height: 5.h,
-                                child: postData['image'] != ''
-                                    ? CircleAvatar(
-                                        foregroundImage:
-                                            CachedNetworkImageProvider(
-                                                postData!['image']),
-                                        backgroundColor: Colors.grey,
-                                        radius: 3.h,
-                                      )
-                                    : CircleAvatar(
-                                        foregroundImage:
-                                            Images.defaultPic.image,
-                                        backgroundColor: Colors.grey,
-                                        radius: 3.h,
-                                      )),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(postData['name']),
-                                  Text(postData['email']),
-                                ],
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                    constraints: BoxConstraints(minWidth: 25.w),
+                                    height: 5.h,
+                                    decoration: BoxDecoration(
+                                        color: Colors.amber,
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(15),
+                                            topRight: Radius.circular(15))),
+                                    child: Center(
+                                        child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 15.0),
+                                      child:
+                                          Text(postData['attachment']['title']),
+                                    ))),
+                                Text(postData['attachment']['timeCompleted'] !=
+                                        null
+                                    ? 'Completed at ${DateFormat("hh:mm a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
+                                    : '')
+                              ],
                             ),
+                            ConstrainedBox(
+                                constraints: BoxConstraints(
+                                    minHeight: 5.h, minWidth: 100.w),
+                                child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber[200],
+                                      border: Border.all(
+                                          color: Colors.amber, width: 5),
+                                      borderRadius: BorderRadius.only(
+                                          bottomLeft: Radius.circular(5),
+                                          bottomRight: Radius.circular(5),
+                                          topRight: Radius.circular(5)),
+                                    ),
+                                    child: ListView.builder(
+                                        physics: NeverScrollableScrollPhysics(),
+                                        shrinkWrap: true,
+                                        itemCount: postData['attachment']
+                                                ['taskList']
+                                            .length,
+                                        itemBuilder: (context, index) {
+                                          return SizedBox(
+                                            height: 5.h,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                  color: postData['attachment']
+                                                              ['taskList']
+                                                          [index]['status']
+                                                      ? Colors.lightGreen[400]
+                                                      : null),
+                                              child: Row(
+                                                children: [
+                                                  Checkbox(
+                                                    shape: CircleBorder(),
+                                                    activeColor:
+                                                        Colors.lightGreen[700],
+                                                    value:
+                                                        postData['attachment']
+                                                                ['taskList']
+                                                            [index]['status'],
+                                                    onChanged: (value) {},
+                                                  ),
+                                                  Text(
+                                                      postData['attachment']
+                                                              ['taskList']
+                                                          [index]['task'],
+                                                      softWrap: false,
+                                                      style: TextStyle(
+                                                          decoration: postData[
+                                                                          'attachment']
+                                                                      [
+                                                                      'taskList'][index]
+                                                                  ['status']
+                                                              ? TextDecoration
+                                                                  .lineThrough
+                                                              : null)),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }))),
                           ],
                         ),
                       ),
                     ),
-                    Divider(
-                      thickness: 2,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text(postData['desc'],
-                          style: Theme.of(context).textTheme.headline4),
-                    ),
-                    if (postData['attachmentType'] != null)
-                      if (postData['attachmentType'] == 'image')
-                        CachedNetworkImage(
-                            width: 100.w,
-                            imageUrl: postData['attachment'],
-                            progressIndicatorBuilder:
-                                (context, url, downloadProgress) => SizedBox(
-                                      width: 100.w,
-                                      height: 100.w,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black26,
-                                        ),
-                                      ),
-                                    ),
-                            fit: BoxFit.fitWidth),
-                    if (postData['attachmentType'] == 'task')
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Transform.scale(
-                          scale: 0.9,
-                          child: InkWell(
-                            onTap: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                        title: Text('Create Similar Task?'),
-                                        actions: [
-                                          TextButton(
-                                              onPressed: () async {
-                                                Navigator.pop(context);
-                                                List task = [];
-                                                var taskList =
-                                                    postData['attachment']
-                                                        ['taskList'];
-                                                var title =
-                                                    postData['attachment']
-                                                        ['title'];
-
-                                                for (var i = 0;
-                                                    i < taskList.length;
-                                                    i++) {
-                                                  var tempMap = {
-                                                    'task': taskList[i]['task'],
-                                                    'status': false
-                                                  };
-                                                  task.add(tempMap);
-                                                }
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        AddToDoTask(
-                                                            editParams: {
-                                                          'id': null,
-                                                          'title': title,
-                                                          'desc': task,
-                                                          'recur': [
-                                                            false,
-                                                            false,
-                                                            false,
-                                                            false,
-                                                            false,
-                                                            false,
-                                                            false
-                                                          ],
-                                                          'reminder': null,
-                                                          'isPublic': false,
-                                                        },
-                                                            isEdit: false),
-                                                  ),
-                                                );
-                                              },
-                                              child: Text("Yes")),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: Text("Cancel"),
-                                          ),
-                                        ]);
-                                  });
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                        constraints:
-                                            BoxConstraints(minWidth: 25.w),
-                                        height: 5.h,
-                                        decoration: BoxDecoration(
-                                            color: Colors.amber,
-                                            borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(15),
-                                                topRight: Radius.circular(15))),
-                                        child: Center(
-                                            child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 15.0),
-                                          child: Text(
-                                              postData['attachment']['title']),
-                                        ))),
-                                    Text(postData['attachment']
-                                                ['timeCompleted'] !=
-                                            null
-                                        ? 'Completed at ${DateFormat("hh:mm a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
-                                        : '')
-                                  ],
-                                ),
-                                ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                        minHeight: 5.h, minWidth: 100.w),
-                                    child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.amber[200],
-                                          border: Border.all(
-                                              color: Colors.amber, width: 5),
-                                          borderRadius: BorderRadius.only(
-                                              bottomLeft: Radius.circular(5),
-                                              bottomRight: Radius.circular(5),
-                                              topRight: Radius.circular(5)),
-                                        ),
-                                        child: ListView.builder(
-                                            physics:
-                                                NeverScrollableScrollPhysics(),
-                                            shrinkWrap: true,
-                                            itemCount: postData['attachment']
-                                                    ['taskList']
-                                                .length,
-                                            itemBuilder: (context, index) {
-                                              return SizedBox(
-                                                height: 5.h,
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                      color: postData['attachment']
-                                                                  ['taskList']
-                                                              [index]['status']
-                                                          ? Colors
-                                                              .lightGreen[400]
-                                                          : null),
-                                                  child: Row(
-                                                    children: [
-                                                      Checkbox(
-                                                        shape: CircleBorder(),
-                                                        activeColor: Colors
-                                                            .lightGreen[700],
-                                                        value: postData[
-                                                                    'attachment']
-                                                                ['taskList']
-                                                            [index]['status'],
-                                                        onChanged: (value) {},
-                                                      ),
-                                                      Text(
-                                                          postData['attachment']
-                                                                  ['taskList']
-                                                              [index]['task'],
-                                                          softWrap: false,
-                                                          style: TextStyle(
-                                                              decoration: postData['attachment']
-                                                                              [
-                                                                              'taskList']
-                                                                          [
-                                                                          index]
-                                                                      ['status']
-                                                                  ? TextDecoration
-                                                                      .lineThrough
-                                                                  : null)),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            }))),
-                              ],
-                            ),
+                  ),
+              ],
+            ),
+            if (postData['hashtags'].length > 0)
+              Container(
+                padding: const EdgeInsets.all(10),
+                width: 100.w,
+                height: 50,
+                child: ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: postData['hashtags'].length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: InkWell(
+                        onTap: isProfile
+                            ? () {}
+                            : () {
+                                hashtag.value = postData['hashtags'][index];
+                                hashtagController.text =
+                                    postData['hashtags'][index];
+                              },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                              color: Colors.blueGrey[200],
+                              borderRadius: BorderRadius.circular(20)),
+                          child: Center(
+                            child: Text('#${postData['hashtags'][index]}',
+                                style: Theme.of(context).textTheme.overline),
                           ),
                         ),
                       ),
-                  ],
+                    );
+                  },
                 ),
-                if (postData['hashtags'].length > 0)
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    width: 100.w,
-                    height: 50,
-                    child: ListView.builder(
-                      physics: BouncingScrollPhysics(),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: postData['hashtags'].length,
-                      itemBuilder: (context, index) {
+              ),
+            CommentList(pid: postData['postId'], commentCount: commentCount),
+            Center(
+              child: InkWell(
+                  onTap: () {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      builder: (BuildContext context) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                          child: InkWell(
-                            onTap: isProfile
-                                ? () {}
-                                : () {
-                                    hashtag.value = postData['hashtags'][index];
-                                    hashtagController.text =
-                                        postData['hashtags'][index];
-                                  },
-                            child: Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              decoration: BoxDecoration(
-                                  color: Colors.blueGrey[200],
-                                  borderRadius: BorderRadius.circular(20)),
-                              child: Center(
-                                child: Text('#${postData['hashtags'][index]}',
-                                    style:
-                                        Theme.of(context).textTheme.overline),
+                          padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).viewInsets.bottom),
+                          child: Container(
+                            height: 10.h,
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: TextField(
+                                      controller: commentController,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
+                                      decoration: InputDecoration(
+                                        hintText: 'Post a comment',
+                                        suffixIcon: IconButton(
+                                          onPressed: () async {
+                                            if (commentController.text.length !=
+                                                0) {
+                                              await Database(uid)
+                                                  .postComment(
+                                                      postData['postId'],
+                                                      commentController.text)
+                                                  .then((value) {
+                                                commentController.clear();
+                                                commentCount.value += 1;
+                                              });
+                                              Navigator.pop(context);
+                                            }
+                                          },
+                                          icon: Icon(Icons.send),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                ],
                               ),
                             ),
                           ),
                         );
                       },
-                    ),
-                  ),
-                CommentList(
-                    pid: postData['postId'], commentCount: commentCount),
-                Center(
-                  child: InkWell(
-                      onTap: () {
-                        showModalBottomSheet<void>(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                  bottom:
-                                      MediaQuery.of(context).viewInsets.bottom),
-                              child: Container(
-                                height: 10.h,
-                                color: Colors.grey[200],
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: TextField(
-                                          controller: commentController,
-                                          textCapitalization:
-                                              TextCapitalization.sentences,
-                                          decoration: InputDecoration(
-                                            hintText: 'Post a comment',
-                                            suffixIcon: IconButton(
-                                              onPressed: () async {
-                                                if (commentController
-                                                        .text.length !=
-                                                    0) {
-                                                  await Database(uid)
-                                                      .postComment(
-                                                          postData['postId'],
-                                                          commentController
-                                                              .text)
-                                                      .then((value) {
-                                                    commentController.clear();
-                                                    commentCount.value += 1;
-                                                  });
-                                                  Navigator.pop(context);
-                                                }
-                                              },
-                                              icon: Icon(Icons.send),
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      child: Container(
-                          padding: const EdgeInsets.all(10),
-                          width: 50.w,
-                          height: 5.h,
-                          decoration: new BoxDecoration(
-                            border: Border.all(color: Colors.black26, width: 1),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Center(
-                              child: Text(
-                            'Add a comment',
-                            style: TextStyle(fontSize: 13.sp),
-                          )))),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                  child: Text(
-                      (postData['dateCreated'] as Timestamp).toDate().timeAgo(),
-                      style:
-                          TextStyle(color: Colors.grey[600], fontSize: 12.sp)),
-                )
-              ],
+                    );
+                  },
+                  child: Container(
+                      padding: const EdgeInsets.all(10),
+                      width: 50.w,
+                      height: 5.h,
+                      decoration: new BoxDecoration(
+                        border: Border.all(color: Colors.black26, width: 1),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Center(
+                          child: Text(
+                        'Add a comment',
+                        style: TextStyle(fontSize: 13.sp),
+                      )))),
             ),
-          ),
-          Divider(),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              child: Text(
+                  (postData['dateCreated'] as Timestamp).toDate().timeAgo(),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12.sp)),
+            )
+          ],
+        ),
       ),
     );
   }

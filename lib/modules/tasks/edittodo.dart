@@ -7,9 +7,11 @@ import 'package:intl/intl.dart';
 import 'package:shizen_app/widgets/field.dart';
 
 class EditToDoTask extends HookWidget {
-  const EditToDoTask(
-      {Key? key, required this.todoTask, required this.todoChanged})
-      : super(key: key);
+  const EditToDoTask({
+    Key? key,
+    required this.todoTask,
+    required this.todoChanged,
+  }) : super(key: key);
 
   final todoTask;
   final todoChanged;
@@ -153,13 +155,17 @@ class EditToDoTask extends HookWidget {
                             onPressed:
                                 !validateFields.value.containsValue(false)
                                     ? () async {
-                                        await Database(uid).editToDoTask(tid, {
-                                          'title': titleController.text,
-                                          'desc': descController.text,
-                                          'recur': recurListValue.value,
-                                          'reminder': reminderTime.value,
-                                          'deadline': deadlineDate.value,
-                                        });
+                                        await Database(uid).editToDoTask(
+                                          tid,
+                                          {
+                                            'title': titleController.text,
+                                            'desc': descController.text,
+                                            'recur': recurListValue.value,
+                                            'reminder': reminderTime.value,
+                                            'deadline': deadlineDate.value,
+                                          },
+                                          reminderTime.value,
+                                        );
                                         todoChanged.value += 1;
                                         Navigator.of(context).pop();
                                       }

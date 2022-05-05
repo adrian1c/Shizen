@@ -37,12 +37,13 @@ class ToDoTask extends HookWidget {
                       var taskDoc = snapshot.data.docs[index];
 
                       return TodoTaskDisplay(
-                          taskId: taskDoc.id,
-                          title: taskDoc['title'],
-                          taskList: taskDoc['desc'],
-                          recur: List<bool>.from(taskDoc['recur']),
-                          reminder: convertTimestamp(taskDoc['reminder']),
-                          isPublic: taskDoc['isPublic']);
+                        taskId: taskDoc.id,
+                        title: taskDoc['title'],
+                        taskList: taskDoc['desc'],
+                        recur: List<bool>.from(taskDoc['recur']),
+                        reminder: convertTimestamp(taskDoc['reminder']),
+                        isPublic: taskDoc['isPublic'],
+                      );
                     })
                 : Center(
                     child: Text(
@@ -52,14 +53,15 @@ class ToDoTask extends HookWidget {
 }
 
 class TodoTaskDisplay extends HookWidget {
-  const TodoTaskDisplay(
-      {Key? key,
-      required this.taskId,
-      required this.title,
-      required this.taskList,
-      required this.recur,
-      required this.reminder,
-      required this.isPublic});
+  const TodoTaskDisplay({
+    Key? key,
+    required this.taskId,
+    required this.title,
+    required this.taskList,
+    required this.recur,
+    required this.reminder,
+    required this.isPublic,
+  });
 
   final String taskId;
   final String title;
@@ -96,14 +98,17 @@ class TodoTaskDisplay extends HookWidget {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => AddToDoTask(editParams: {
-                        'id': taskId,
-                        'title': title,
-                        'desc': taskList,
-                        'recur': recur,
-                        'reminder': reminder,
-                        'isPublic': isPublic,
-                      }, isEdit: true)));
+                  builder: (context) => AddToDoTask(
+                        editParams: {
+                          'id': taskId,
+                          'title': title,
+                          'desc': taskList,
+                          'recur': recur,
+                          'reminder': reminder,
+                          'isPublic': isPublic,
+                        },
+                        isEdit: true,
+                      )));
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

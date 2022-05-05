@@ -1,10 +1,13 @@
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shizen_app/models/todoTask.dart';
 import 'package:shizen_app/utils/allUtils.dart';
+import 'package:shizen_app/utils/notifications.dart';
 import 'package:shizen_app/widgets/button.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shizen_app/widgets/field.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 class AddToDoTask extends HookWidget {
   const AddToDoTask({Key? key, this.editParams, this.isEdit = false})
@@ -24,7 +27,10 @@ class AddToDoTask extends HookWidget {
 
     final TextEditingController titleController = useTextEditingController();
     final TextEditingController taskController = useTextEditingController();
-
+    useEffect(() {
+      tz.initializeTimeZones();
+      return null;
+    }, []);
     final ValueNotifier<bool> isValid =
         useState(editParams != null ? true : false);
 
@@ -91,13 +97,16 @@ class AddToDoTask extends HookWidget {
                               ? await LoaderWithToast(
                                       context: context,
                                       api: Database(uid).editToDoTask(
-                                          editParams['id'], newTask),
+                                          editParams['id'],
+                                          newTask,
+                                          reminderValue.value),
                                       msg: 'Success',
                                       isSuccess: true)
                                   .show()
                               : await LoaderWithToast(
                                       context: context,
-                                      api: Database(uid).addToDoTask(newTask),
+                                      api: Database(uid).addToDoTask(
+                                          newTask, reminderValue.value),
                                       msg: 'Success',
                                       isSuccess: true)
                                   .show();

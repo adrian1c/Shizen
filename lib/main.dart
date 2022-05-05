@@ -11,9 +11,11 @@ import './modules/login/login.dart';
 import './mainScaffoldStack.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shizen_app/utils/notifications.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  NotificationService().initNotifications();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider<UserProvider>(
@@ -27,54 +29,8 @@ void main() {
   ));
 }
 
-Future initNotifications() async {
-  await FirebaseMessaging.instance.requestPermission(
-    alert: true,
-    announcement: false,
-    badge: true,
-    carPlay: false,
-    criticalAlert: false,
-    provisional: false,
-    sound: true,
-  );
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-    if (message.notification != null) {
-      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-          FlutterLocalNotificationsPlugin();
-      var initializationSettingsAndroid =
-          new AndroidInitializationSettings('shizen_launcher');
-      var initializationSettingsIOS = new IOSInitializationSettings();
-      var initializationSettings = new InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsIOS);
-      flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-      var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
-        Platform.isAndroid
-            ? 'com.example.shizen_app'
-            : 'com.example.shizen_app',
-        'Shizen Notification',
-        channelDescription: 'Notification for Shizen App',
-        playSound: true,
-        enableVibration: true,
-        importance: Importance.max,
-        priority: Priority.high,
-      );
-      var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
-      var platformChannelSpecifics = new NotificationDetails(
-          android: androidPlatformChannelSpecifics,
-          iOS: iOSPlatformChannelSpecifics);
-      await flutterLocalNotificationsPlugin.show(0, message.notification!.title,
-          message.notification!.body, platformChannelSpecifics,
-          payload: 'test');
-    }
-  });
-}
-
 class MyApp extends StatelessWidget {
   final Future<FirebaseApp> _initialization = Firebase.initializeApp();
-
-  final Future _initNotif = initNotifications();
 
   // This widget is the root of your application.
   @override

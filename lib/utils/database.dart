@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shizen_app/models/trackerTask.dart';
 import 'package:intl/intl.dart';
+import 'package:shizen_app/utils/notifications.dart';
 
 class Database {
   Database(this.uid);
@@ -37,35 +38,63 @@ class Database {
         .get();
   }
 
-  Future<void> addToDoTask(toDoTask) async {
+  Future<void> addToDoTask(toDoTask, reminder) async {
     print("Firing addToDoTask");
-
-    await userDoc
-        .collection('todo')
-        .add(toDoTask.toJson())
-        .whenComplete(() => print("Done"))
-        .catchError((e) => print(e));
+    var taskData = toDoTask.toJson();
+    var notifDesc = '';
+    for (var i = 0; i < taskData['desc'].length; i++) {
+      notifDesc += '${taskData['desc'][i]['task']}';
+      if (i != taskData['desc'].length - 1) {
+        notifDesc += ', ';
+      }
+    }
+    await userDoc.collection('todo').add(taskData).then((doc) async {
+      if (reminder != null) {
+        print(doc.id.hashCode);
+        await NotificationService().showNotification(doc.id.hashCode,
+            'REMINDER: ${taskData['title']}', notifDesc, reminder);
+      } else {
+        await NotificationService()
+            .flutterLocalNotificationsPlugin
+            .cancel(doc.id.hashCode);
+      }
+    }).whenComplete(() => print("Done"));
   }
 
-  Future<void> editToDoTask(tid, toDoTask) async {
+  Future<void> editToDoTask(tid, toDoTask, reminder) async {
     print("Firing editToDoTask");
-
+    var taskData = toDoTask.toJson();
+    var notifDesc = '';
+    for (var i = 0; i < taskData['desc'].length; i++) {
+      notifDesc += '${taskData['desc'][i]['task']}';
+      if (i != taskData['desc'].length - 1) {
+        notifDesc += ', ';
+      }
+    }
     await userDoc
         .collection('todo')
         .doc(tid)
-        .update(toDoTask.toJson())
-        .whenComplete(() => print("Done"))
-        .catchError((e) => print(e));
+        .update(taskData)
+        .then((doc) async {
+      if (reminder != null) {
+        print(tid.hashCode);
+        await NotificationService().showNotification(tid.hashCode,
+            'REMINDER: ${taskData['title']}', notifDesc, reminder);
+      } else {
+        await NotificationService()
+            .flutterLocalNotificationsPlugin
+            .cancel(tid.hashCode);
+      }
+    }).whenComplete(() => print("Done"));
   }
 
   Future<void> deleteToDoTask(tid) async {
     print("Firing deleteToDoTask");
-    await userDoc
-        .collection('todo')
-        .doc(tid)
-        .delete()
-        .whenComplete(() => print("Done"))
-        .catchError((e) => print(e));
+    await userDoc.collection('todo').doc(tid).delete().then((value) async {
+      await NotificationService()
+          .flutterLocalNotificationsPlugin
+          .cancel(tid.hashCode);
+    }).whenComplete(() => print("Done"));
   }
 
   Future<void> deleteTrackerTask(tid) async {
@@ -87,9 +116,14 @@ class Database {
   Future<void> completeTaskAll(tid, newDesc) async {
     print("Firing completeTaskAll");
 
-    await userDoc.collection('todo').doc(tid).set(
-        {'desc': newDesc, 'allComplete': true, 'dateCompleted': DateTime.now()},
-        SetOptions(merge: true));
+    await userDoc.collection('todo').doc(tid).set({
+      'desc': newDesc,
+      'allComplete': true,
+      'dateCompleted': DateTime.now()
+    }, SetOptions(merge: true)).then((value) async =>
+        await NotificationService()
+            .flutterLocalNotificationsPlugin
+            .cancel(tid.hashCode));
   }
 
   Future editMilestones(tid, milestoneList) async {

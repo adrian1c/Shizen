@@ -177,22 +177,24 @@ class ProfileToDo extends HookWidget {
                                   const EdgeInsets.fromLTRB(10, 15, 10, 15),
                               child: InkWell(
                                 onTap: ownProfile
-                                    ? () {
+                                    ? () async {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) =>
-                                                AddToDoTask(editParams: {
-                                              'id': taskDoc.id,
-                                              'title': taskDoc['title'],
-                                              'desc': taskList,
-                                              'recur': List<bool>.from(
-                                                  taskDoc['recur']),
-                                              'reminder':
-                                                  ToDoTask.convertTimestamp(
-                                                      taskDoc['reminder']),
-                                              'isPublic': taskDoc['isPublic'],
-                                            }, isEdit: true),
+                                            builder: (context) => AddToDoTask(
+                                              editParams: {
+                                                'id': taskDoc.id,
+                                                'title': taskDoc['title'],
+                                                'desc': taskList,
+                                                'recur': List<bool>.from(
+                                                    taskDoc['recur']),
+                                                'reminder':
+                                                    ToDoTask.convertTimestamp(
+                                                        taskDoc['reminder']),
+                                                'isPublic': taskDoc['isPublic'],
+                                              },
+                                              isEdit: true,
+                                            ),
                                           ),
                                         );
                                       }
@@ -226,30 +228,30 @@ class ProfileToDo extends HookWidget {
                                                           Navigator.push(
                                                             context,
                                                             MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  AddToDoTask(
-                                                                      editParams: {
-                                                                    'id': null,
-                                                                    'title':
-                                                                        title,
-                                                                    'desc':
-                                                                        task,
-                                                                    'recur': [
+                                                              builder:
+                                                                  (context) =>
+                                                                      AddToDoTask(
+                                                                editParams: {
+                                                                  'id': null,
+                                                                  'title':
+                                                                      title,
+                                                                  'desc': task,
+                                                                  'recur': [
+                                                                    false,
+                                                                    false,
+                                                                    false,
+                                                                    false,
+                                                                    false,
+                                                                    false,
+                                                                    false
+                                                                  ],
+                                                                  'reminder':
+                                                                      null,
+                                                                  'isPublic':
                                                                       false,
-                                                                      false,
-                                                                      false,
-                                                                      false,
-                                                                      false,
-                                                                      false,
-                                                                      false
-                                                                    ],
-                                                                    'reminder':
-                                                                        null,
-                                                                    'isPublic':
-                                                                        false,
-                                                                  },
-                                                                      isEdit:
-                                                                          false),
+                                                                },
+                                                                isEdit: false,
+                                                              ),
                                                             ),
                                                           );
                                                         },
