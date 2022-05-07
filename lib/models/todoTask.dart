@@ -7,12 +7,25 @@ class ToDoTaskModel {
   DateTime? reminder;
   bool allComplete = false;
   bool isPublic = false;
+  bool isEdit;
 
-  ToDoTaskModel(this.title, this.desc, this.recur, this.reminder, this.isPublic);
+  ToDoTaskModel(this.title, this.desc, this.recur, this.reminder, this.isPublic,
+      [this.isEdit = false]);
 
   toJson() {
     if (title == '') {
       title = 'Task';
+    }
+
+    if (isEdit) {
+      return {
+        'title': title,
+        'desc': desc,
+        'recur': recur,
+        'reminder': reminder,
+        'allComplete': allComplete,
+        'isPublic': isPublic,
+      };
     }
 
     return {

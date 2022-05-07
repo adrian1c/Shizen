@@ -25,7 +25,7 @@ class Database {
     return userDoc
         .collection('todo')
         .where("allComplete", isEqualTo: false)
-        .orderBy("dateCreated", descending: false)
+        .orderBy("dateCreated", descending: true)
         .get();
   }
 
@@ -823,9 +823,9 @@ class Database {
         .then((value) {
       value.docs.forEach((element) {
         var currElement = element.data();
-        currElement['dateCreatedDay'] = new DateFormat("dd MMM yy").format(
-            DateTime.parse(
-                (currElement['dateCreated'] as Timestamp).toDate().toString()));
+        // currElement['dateCreatedDay'] = new DateFormat("dd MMM yy").format(
+        //     DateTime.parse(
+        //         (currElement['dateCreated'] as Timestamp).toDate().toString()));
         currElement['dateCreated'] =
             (currElement['dateCreated'] as Timestamp).toDate();
         progressList.add(currElement);
@@ -852,10 +852,10 @@ class Database {
       value.docs.forEach((element) {
         var currElement = element.data();
         currElement['taskId'] = element.id;
-        currElement['dateCompletedDay'] = new DateFormat("dd MMM yy").format(
-            DateTime.parse((currElement['dateCompleted'] as Timestamp)
-                .toDate()
-                .toString()));
+        // currElement['dateCompletedDay'] = new DateFormat("dd MMM yy").format(
+        //     DateTime.parse((currElement['dateCompleted'] as Timestamp)
+        //         .toDate()
+        //         .toString()));
         currElement['dateCompleted'] =
             (currElement['dateCompleted'] as Timestamp).toDate();
         progressList.add(currElement);
@@ -949,5 +949,12 @@ class Database {
         .collection('chats')
         .doc(peerId)
         .set({'unreadCount': 0}, SetOptions(merge: true));
+  }
+
+  Stream getUnreadMessageCount() {
+    return userDoc
+        .collection('chats')
+        .where('unreadCount', isGreaterThan: 0)
+        .snapshots();
   }
 }

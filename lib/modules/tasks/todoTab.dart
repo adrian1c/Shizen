@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shizen_app/widgets/field.dart';
@@ -35,7 +37,6 @@ class ToDoTask extends HookWidget {
                     itemCount: snapshot.data.docs.length,
                     itemBuilder: (context, index) {
                       var taskDoc = snapshot.data.docs[index];
-
                       return TodoTaskDisplay(
                         taskId: taskDoc.id,
                         title: taskDoc['title'],
@@ -52,7 +53,7 @@ class ToDoTask extends HookWidget {
   }
 }
 
-class TodoTaskDisplay extends HookWidget {
+class TodoTaskDisplay extends StatelessWidget {
   const TodoTaskDisplay({
     Key? key,
     required this.taskId,
@@ -136,20 +137,20 @@ class TodoTaskDisplay extends HookWidget {
                         ? Icon(Icons.repeat, color: Colors.blue, size: 25)
                         : Icon(Icons.repeat, color: Colors.black26, size: 25),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: reminder != null
-                          ? Icon(Icons.notifications_active,
-                              color: Colors.blue, size: 25)
-                          : Icon(Icons.notifications_active,
-                              color: Colors.black26, size: 25),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: isPublic
-                          ? Icon(Icons.visibility, color: Colors.blue, size: 25)
-                          : Icon(Icons.visibility,
-                              color: Colors.black26, size: 25),
-                    ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: reminder != null
+                            ? DateTime.now().isBefore(reminder!)
+                                ? ReminderIcon(
+                                    reminder: reminder,
+                                  )
+                                : Icon(Icons.notifications_active,
+                                    color: Colors.black26, size: 25)
+                            : Icon(Icons.notifications_active,
+                                color: Colors.black26, size: 25)),
+                    isPublic
+                        ? Icon(Icons.visibility, color: Colors.blue, size: 25)
+                        : Icon(Icons.visibility,
+                            color: Colors.black26, size: 25),
                   ],
                 ),
               ],
@@ -240,5 +241,27 @@ class TodoTaskDisplay extends HookWidget {
         ),
       ),
     );
+  }
+}
+
+class ReminderIcon extends HookWidget {
+  const ReminderIcon({Key? key, required this.reminder}) : super(key: key);
+
+  final reminder;
+
+  @override
+  Widget build(BuildContext context) {
+    final isBefore = useState(true);
+    useEffect(() {
+      Timer.periodic(Duration(seconds: 1), (time) {
+        if (DateTime.now().isAfter(reminder)) {
+          isBefore.value = false;
+        }
+      });
+      return null;
+    });
+    return isBefore.value
+        ? Icon(Icons.notifications_active, color: Colors.blue, size: 25)
+        : Icon(Icons.notifications_active, color: Colors.black26, size: 25);
   }
 }

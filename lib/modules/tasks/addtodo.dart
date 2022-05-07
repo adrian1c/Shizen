@@ -42,8 +42,13 @@ class AddToDoTask extends HookWidget {
     final ValueNotifier<List<bool>> recurValue = useState(editParams != null
         ? editParams['recur']
         : [false, false, false, false, false, false, false]);
-    final ValueNotifier<DateTime?> reminderValue =
-        useState(editParams != null ? editParams['reminder'] : null);
+    final ValueNotifier<DateTime?> reminderValue = useState(editParams != null
+        ? editParams['reminder'] != null
+            ? DateTime.now().isBefore(editParams['reminder'])
+                ? editParams['reminder']
+                : null
+            : null
+        : null);
     final ValueNotifier<bool> isPublic =
         useState(editParams != null ? editParams['isPublic'] : false);
     return Scaffold(
@@ -87,34 +92,40 @@ class AddToDoTask extends HookWidget {
                     CreateButton(
                       onPressed: () async {
                         if (isValid.value) {
-                          var newTask = ToDoTaskModel(
-                              title.value,
-                              taskList.value,
-                              recurValue.value,
-                              reminderValue.value,
-                              isPublic.value);
-                          isEdit
-                              ? await LoaderWithToast(
-                                      context: context,
-                                      api: Database(uid).editToDoTask(
-                                          editParams['id'],
-                                          newTask,
-                                          reminderValue.value),
-                                      msg: 'Success',
-                                      isSuccess: true)
-                                  .show()
-                              : await LoaderWithToast(
-                                      context: context,
-                                      api: Database(uid).addToDoTask(
-                                          newTask, reminderValue.value),
-                                      msg: 'Success',
-                                      isSuccess: true)
-                                  .show();
-
+                          if (isEdit) {
+                            var newTask = ToDoTaskModel(
+                                title.value,
+                                taskList.value,
+                                recurValue.value,
+                                reminderValue.value,
+                                isPublic.value,
+                                true);
+                            await LoaderWithToast(
+                                    context: context,
+                                    api: Database(uid).editToDoTask(
+                                        editParams['id'],
+                                        newTask,
+                                        reminderValue.value),
+                                    msg: 'Success',
+                                    isSuccess: true)
+                                .show();
+                          } else {
+                            var newTask = ToDoTaskModel(
+                                title.value,
+                                taskList.value,
+                                recurValue.value,
+                                reminderValue.value,
+                                isPublic.value);
+                            await LoaderWithToast(
+                                    context: context,
+                                    api: Database(uid).addToDoTask(
+                                        newTask, reminderValue.value),
+                                    msg: 'Success',
+                                    isSuccess: true)
+                                .show();
+                          }
                           Provider.of<TabProvider>(context, listen: false)
                               .rebuildPage('todo');
-                          Provider.of<TabProvider>(context, listen: false)
-                              .changeTabPage(0);
                           Navigator.of(context).pop();
                         }
                       },

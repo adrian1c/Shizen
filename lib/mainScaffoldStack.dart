@@ -124,87 +124,62 @@ class MainScaffoldStack extends HookWidget {
         ));
   }
 }
-// child: Icon(Icons.add),
-// shape: RoundedRectangleBorder(
-//     borderRadius: BorderRadius.all(Radius.circular(10.0))),
-// backgroundColor: Color(0xff233141),
-// onPressed: () {
 
-// },
-
-class FABubble extends StatefulWidget {
-  FABubble({Key? key}) : super(key: key);
-
-  @override
-  _FABubbleState createState() => _FABubbleState();
-}
-
-class _FABubbleState extends State<FABubble>
-    with SingleTickerProviderStateMixin {
-  late Animation<double> _animation;
-  late AnimationController _animationController;
-
-  @override
-  void initState() {
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 260),
-    );
-
-    final curvedAnimation =
-        CurvedAnimation(curve: Curves.easeInOut, parent: _animationController);
-    _animation = Tween<double>(begin: 0, end: 1).animate(curvedAnimation);
-
-    super.initState();
-  }
+class FABubble extends StatelessWidget {
+  const FABubble({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionBubble(
-      // Menu items
-      items: <Bubble>[
-        // Floating action menu item
-        Bubble(
-          title: "Add To Do Task",
-          iconColor: Colors.white,
-          bubbleColor: Colors.blue,
-          icon: Icons.people,
-          titleStyle: TextStyle(fontSize: 16, color: Colors.white),
-          onPress: () async {
-            _animationController.reverse();
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => AddToDoTask()));
-          },
-        ),
-        //Floating action menu item
-        Bubble(
-          title: "Add Daily Tracker",
-          iconColor: Colors.white,
-          bubbleColor: Colors.blue,
-          icon: Icons.home,
-          titleStyle: TextStyle(fontSize: 16, color: Colors.white),
-          onPress: () {
-            _animationController.reverse();
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => AddTrackerTask()));
-          },
-        ),
-      ],
-
-      // animation controller
-      animation: _animation,
-
-      // On pressed change animation state
-      onPress: () => _animationController.isCompleted
-          ? _animationController.reverse()
-          : _animationController.forward(),
-
-      // Floating Action button Icon color
-      iconColor: Colors.blue,
-
-      // Flaoting Action button Icon
-      iconData: Icons.add,
-      backGroundColor: Colors.white,
+    return FloatingActionButton(
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+              title: Text('Create a Task'),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AddToDoTask()));
+                    },
+                    child: Container(
+                      alignment: Alignment.center,
+                      width: 30.w,
+                      height: 30.h,
+                      decoration: BoxDecoration(color: Colors.amber[200]),
+                      child: Text('To Do Task'),
+                    ),
+                  ),
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 5.0)),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AddTrackerTask()));
+                    },
+                    child: Container(
+                        alignment: Alignment.center,
+                        width: 30.w,
+                        height: 30.h,
+                        decoration: BoxDecoration(color: Colors.amber[200]),
+                        child: Text('Daily Tracker')),
+                  )
+                ],
+              )),
+        );
+      },
+      child: Icon(
+        Icons.add,
+        color: Colors.blue,
+      ),
+      backgroundColor: Colors.white,
     );
   }
 }

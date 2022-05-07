@@ -53,6 +53,7 @@ class MyApp extends StatelessWidget {
                   useDefaultLoading: false,
                   overlayWidget: Loader(),
                   child: MaterialApp(
+                    scrollBehavior: MyCustomScrollBehavior(),
                     debugShowCheckedModeBanner: false,
                     title: 'Shizen',
                     theme: Provider.of<AppTheme>(context).darkTheme
@@ -170,5 +171,13 @@ class _WelcomePageState extends State<WelcomePage> {
         ),
       ),
     );
+  }
+}
+
+class MyCustomScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
   }
 }

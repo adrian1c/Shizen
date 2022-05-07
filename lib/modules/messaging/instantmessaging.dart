@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:intl/intl.dart';
+import 'package:sticky_grouped_list/sticky_grouped_list.dart';
 
 class InstantMessagingPage extends HookWidget {
   const InstantMessagingPage({Key? key}) : super(key: key);
@@ -226,6 +227,11 @@ class ChatPage extends HookWidget {
     }, const []);
     if (messageStream.hasData) {
       var msgList = messageStream.data;
+      // for (var i = 0; i < msgList.docs.length; i++) {
+      //   print(msgList.docs[i]);
+      // }
+      var msgs =
+          List<Map>.from(msgList.docs.map((doc) => Map.from(doc.data())));
       var mustInitializeDoc = false;
       if (msgList.docs.length == 0) {
         mustInitializeDoc = true;
@@ -244,80 +250,114 @@ class ChatPage extends HookWidget {
             child: Column(mainAxisSize: MainAxisSize.max, children: [
               Expanded(
                 child: Container(
-                    padding: const EdgeInsets.all(10),
-                    child: ListView.builder(
-                        shrinkWrap: true,
-                        reverse: true,
-                        itemCount: msgList.docs.length,
-                        itemBuilder: (context, index) {
-                          var msg = msgList.docs[index];
-                          if (msg['idFrom'] == uid) {
-                            return Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 5.0),
-                                    child: Text(
-                                        DateFormat("hh:mm a")
-                                            .format((msg['dateCreated']
-                                                    as Timestamp)
-                                                .toDate())
-                                            .toString(),
-                                        style: TextStyle(fontSize: 12.sp)),
-                                  ),
-                                  Container(
-                                      padding: const EdgeInsets.all(10),
-                                      constraints:
-                                          BoxConstraints(maxWidth: 70.w),
-                                      decoration: BoxDecoration(
-                                          color: Colors.blue[200],
-                                          borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(15),
-                                              topRight: Radius.circular(15),
-                                              bottomLeft: Radius.circular(15))),
-                                      child: Text(msg['message'],
-                                          style:
-                                              TextStyle(color: Colors.white))),
-                                ],
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: StickyGroupedListView(
+                      shrinkWrap: true,
+                      elements: msgs,
+                      groupBy: (Map element) => DateTime(
+                          (element['dateCreated'] as Timestamp).toDate().year,
+                          (element['dateCreated'] as Timestamp).toDate().month,
+                          (element['dateCreated'] as Timestamp).toDate().day),
+                      groupSeparatorBuilder: (Map element) {
+                        var formattedDate = DateFormat("dd MMM yyyy").format(
+                            (element['dateCreated'] as Timestamp).toDate());
+                        return Container(
+                          height: 5.h,
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Color.fromARGB(99, 114, 133, 143),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10.0)),
                               ),
-                            );
-                          }
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  '$formattedDate',
+                                  style: TextStyle(color: Colors.white),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      itemComparator: (Map item1, Map item2) =>
+                          (item1['dateCreated'] as Timestamp)
+                              .toDate()
+                              .compareTo(
+                                  (item2['dateCreated'] as Timestamp).toDate()),
+                      itemBuilder: (context, dynamic element) {
+                        if (element['idFrom'] == uid) {
                           return Padding(
                             padding: const EdgeInsets.all(5.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Container(
-                                    padding: const EdgeInsets.all(10),
-                                    constraints: BoxConstraints(maxWidth: 75.w),
-                                    decoration: BoxDecoration(
-                                        color: Colors.blueGrey[700],
-                                        borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(15),
-                                            topRight: Radius.circular(15),
-                                            bottomRight: Radius.circular(15))),
-                                    child: Text(msg['message'],
-                                        style: TextStyle(color: Colors.white))),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 5.0),
                                   child: Text(
                                       DateFormat("hh:mm a")
-                                          .format(
-                                              (msg['dateCreated'] as Timestamp)
-                                                  .toDate())
+                                          .format((element['dateCreated']
+                                                  as Timestamp)
+                                              .toDate())
                                           .toString(),
                                       style: TextStyle(fontSize: 12.sp)),
                                 ),
+                                Container(
+                                    padding: const EdgeInsets.all(10),
+                                    constraints: BoxConstraints(maxWidth: 70.w),
+                                    decoration: BoxDecoration(
+                                        color: Colors.blue[200],
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(15),
+                                            topRight: Radius.circular(15),
+                                            bottomLeft: Radius.circular(15))),
+                                    child: Text(element['message'],
+                                        style: TextStyle(color: Colors.white))),
                               ],
                             ),
                           );
-                        })),
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                  padding: const EdgeInsets.all(10),
+                                  constraints: BoxConstraints(maxWidth: 75.w),
+                                  decoration: BoxDecoration(
+                                      color: Colors.blueGrey[700],
+                                      borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(15),
+                                          topRight: Radius.circular(15),
+                                          bottomRight: Radius.circular(15))),
+                                  child: Text(element['message'],
+                                      style: TextStyle(color: Colors.white))),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 5.0),
+                                child: Text(
+                                    DateFormat("hh:mm a")
+                                        .format((element['dateCreated']
+                                                as Timestamp)
+                                            .toDate())
+                                        .toString(),
+                                    style: TextStyle(fontSize: 12.sp)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      reverse: true,
+                      floatingHeader: true,
+                      order: StickyGroupedListOrder.DESC,
+                    )),
               ),
               Align(
                 alignment: Alignment.bottomCenter,

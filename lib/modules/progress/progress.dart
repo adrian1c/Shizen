@@ -6,6 +6,7 @@ import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
+import 'package:sticky_grouped_list/sticky_grouped_list.dart';
 
 class ProgressPage extends HookWidget {
   const ProgressPage({Key? key}) : super(key: key);
@@ -87,8 +88,14 @@ class ProgressPage extends HookWidget {
                   child: Column(
                     children: [
                       TextDivider('TO DO TASKS'),
-                      TodoTaskProgressList(
-                          filterValue: filterValue, searchValue: searchValue),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: TodoTaskProgressList(
+                              filterValue: filterValue,
+                              searchValue: searchValue),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -96,8 +103,14 @@ class ProgressPage extends HookWidget {
                   child: Column(
                     children: [
                       TextDivider('DAILY TRACKER'),
-                      TrackerProgressList(
-                          filterValue: filterValue, searchValue: searchValue),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: TrackerProgressList(
+                              filterValue: filterValue,
+                              searchValue: searchValue),
+                        ),
+                      ),
                     ],
                   ),
                 )
@@ -125,38 +138,55 @@ class TodoTaskProgressList extends HookWidget {
         [filterValue.value, searchValue.value]);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
-      return Container(
-        child: GroupedListView(
-          shrinkWrap: true,
-          elements: snapshot.data,
-          groupBy: (Map element) => element['dateCompletedDay'],
-          groupSeparatorBuilder: (value) => Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(color: Colors.blueGrey[600]),
-            child: Text(
-              value.toString(),
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
-            ),
-          ),
-          itemBuilder: (context, dynamic element) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-              child: TodoTaskProgressTile(
-                taskId: element['taskId'],
-                title: element['title'],
-                taskList: element['desc'],
-                timeCompleted: element['dateCompleted'],
-              ),
-            );
-          },
-          useStickyGroupSeparators: true,
-          order: GroupedListOrder.DESC,
-        ),
-      );
+      return snapshot.data.length > 0
+          ? StickyGroupedListView(
+              shrinkWrap: true,
+              elements: snapshot.data,
+              groupBy: (Map element) => DateTime(element['dateCompleted'].year,
+                  element['dateCompleted'].month, element['dateCompleted'].day),
+              groupSeparatorBuilder: (Map element) {
+                var formattedDate =
+                    DateFormat("dd MMM yyyy").format(element['dateCompleted']);
+                return Container(
+                  height: 50,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.blue[300],
+                        border: Border.all(
+                          color: Colors.blue[300]!,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          '$formattedDate',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+              itemBuilder: (context, dynamic element) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  child: TodoTaskProgressTile(
+                    taskId: element['taskId'],
+                    title: element['title'],
+                    taskList: element['desc'],
+                    timeCompleted: element['dateCompleted'],
+                  ),
+                );
+              },
+              reverse: false,
+              floatingHeader: true,
+              order: StickyGroupedListOrder.DESC,
+            )
+          : Text('No To Do Tasks completed');
     }
     return SpinKitWanderingCubes(
       color: Colors.blueGrey,
@@ -269,37 +299,59 @@ class TrackerProgressList extends HookWidget {
         useMemoized(() => Database(uid).getTrackerProgressList(), []);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
-      return Container(
-        child: GroupedListView(
-          shrinkWrap: true,
-          elements: snapshot.data,
-          groupBy: (Map element) => element['dateCreatedDay'],
-          groupSeparatorBuilder: (value) => Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(color: Colors.blueGrey[600]),
-            child: Text(
-              value.toString(),
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
-            ),
-          ),
-          itemBuilder: (context, dynamic element) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-              child: TrackerProgressTile(
-                trackerId: element['trackerId'],
-                note: element['note'],
-                timeCompleted: element['dateCreated'],
-              ),
-            );
-          },
-          useStickyGroupSeparators: true,
-          order: GroupedListOrder.DESC,
-        ),
-      );
+      return snapshot.data.length > 0
+          ? StickyGroupedListView(
+              shrinkWrap: true,
+              elements: snapshot.data,
+              groupBy: (Map element) => DateTime(element['dateCreated'].year,
+                  element['dateCreated'].month, element['dateCreated'].day),
+              groupSeparatorBuilder: (Map element) {
+                var formattedDate =
+                    DateFormat("dd MMM yyyy").format(element['dateCreated']);
+                return Column(
+                  children: [
+                    Container(
+                      height: 50,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Container(
+                          width: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.blue[300],
+                            border: Border.all(
+                              color: Colors.blue[300]!,
+                            ),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(20.0)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              '$formattedDate',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+              itemBuilder: (context, dynamic element) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  child: TrackerProgressTile(
+                    trackerId: element['trackerId'],
+                    note: element['note'],
+                    timeCompleted: element['dateCreated'],
+                  ),
+                );
+              },
+              reverse: false,
+              floatingHeader: true,
+              order: StickyGroupedListOrder.DESC,
+            )
+          : Text('No Check-ins yet');
     }
     return SpinKitWanderingCubes(
       color: Colors.blueGrey,

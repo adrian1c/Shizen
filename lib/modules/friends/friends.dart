@@ -47,14 +47,26 @@ class _FriendsPageState extends State<FriendsPage> {
                         MaterialPageRoute(
                             builder: (context) => InstantMessagingPage()));
                   },
-                  icon: Badge(
-                    badgeContent:
-                        Text('3', style: TextStyle(color: Colors.white)),
-                    child: Icon(
-                      Icons.message_outlined,
-                      color: Colors.blueGrey[700],
-                    ),
-                  ))
+                  icon: StreamBuilder(
+                      stream: Database(uid).getUnreadMessageCount(),
+                      builder: (context, AsyncSnapshot snapshot) {
+                        if (snapshot.hasData) {
+                          if (snapshot.data!.docs.length > 0) {
+                            return Badge(
+                                badgeContent: Text(
+                                    snapshot.data!.docs.length.toString(),
+                                    style: TextStyle(color: Colors.white)),
+                                child: Icon(Icons.message_outlined,
+                                    color: Colors.blueGrey[700]));
+                          } else {
+                            return Icon(Icons.message_outlined,
+                                color: Colors.blueGrey[700]);
+                          }
+                        }
+
+                        return Icon(Icons.message_outlined,
+                            color: Colors.blueGrey[700]);
+                      }))
             ],
           ),
           Expanded(

@@ -40,7 +40,7 @@ class ProfilePage extends HookWidget {
             padding: const EdgeInsets.all(20),
             width: double.infinity,
             height: 15.h,
-            color: Color(0xff80ceff),
+            color: Color.fromARGB(255, 186, 195, 201),
             child: snapshotUserProfileData.hasData
                 ? UserProfileData(
                     data: snapshotUserProfileData.data,
@@ -827,34 +827,50 @@ class UserProfileData extends StatelessWidget {
     final _form = GlobalKey<FormState>();
     return Row(
       children: [
-        Container(
-          width: 25.w,
-          height: 25.w,
-          child: data.data()['image'] != ''
-              ? InkWell(
+        data.data()['image'] != ''
+            ? InkWell(
+                child: Container(
+                  width: 10.h,
+                  height: 10.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 5.0,
+                    ),
+                  ),
                   child: CircleAvatar(
                     foregroundImage: CachedNetworkImageProvider(data!['image']),
                     backgroundColor: Colors.grey,
-                    radius: 3.h,
                   ),
-                  onTap: viewId != null
-                      ? () {}
-                      : () async =>
-                          await changeProfilePic(context, true, data['image']),
-                )
-              : InkWell(
+                ),
+                onTap: viewId != null
+                    ? () {}
+                    : () async =>
+                        await changeProfilePic(context, true, data['image']),
+              )
+            : InkWell(
+                child: Container(
+                  width: 10.h,
+                  height: 10.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 5.0,
+                    ),
+                  ),
                   child: CircleAvatar(
                     foregroundImage: Images.defaultPic.image,
                     backgroundColor: Colors.grey,
-                    radius: 3.h,
                   ),
-                  onTap: viewId != null
-                      ? () {}
-                      : () async {
-                          await changeProfilePic(context, false);
-                        },
                 ),
-        ),
+                onTap: viewId != null
+                    ? () {}
+                    : () async {
+                        await changeProfilePic(context, false);
+                      },
+              ),
         Padding(
           padding: const EdgeInsets.only(left: 20),
           child: Column(
