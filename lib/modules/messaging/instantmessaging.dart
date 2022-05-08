@@ -204,11 +204,12 @@ class FriendMessageListPage extends HookWidget {
 }
 
 class ChatPage extends HookWidget {
-  const ChatPage({Key? key, required this.peerId, required this.peerName})
+  ChatPage({Key? key, required this.peerId, required this.peerName})
       : super(key: key);
 
   final peerId;
   final peerName;
+
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).user.uid;
@@ -217,19 +218,15 @@ class ChatPage extends HookWidget {
     final stream = useMemoized(() => Database(uid).getMessages(chatId), []);
     final messageStream = useStream(stream);
     final msgController = useTextEditingController();
-
     useEffect(() {
       final observer = MyObserver(
           detachedCallBack: () async => await Database(uid).chattingWith(null),
           resumeCallBack: () async => await Database(uid).chattingWith(peerId));
       WidgetsBinding.instance!.addObserver(observer);
       return () => WidgetsBinding.instance!.removeObserver(observer);
-    }, const []);
+    }, []);
     if (messageStream.hasData) {
       var msgList = messageStream.data;
-      // for (var i = 0; i < msgList.docs.length; i++) {
-      //   print(msgList.docs[i]);
-      // }
       var msgs =
           List<Map>.from(msgList.docs.map((doc) => Map.from(doc.data())));
       var mustInitializeDoc = false;
@@ -252,6 +249,7 @@ class ChatPage extends HookWidget {
                 child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: StickyGroupedListView(
+                      itemScrollController: GroupedItemScrollController(),
                       shrinkWrap: true,
                       elements: msgs,
                       groupBy: (Map element) => DateTime(
@@ -288,7 +286,8 @@ class ChatPage extends HookWidget {
                               .toDate()
                               .compareTo(
                                   (item2['dateCreated'] as Timestamp).toDate()),
-                      itemBuilder: (context, dynamic element) {
+                      indexedItemBuilder: (context, Map element, index) {
+                        print(index);
                         if (element['idFrom'] == uid) {
                           return Padding(
                             padding: const EdgeInsets.all(5.0),

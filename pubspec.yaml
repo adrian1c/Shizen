@@ -59,6 +59,7 @@ dependencies:
   flutter_email_sender: ^5.1.0
   timezone: ^0.8.0
   sticky_grouped_list: ^2.1.0
+  scrollable_positioned_list: ^0.2.3
 
 dev_dependencies:
   flutter_test:

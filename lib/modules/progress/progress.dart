@@ -89,12 +89,8 @@ class ProgressPage extends HookWidget {
                     children: [
                       TextDivider('TO DO TASKS'),
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: TodoTaskProgressList(
-                              filterValue: filterValue,
-                              searchValue: searchValue),
-                        ),
+                        child: TodoTaskProgressList(
+                            filterValue: filterValue, searchValue: searchValue),
                       ),
                     ],
                   ),
@@ -104,12 +100,8 @@ class ProgressPage extends HookWidget {
                     children: [
                       TextDivider('DAILY TRACKER'),
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: TrackerProgressList(
-                              filterValue: filterValue,
-                              searchValue: searchValue),
-                        ),
+                        child: TrackerProgressList(
+                            filterValue: filterValue, searchValue: searchValue),
                       ),
                     ],
                   ),
@@ -148,22 +140,19 @@ class TodoTaskProgressList extends HookWidget {
                 var formattedDate =
                     DateFormat("dd MMM yyyy").format(element['dateCompleted']);
                 return Container(
-                  height: 50,
+                  height: 5.h,
                   child: Align(
                     alignment: Alignment.center,
                     child: Container(
-                      width: 120,
                       decoration: BoxDecoration(
-                        color: Colors.blue[300],
-                        border: Border.all(
-                          color: Colors.blue[300]!,
-                        ),
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                        color: Color.fromARGB(99, 114, 133, 143),
+                        borderRadius: BorderRadius.all(Radius.circular(10.0)),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           '$formattedDate',
+                          style: TextStyle(color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -182,7 +171,6 @@ class TodoTaskProgressList extends HookWidget {
                   ),
                 );
               },
-              reverse: false,
               floatingHeader: true,
               order: StickyGroupedListOrder.DESC,
             )
@@ -308,33 +296,25 @@ class TrackerProgressList extends HookWidget {
               groupSeparatorBuilder: (Map element) {
                 var formattedDate =
                     DateFormat("dd MMM yyyy").format(element['dateCreated']);
-                return Column(
-                  children: [
-                    Container(
-                      height: 50,
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Container(
-                          width: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.blue[300],
-                            border: Border.all(
-                              color: Colors.blue[300]!,
-                            ),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(20.0)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              '$formattedDate',
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
+                return Container(
+                  height: 5.h,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Color.fromARGB(99, 114, 133, 143),
+                        borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          '$formattedDate',
+                          style: TextStyle(color: Colors.white),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 );
               },
               itemBuilder: (context, dynamic element) {
@@ -347,7 +327,6 @@ class TrackerProgressList extends HookWidget {
                   ),
                 );
               },
-              reverse: false,
               floatingHeader: true,
               order: StickyGroupedListOrder.DESC,
             )

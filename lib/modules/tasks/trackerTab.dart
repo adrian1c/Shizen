@@ -137,6 +137,15 @@ class TrackerTile extends HookWidget {
     return null;
   }
 
+  String getNextMilestone(milestoneList, currDay) {
+    for (var i = 0; i < milestoneList.length; i++) {
+      if (milestoneList[i]['day'] > currDay) {
+        return 'Day ${milestoneList[i]['day']} - ${milestoneList[i]['reward']}';
+      }
+    }
+    return 'You\'ve completed all milestones!';
+  }
+
   @override
   Widget build(BuildContext context) {
     final checkInController = useTextEditingController();
@@ -302,7 +311,15 @@ class TrackerTile extends HookWidget {
                                         TextStyle(fontWeight: FontWeight.bold)),
                                 Text(task['milestones'].isEmpty
                                     ? 'No milestone'
-                                    : 'Day ${task['milestones'][0]['day']} - ${task['milestones'][0]['reward']}'),
+                                    : getNextMilestone(
+                                        task['milestones'],
+                                        DateTime.now()
+                                                .difference(
+                                                    (task['currStreakDate']
+                                                            as Timestamp)
+                                                        .toDate())
+                                                .inDays +
+                                            1)),
                               ],
                             ),
                             ElevatedButton(
@@ -332,7 +349,7 @@ class TrackerTile extends HookWidget {
                                                             index: index,
                                                             minDay: DateTime
                                                                         .now()
-                                                                    .difference((task['startDate']
+                                                                    .difference((task['currStreakDate']
                                                                             as Timestamp)
                                                                         .toDate())
                                                                     .inDays +
