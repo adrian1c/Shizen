@@ -26,7 +26,7 @@ class TaskPage extends HookWidget {
             Container(
               width: 60.w,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Color.fromARGB(255, 245, 243, 248),
                 borderRadius: BorderRadius.circular(
                   25.0,
                 ),
@@ -38,10 +38,10 @@ class TaskPage extends HookWidget {
                   borderRadius: BorderRadius.circular(
                     25.0,
                   ),
-                  color: Colors.blueGrey[700],
+                  color: Theme.of(context).primaryColor,
                 ),
                 labelColor: Colors.white,
-                unselectedLabelColor: Colors.blueGrey[700],
+                unselectedLabelColor: Theme.of(context).primaryColor,
                 tabs: [
                   Tab(
                     child: Icon(Icons.task_alt),

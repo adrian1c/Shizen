@@ -722,6 +722,7 @@ class SelectTaskPage extends HookWidget {
                     ),
                   );
                 })
-            : SpinKitWanderingCubes(color: Colors.blueGrey, size: 75));
+            : SpinKitWanderingCubes(
+                color: Theme.of(context).primaryColor, size: 75));
   }
 }

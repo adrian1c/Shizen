@@ -54,10 +54,31 @@ class MainScaffoldStack extends HookWidget {
   Widget build(BuildContext context) {
     final ValueNotifier<bool> isSwitching = useState(true);
     return Scaffold(
+        // extendBodyBehindAppBar: true,
         appBar: AppBar(
-          title: Text(title[
-              Provider.of<TabProvider>(context, listen: false).selectedIndex]),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: Builder(
+            builder: (BuildContext context) {
+              return IconButton(
+                icon: Icon(
+                  Icons.menu_rounded,
+                  color: Theme.of(context).primaryColor,
+                ),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+                tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              );
+            },
+          ),
           centerTitle: true,
+          title: Text(
+              title[Provider.of<TabProvider>(context, listen: false)
+                  .selectedIndex],
+              style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold)),
           actions:
               Provider.of<TabProvider>(context, listen: false).selectedIndex ==
                       2
@@ -69,7 +90,7 @@ class MainScaffoldStack extends HookWidget {
                                   builder: (context) => AddNewPost())),
                           child: Text('POST',
                               style: TextStyle(
-                                  color: Colors.white,
+                                  color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.bold)))
                     ]
                   : null,
@@ -80,7 +101,7 @@ class MainScaffoldStack extends HookWidget {
                 ? FABubble()
                 : null,
         bottomNavigationBar: GNav(
-            backgroundColor: Colors.grey[400]!,
+            backgroundColor: Colors.transparent,
             rippleColor: Colors.grey[300]!,
             hoverColor: Colors.grey[100]!,
             gap: 5,
@@ -89,8 +110,8 @@ class MainScaffoldStack extends HookWidget {
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             tabMargin: EdgeInsets.fromLTRB(5, 10, 5, 10),
             duration: Duration(milliseconds: 400),
-            tabBackgroundColor: Colors.grey[850]!,
-            color: Colors.black,
+            tabBackgroundColor: Color(0xff444444),
+            color: Color(0xff444444),
             tabs: screens,
             selectedIndex: Provider.of<TabProvider>(context).selectedIndex,
             onTabChange: (index) {
@@ -176,10 +197,8 @@ class FABubble extends StatelessWidget {
         );
       },
       child: Icon(
-        Icons.add,
-        color: Colors.blue,
+        Icons.add_rounded,
       ),
-      backgroundColor: Colors.white,
     );
   }
 }

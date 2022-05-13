@@ -105,14 +105,14 @@ class InstantMessagingPage extends HookWidget {
                                           width: 7.w,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Colors.blueGrey[
-                                                800], // inner circle color
+                                            color:
+                                                Theme.of(context).primaryColor,
                                           ),
                                           child: Text(
                                               friend['unreadCount'].toString(),
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .bodyText1), // inner content
+                                                  .bodyText1),
                                         )
                                       : null,
                                   horizontalTitleGap: 0,
@@ -183,7 +183,7 @@ class FriendMessageListPage extends HookWidget {
                               TextStyle(color: Colors.white, fontSize: 13.sp),
                         ),
                         horizontalTitleGap: 0,
-                        tileColor: Colors.blueGrey[600],
+                        tileColor: Theme.of(context).primaryColor,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
@@ -310,11 +310,13 @@ class ChatPage extends HookWidget {
                                     padding: const EdgeInsets.all(10),
                                     constraints: BoxConstraints(maxWidth: 70.w),
                                     decoration: BoxDecoration(
-                                        color: Colors.blue[200],
+                                        color:
+                                            Color.fromARGB(255, 90, 134, 170),
                                         borderRadius: BorderRadius.only(
                                             topLeft: Radius.circular(15),
                                             topRight: Radius.circular(15),
-                                            bottomLeft: Radius.circular(15))),
+                                            bottomLeft: Radius.circular(15)),
+                                        boxShadow: CustomTheme.boxShadow),
                                     child: Text(element['message'],
                                         style: TextStyle(color: Colors.white))),
                               ],
@@ -331,11 +333,12 @@ class ChatPage extends HookWidget {
                                   padding: const EdgeInsets.all(10),
                                   constraints: BoxConstraints(maxWidth: 75.w),
                                   decoration: BoxDecoration(
-                                      color: Colors.blueGrey[700],
+                                      color: Color.fromARGB(255, 114, 180, 101),
                                       borderRadius: BorderRadius.only(
                                           topLeft: Radius.circular(15),
                                           topRight: Radius.circular(15),
-                                          bottomRight: Radius.circular(15))),
+                                          bottomRight: Radius.circular(15)),
+                                      boxShadow: CustomTheme.boxShadow),
                                   child: Text(element['message'],
                                       style: TextStyle(color: Colors.white))),
                               Padding(
@@ -363,40 +366,32 @@ class ChatPage extends HookWidget {
                 child: Container(
                   height: 10.h,
                   width: 100.w,
-                  color: Colors.grey[200],
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TextField(
-                            controller: msgController,
-                            textCapitalization: TextCapitalization.sentences,
-                            decoration: InputDecoration(
-                              hintText: 'Message',
-                              suffixIcon: IconButton(
-                                onPressed: () async {
-                                  if (msgController.text.length != 0) {
-                                    final msg = msgController.text;
-                                    msgController.clear();
-                                    if (mustInitializeDoc) {
-                                      await Database(uid)
-                                          .newChat(chatId, peerId)
-                                          .then((value) =>
-                                              mustInitializeDoc = false);
-                                    }
-                                    await Database(uid)
-                                        .sendMessage(chatId, msg, uid, peerId);
-                                  }
-                                },
-                                icon: Icon(Icons.send),
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
+                  alignment: Alignment.center,
+                  color: Theme.of(context).backgroundColor,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      controller: msgController,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        hintText: 'Message',
+                        suffixIcon: IconButton(
+                          onPressed: () async {
+                            if (msgController.text.length != 0) {
+                              final msg = msgController.text;
+                              msgController.clear();
+                              if (mustInitializeDoc) {
+                                await Database(uid)
+                                    .newChat(chatId, peerId)
+                                    .then((value) => mustInitializeDoc = false);
+                              }
+                              await Database(uid)
+                                  .sendMessage(chatId, msg, uid, peerId);
+                            }
+                          },
+                          icon: Icon(Icons.send),
+                        ),
+                      ),
                     ),
                   ),
                 ),

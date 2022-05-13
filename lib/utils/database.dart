@@ -334,7 +334,7 @@ class Database {
   }
 
   Future<List<Map<String, dynamic>>> getCommunityPost(filter, hashtag,
-      {loadMore = false}) async {
+      [loadMore = false, lastDoc]) async {
     // Can add parameter for lazy loading, count number of reloads then
     //postIds sublist accordingly
     print("Firing getCommunityPost");
@@ -344,17 +344,34 @@ class Database {
     switch (filter) {
       case 'Everyone':
         if (hashtag != '') {
-          QuerySnapshot<Map<String, dynamic>> query = await postCol
-              .where('uid', isNotEqualTo: uid)
-              .where('hashtags', arrayContains: hashtag)
-              .orderBy('uid')
-              .orderBy('dateCreated', descending: true)
-              .get();
-          query.docs.forEach((doc) {
-            var data = doc.data();
-            data['postId'] = doc.id;
-            results.add(data);
-          });
+          if (!loadMore) {
+            QuerySnapshot<Map<String, dynamic>> query = await postCol
+                .where('uid', isNotEqualTo: uid)
+                .where('hashtags', arrayContains: hashtag)
+                .orderBy('uid')
+                .orderBy('dateCreated', descending: true)
+                .limit(5)
+                .get();
+            query.docs.forEach((doc) {
+              var data = doc.data();
+              data['postId'] = doc.id;
+              results.add(data);
+            });
+          } else {
+            QuerySnapshot<Map<String, dynamic>> query = await postCol
+                .where('uid', isNotEqualTo: uid)
+                .where('hashtags', arrayContains: hashtag)
+                .orderBy('uid')
+                .orderBy('dateCreated', descending: true)
+                .startAfter(lastDoc)
+                .limit(5)
+                .get();
+            query.docs.forEach((doc) {
+              var data = doc.data();
+              data['postId'] = doc.id;
+              results.add(data);
+            });
+          }
         } else {
           QuerySnapshot<Map<String, dynamic>> query = await postCol
               .where('uid', isNotEqualTo: uid)

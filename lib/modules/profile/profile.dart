@@ -39,7 +39,7 @@ class ProfilePage extends HookWidget {
         Container(
             padding: const EdgeInsets.all(20),
             width: double.infinity,
-            height: 15.h,
+            height: 17.h,
             color: Color.fromARGB(255, 186, 195, 201),
             child: snapshotUserProfileData.hasData
                 ? UserProfileData(
@@ -100,10 +100,10 @@ class ProfilePage extends HookWidget {
               borderRadius: BorderRadius.circular(
                 25.0,
               ),
-              color: Colors.blueGrey[700],
+              color: Theme.of(context).primaryColor,
             ),
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.blueGrey[700],
+            unselectedLabelColor: Theme.of(context).primaryColor,
             tabs: [
               Tab(
                 child: Icon(Icons.task_alt),
@@ -160,7 +160,7 @@ class ProfileToDo extends HookWidget {
           Container(
               child: !snapshot.hasData
                   ? SpinKitWanderingCubes(
-                      color: Colors.blueGrey,
+                      color: Theme.of(context).primaryColor,
                       size: 75.0,
                     )
                   : snapshot.data.docs.length > 0
@@ -457,7 +457,7 @@ class ProfileTracker extends HookWidget {
         children: [
           TextDivider('DAILY TRACKER'),
           SpinKitWanderingCubes(
-            color: Colors.blueGrey,
+            color: Theme.of(context).primaryColor,
             size: 75.0,
           ),
         ],
@@ -530,7 +530,8 @@ class ProfileSelectTracker extends HookWidget {
                                   task: task, taskId: task.id))));
                 },
               )
-            : SpinKitWanderingCubes(color: Colors.blueGrey, size: 75));
+            : SpinKitWanderingCubes(
+                color: Theme.of(context).primaryColor, size: 75));
   }
 }
 
@@ -553,7 +554,7 @@ class ProfileSelectTrackerTile extends HookWidget {
     return Container(
         padding: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
-            border: Border.all(color: Colors.blueGrey, width: 5),
+            border: Border.all(color: Theme.of(context).primaryColor, width: 5),
             borderRadius: BorderRadius.circular(10),
             color: Colors.lightBlue[50]),
         child: Column(
@@ -931,9 +932,11 @@ class UserProfileData extends StatelessWidget {
                   child:
                       Text(data!['name'], style: TextStyle(fontSize: 25.sp))),
               Text(data!['email'], style: TextStyle(fontSize: 15.sp)),
-              Text(data.data().containsKey('bio')
-                  ? "Nice"
-                  : "I do not have a bio..."),
+              Text(
+                  data.data().containsKey('bio')
+                      ? "Nice"
+                      : "I do not have a bio...",
+                  overflow: TextOverflow.fade),
             ],
           ),
         ),

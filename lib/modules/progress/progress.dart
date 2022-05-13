@@ -61,10 +61,10 @@ class ProgressPage extends HookWidget {
                 borderRadius: BorderRadius.circular(
                   25.0,
                 ),
-                color: Colors.blueGrey[700],
+                color: Theme.of(context).primaryColor,
               ),
               labelColor: Colors.white,
-              unselectedLabelColor: Colors.blueGrey[700],
+              unselectedLabelColor: Theme.of(context).primaryColor,
               tabs: [
                 // first tab [you can add an icon using the icon property]
                 Tab(
@@ -177,7 +177,7 @@ class TodoTaskProgressList extends HookWidget {
           : Text('No To Do Tasks completed');
     }
     return SpinKitWanderingCubes(
-      color: Colors.blueGrey,
+      color: Theme.of(context).primaryColor,
       size: 75.0,
     );
   }
@@ -333,7 +333,7 @@ class TrackerProgressList extends HookWidget {
           : Text('No Check-ins yet');
     }
     return SpinKitWanderingCubes(
-      color: Colors.blueGrey,
+      color: Theme.of(context).primaryColor,
       size: 75.0,
     );
   }
@@ -365,7 +365,8 @@ class TrackerProgressTile extends HookWidget {
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
               color: Colors.lightBlue[50],
-              border: Border.all(color: Colors.blueGrey, width: 5),
+              border:
+                  Border.all(color: Theme.of(context).primaryColor, width: 5),
               borderRadius: BorderRadius.circular(10)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

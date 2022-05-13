@@ -7,14 +7,16 @@ class CancelButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        primary: Color(0xffF24C4C),
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10))),
+        primary: Colors.transparent,
+        shadowColor: Colors.transparent,
         minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
       ),
       onPressed: () => Navigator.of(context).pop(),
       child: Text(Words.cancelButton,
-          style: Theme.of(context).textTheme.bodyText1),
+          style: TextStyle(
+              color: Color.fromARGB(255, 255, 93, 93),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -38,7 +40,9 @@ class CreateButton extends StatelessWidget {
         builder: (context, data, _) {
           return ElevatedButton(
             style: ElevatedButton.styleFrom(
-              primary: data != false ? Color(0xff4B7586) : Colors.grey[400],
+              primary: data != false
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey[400],
               shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10))),
               minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),

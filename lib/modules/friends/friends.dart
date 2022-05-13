@@ -57,15 +57,15 @@ class _FriendsPageState extends State<FriendsPage> {
                                     snapshot.data!.docs.length.toString(),
                                     style: TextStyle(color: Colors.white)),
                                 child: Icon(Icons.message_outlined,
-                                    color: Colors.blueGrey[700]));
+                                    color: Theme.of(context).primaryColor));
                           } else {
                             return Icon(Icons.message_outlined,
-                                color: Colors.blueGrey[700]);
+                                color: Theme.of(context).primaryColor);
                           }
                         }
 
                         return Icon(Icons.message_outlined,
-                            color: Colors.blueGrey[700]);
+                            color: Theme.of(context).primaryColor);
                       }))
             ],
           ),
@@ -292,86 +292,90 @@ class _FriendsPageState extends State<FriendsPage> {
   Widget friendListTile(itemList, index, uid, context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
-      child: Material(
-        child: SizedBox(
-          width: 100.w,
-          height: 10.h,
-          child: Center(
-            child: ListTile(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return Scaffold(
-                      appBar: AppBar(
-                        title: Text('${itemList[index]['name']}\'s Profile'),
-                        centerTitle: true,
-                      ),
-                      body: ProfilePage(viewId: itemList[index].id));
-                }));
-              },
-              leading: Padding(
-                padding: const EdgeInsets.only(right: 10.0),
-                child: CircleAvatar(
-                  foregroundImage:
-                      CachedNetworkImageProvider(itemList[index]['image']),
-                  backgroundColor: Colors.grey,
-                  radius: 3.h,
-                ),
+      child: Container(
+        width: 100.w,
+        height: 10.h,
+        decoration: BoxDecoration(
+          color: Theme.of(context).backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: CustomTheme.boxShadow,
+        ),
+        child: Center(
+          child: ListTile(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return Scaffold(
+                    appBar: AppBar(
+                      title: Text('${itemList[index]['name']}\'s Profile'),
+                      centerTitle: true,
+                    ),
+                    body: ProfilePage(viewId: itemList[index].id));
+              }));
+            },
+            leading: Padding(
+              padding: const EdgeInsets.only(right: 10.0),
+              child: CircleAvatar(
+                foregroundImage:
+                    CachedNetworkImageProvider(itemList[index]['image']),
+                backgroundColor: Colors.grey,
+                radius: 3.h,
               ),
-              title: Text(
-                "${itemList[index]["name"]}",
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white, fontSize: 20.sp),
-              ),
-              subtitle: Text(
-                "${itemList[index]["email"]}",
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white, fontSize: 13.sp),
-              ),
-              trailing: IconButton(
-                color: Colors.white,
-                onPressed: () {
-                  StyledPopup(
-                    context: context,
-                    title: 'Actions',
-                    children: [
-                      Divider(),
-                      TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.push(context,
-                                MaterialPageRoute(builder: (context) {
-                              return Scaffold(
-                                  appBar: AppBar(
-                                    title: Text(
-                                        '${itemList[index]['name']}\'s Profile'),
-                                    centerTitle: true,
-                                  ),
-                                  body:
-                                      ProfilePage(viewId: itemList[index].id));
-                            }));
-                          },
-                          child: Text("View Profile")),
-                      TextButton(
-                          onPressed: () async {
-                            await Database(uid)
-                                .declineFriendReq(itemList[index].id)
-                                .then((value) =>
-                                    setState(() => itemList.removeAt(index)));
-
-                            Navigator.pop(context);
-                          },
-                          child: Text("Remove Friend")),
-                    ],
-                    cancelText: 'Done',
-                  ).showPopup();
-                },
-                icon: Icon(Icons.more_horiz),
-              ),
-              horizontalTitleGap: 0,
-              tileColor: Colors.blueGrey[600],
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
             ),
+            title: Text(
+              "${itemList[index]["name"]}",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  color: Theme.of(context).primaryColorDark, fontSize: 20.sp),
+            ),
+            subtitle: Text(
+              "${itemList[index]["email"]}",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  color: Theme.of(context).primaryColorDark, fontSize: 13.sp),
+            ),
+            trailing: IconButton(
+              color: Theme.of(context).primaryColorDark,
+              onPressed: () {
+                StyledPopup(
+                  context: context,
+                  title: 'Actions',
+                  children: [
+                    Divider(),
+                    TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return Scaffold(
+                                appBar: AppBar(
+                                  title: Text(
+                                      '${itemList[index]['name']}\'s Profile'),
+                                  centerTitle: true,
+                                ),
+                                body: ProfilePage(viewId: itemList[index].id));
+                          }));
+                        },
+                        child: Text("View Profile")),
+                    TextButton(
+                        onPressed: () async {
+                          await Database(uid)
+                              .declineFriendReq(itemList[index].id)
+                              .then((value) =>
+                                  setState(() => itemList.removeAt(index)));
+
+                          Navigator.pop(context);
+                        },
+                        child: Text("Remove Friend")),
+                  ],
+                  cancelText: 'Done',
+                ).showPopup();
+              },
+              icon: Icon(Icons.more_horiz),
+            ),
+            horizontalTitleGap: 0,
+            tileColor: Theme.of(context).backgroundColor,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),

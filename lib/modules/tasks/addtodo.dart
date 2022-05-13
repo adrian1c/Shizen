@@ -495,7 +495,7 @@ class RecurButton extends HookWidget {
                     borderRadius: BorderRadius.circular(10),
                     color: taskList.value.length == 0
                         ? Colors.grey[400]
-                        : Colors.blueGrey),
+                        : Theme.of(context).primaryColor),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -605,7 +605,7 @@ class ReminderButton extends HookWidget {
                     borderRadius: BorderRadius.circular(10),
                     color: taskList.value.length == 0
                         ? Colors.grey[400]
-                        : Colors.blueGrey),
+                        : Theme.of(context).primaryColor),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

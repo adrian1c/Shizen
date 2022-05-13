@@ -14,19 +14,21 @@ class TextDivider extends StatelessWidget {
           child: new Container(
               margin: const EdgeInsets.only(left: 0.0, right: 10.0),
               child: Divider(
-                color: Colors.black,
+                color: Theme.of(context).primaryColor,
                 height: 5.h,
               )),
         ),
         Text(
           text,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor),
         ),
         Expanded(
           child: new Container(
               margin: const EdgeInsets.only(left: 10.0, right: 0.0),
               child: Divider(
-                color: Colors.black,
+                color: Theme.of(context).primaryColor,
                 height: 5.h,
               )),
         ),

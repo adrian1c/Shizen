@@ -19,7 +19,8 @@ class TrackerTask extends HookWidget {
     final snapshot = useFuture(future);
     if (!snapshot.hasData) {
       return Container(
-          child: SpinKitWanderingCubes(color: Colors.blueGrey, size: 75));
+          child: SpinKitWanderingCubes(
+              color: Theme.of(context).primaryColor, size: 75));
     }
 
     return Container(
@@ -275,23 +276,30 @@ class TrackerTile extends HookWidget {
               child: Container(
                   padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blueGrey, width: 5),
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.lightBlue[50]),
+                      borderRadius: BorderRadius.circular(20),
+                      color: Theme.of(context).backgroundColor,
+                      boxShadow: CustomTheme.boxShadow),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(task['title'],
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline4
+                                  ?.copyWith(
+                                      color: Theme.of(context)
+                                          .primaryColor
+                                          .withAlpha(200))),
                           Row(
                             children: [
                               Text(
                                   '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
-                              Icon(Icons.park, color: Colors.lightGreen[700])
+                              Icon(Icons.park_rounded,
+                                  color: Color.fromARGB(255, 147, 182, 117))
                             ],
                           )
                         ],
@@ -364,9 +372,10 @@ class TrackerTile extends HookWidget {
                                         cancelText: 'Done')
                                     .showPopup();
                               },
-                              child: Icon(Icons.flag),
+                              child: Icon(Icons.flag_rounded),
                               style: ElevatedButton.styleFrom(
-                                  shape: CircleBorder(), primary: Colors.amber),
+                                  shape: CircleBorder(),
+                                  primary: Color.fromARGB(255, 252, 212, 93)),
                             ),
                           ],
                         ),
@@ -412,11 +421,11 @@ class TrackerTile extends HookWidget {
                                       ? currentDayCheckIn(snapshot.data.docs) !=
                                               null
                                           ? MaterialStateProperty.all(
-                                              Colors.lightGreen[400])
+                                              CustomTheme.completeColor)
                                           : MaterialStateProperty.all(
-                                              Colors.grey[400])
+                                              CustomTheme.greyedButton)
                                       : MaterialStateProperty.all(
-                                          Colors.grey[400]),
+                                          CustomTheme.greyedButton),
                                   shape: MaterialStateProperty.all<
                                           RoundedRectangleBorder>(
                                       RoundedRectangleBorder(

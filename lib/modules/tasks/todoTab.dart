@@ -27,7 +27,7 @@ class ToDoTask extends HookWidget {
     return Container(
         child: !snapshot.hasData
             ? SpinKitWanderingCubes(
-                color: Colors.blueGrey,
+                color: Theme.of(context).primaryColor,
                 size: 75.0,
               )
             : snapshot.data.docs.length > 0
@@ -121,7 +121,7 @@ class TodoTaskDisplay extends StatelessWidget {
                     constraints: BoxConstraints(minWidth: 25.w),
                     height: 5.h,
                     decoration: BoxDecoration(
-                        color: Colors.amber,
+                        color: Theme.of(context).primaryColor.withAlpha(200),
                         borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(15),
                             topRight: Radius.circular(15))),
@@ -129,13 +129,15 @@ class TodoTaskDisplay extends StatelessWidget {
                         child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
                       child: Text(title,
-                          style: Theme.of(context).textTheme.headline1),
+                          style: Theme.of(context).textTheme.headline4),
                     ))),
                 Row(
                   children: [
                     recur.contains(true)
-                        ? Icon(Icons.repeat, color: Colors.blue, size: 25)
-                        : Icon(Icons.repeat, color: Colors.black26, size: 25),
+                        ? Icon(Icons.repeat_rounded,
+                            color: CustomTheme.activeIcon, size: 25)
+                        : Icon(Icons.repeat_rounded,
+                            color: CustomTheme.inactiveIcon, size: 25),
                     Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: reminder != null
@@ -143,14 +145,15 @@ class TodoTaskDisplay extends StatelessWidget {
                                 ? ReminderIcon(
                                     reminder: reminder,
                                   )
-                                : Icon(Icons.notifications_active,
-                                    color: Colors.black26, size: 25)
-                            : Icon(Icons.notifications_active,
-                                color: Colors.black26, size: 25)),
+                                : Icon(Icons.notifications_active_rounded,
+                                    color: CustomTheme.inactiveIcon, size: 25)
+                            : Icon(Icons.notifications_active_rounded,
+                                color: CustomTheme.inactiveIcon, size: 25)),
                     isPublic
-                        ? Icon(Icons.visibility, color: Colors.blue, size: 25)
-                        : Icon(Icons.visibility,
-                            color: Colors.black26, size: 25),
+                        ? Icon(Icons.visibility_rounded,
+                            color: CustomTheme.activeIcon, size: 25)
+                        : Icon(Icons.visibility_rounded,
+                            color: CustomTheme.inactiveIcon, size: 25),
                   ],
                 ),
               ],
@@ -159,12 +162,12 @@ class TodoTaskDisplay extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
                 child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.amber[200],
-                      border: Border.all(color: Colors.amber, width: 5),
+                      color: Theme.of(context).primaryColor.withAlpha(200),
                       borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(5),
-                          bottomRight: Radius.circular(5),
-                          topRight: Radius.circular(5)),
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15),
+                          topRight: Radius.circular(15)),
+                      boxShadow: CustomTheme.boxShadow,
                     ),
                     child: ListView.builder(
                         physics: NeverScrollableScrollPhysics(),
@@ -176,13 +179,32 @@ class TodoTaskDisplay extends StatelessWidget {
                             child: Container(
                               decoration: BoxDecoration(
                                   color: taskList[index]['status']
-                                      ? Colors.lightGreen[400]
-                                      : null),
+                                      ? CustomTheme.completeColor
+                                      : Theme.of(context).backgroundColor,
+                                  borderRadius: index == 0
+                                      ? BorderRadius.only(
+                                          topLeft: Radius.circular(15),
+                                          topRight: Radius.circular(15),
+                                          bottomLeft: taskList.length == 1
+                                              ? Radius.circular(15)
+                                              : Radius.zero,
+                                          bottomRight: taskList.length == 1
+                                              ? Radius.circular(15)
+                                              : Radius.zero,
+                                        )
+                                      : index == taskList.length - 1
+                                          ? BorderRadius.only(
+                                              bottomLeft: Radius.circular(15),
+                                              bottomRight: Radius.circular(15),
+                                            )
+                                          : null),
                               child: Row(
                                 children: [
                                   Checkbox(
                                     shape: CircleBorder(),
-                                    activeColor: Colors.lightGreen[700],
+                                    activeColor:
+                                        Theme.of(context).backgroundColor,
+                                    checkColor: Colors.lightGreen[700],
                                     value: taskList[index]['status'],
                                     onChanged: (value) async {
                                       taskList[index]['status'] =
@@ -261,7 +283,9 @@ class ReminderIcon extends HookWidget {
       return null;
     });
     return isBefore.value
-        ? Icon(Icons.notifications_active, color: Colors.blue, size: 25)
-        : Icon(Icons.notifications_active, color: Colors.black26, size: 25);
+        ? Icon(Icons.notifications_active,
+            color: CustomTheme.activeIcon, size: 25)
+        : Icon(Icons.notifications_active,
+            color: CustomTheme.inactiveIcon, size: 25);
   }
 }

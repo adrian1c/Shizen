@@ -50,7 +50,9 @@ class CommunityPage extends HookWidget {
                 floating: true,
                 flexibleSpace: Container(
                   decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor),
+                      color: Theme.of(context)
+                          .scaffoldBackgroundColor
+                          .withAlpha(235)),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
                     child: Row(
@@ -173,8 +175,11 @@ class PostListTile extends HookWidget {
       child: Container(
         padding: const EdgeInsets.only(top: 15, bottom: 15),
         decoration: BoxDecoration(
-            color: Colors.blueGrey[100],
-            borderRadius: BorderRadius.circular(20)),
+            color: Theme.of(context).backgroundColor,
+            // border: Border.all(
+            //     color: Theme.of(context).primaryColor.withAlpha(100), width: 2),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: CustomTheme.boxShadow),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -225,7 +230,10 @@ class PostListTile extends HookWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(postData['name']),
+                              Text(
+                                postData['name'],
+                                style: TextStyle(fontSize: 16.sp),
+                              ),
                               Text(postData['email']),
                             ],
                           ),
@@ -240,7 +248,7 @@ class PostListTile extends HookWidget {
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: Text(postData['desc'],
-                      style: Theme.of(context).textTheme.headline4),
+                      style: Theme.of(context).textTheme.headline5),
                 ),
                 if (postData['attachmentType'] != null)
                   if (postData['attachmentType'] == 'image')
@@ -443,7 +451,8 @@ class PostListTile extends HookWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
-                              color: Colors.blueGrey[200],
+                              color:
+                                  Theme.of(context).primaryColor.withAlpha(150),
                               borderRadius: BorderRadius.circular(20)),
                           child: Center(
                             child: Text('#${postData['hashtags'][index]}',
@@ -559,7 +568,10 @@ class CommentList extends HookWidget {
       child: Container(
           padding: const EdgeInsets.fromLTRB(20, 10, 0, 10),
           child: commentCount.value > 0
-              ? Text('View all ${commentCount.value} comments')
+              ? Text(
+                  'View all ${commentCount.value} comments',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                )
               : null),
     );
   }
@@ -732,6 +744,7 @@ class CommentPage extends HookWidget {
           title: const Text("ALL COMMENTS"),
           centerTitle: true,
         ),
-        body: SpinKitWanderingCubes(color: Colors.blueGrey, size: 75));
+        body: SpinKitWanderingCubes(
+            color: Theme.of(context).primaryColor, size: 75));
   }
 }

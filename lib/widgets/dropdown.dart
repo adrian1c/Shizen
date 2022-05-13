@@ -67,7 +67,8 @@ class VisibilityItem extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Icon(Icons.visibility, size: 20, color: Colors.blueGrey),
+              Icon(Icons.visibility,
+                  size: 20, color: Theme.of(context).primaryColor),
               Flexible(
                   fit: FlexFit.tight,
                   child: Padding(
