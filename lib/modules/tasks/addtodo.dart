@@ -197,13 +197,13 @@ class TodoTaskList extends HookWidget {
                   )).showPopup();
             },
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                     constraints: BoxConstraints(minWidth: 25.w),
                     height: 5.h,
                     decoration: BoxDecoration(
-                        color: Colors.amber,
+                        color: Theme.of(context).primaryColor.withAlpha(200),
                         borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(15),
                             topRight: Radius.circular(15))),
@@ -212,7 +212,7 @@ class TodoTaskList extends HookWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
                       child: Text(
                           title.value == '' ? 'Enter Title' : title.value,
-                          style: Theme.of(context).textTheme.headline1),
+                          style: Theme.of(context).textTheme.headline4),
                     ))),
               ],
             ),
@@ -221,22 +221,26 @@ class TodoTaskList extends HookWidget {
               constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
               child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.amber[200],
-                    border: Border.all(color: Colors.amber, width: 5),
+                    color: Theme.of(context).primaryColor.withAlpha(200),
                     borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(5),
-                        bottomRight: Radius.circular(5),
-                        topRight: Radius.circular(5)),
+                        bottomLeft: Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                        topRight: Radius.circular(15)),
+                    boxShadow: CustomTheme.boxShadow,
                   ),
                   child: taskList.value.length == 0
                       ? Container(
-                          decoration: BoxDecoration(color: Colors.grey[400]),
+                          decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(15)),
                           height: 5.h,
                           padding: EdgeInsets.only(top: 10, bottom: 10),
                           alignment: Alignment.center,
                           child: Text('Add a task',
-                              style: TextStyle(color: Colors.white)))
+                              style: TextStyle(
+                                  color: Theme.of(context).backgroundColor)))
                       : ListView.builder(
+                          physics: NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                           itemCount: taskList.value.length,
                           itemBuilder: (context, index) {
@@ -248,8 +252,29 @@ class TodoTaskList extends HookWidget {
                                       horizontal: 15),
                                   decoration: BoxDecoration(
                                       color: taskList.value[index]['status']
-                                          ? Colors.lightGreen[400]
-                                          : null),
+                                          ? CustomTheme.completeColor
+                                          : Theme.of(context).backgroundColor,
+                                      borderRadius: index == 0
+                                          ? BorderRadius.only(
+                                              topLeft: Radius.circular(15),
+                                              topRight: Radius.circular(15),
+                                              bottomLeft:
+                                                  taskList.value.length == 1
+                                                      ? Radius.circular(15)
+                                                      : Radius.zero,
+                                              bottomRight:
+                                                  taskList.value.length == 1
+                                                      ? Radius.circular(15)
+                                                      : Radius.zero,
+                                            )
+                                          : index == taskList.value.length - 1
+                                              ? BorderRadius.only(
+                                                  bottomLeft:
+                                                      Radius.circular(15),
+                                                  bottomRight:
+                                                      Radius.circular(15),
+                                                )
+                                              : null),
                                   child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
@@ -495,12 +520,15 @@ class RecurButton extends HookWidget {
                     borderRadius: BorderRadius.circular(10),
                     color: taskList.value.length == 0
                         ? Colors.grey[400]
-                        : Theme.of(context).primaryColor),
+                        : Theme.of(context).primaryColor.withAlpha(200)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Recurring Days',
-                        style: TextStyle(color: Colors.white)),
+                    Text(
+                      'Recurring Days',
+                      style:
+                          TextStyle(color: Theme.of(context).backgroundColor),
+                    ),
                     ListView.builder(
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
@@ -516,7 +544,7 @@ class RecurButton extends HookWidget {
                                   style: TextStyle(
                                       color: recurValue.value[index]
                                           ? Colors.lightGreenAccent[400]
-                                          : Colors.grey[400])),
+                                          : CustomTheme.incompleteColor)),
                             ));
                       },
                     )
@@ -605,18 +633,20 @@ class ReminderButton extends HookWidget {
                     borderRadius: BorderRadius.circular(10),
                     color: taskList.value.length == 0
                         ? Colors.grey[400]
-                        : Theme.of(context).primaryColor),
+                        : Theme.of(context).primaryColor.withAlpha(200)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Reminder', style: TextStyle(color: Colors.white)),
+                    Text('Reminder',
+                        style: TextStyle(
+                            color: Theme.of(context).backgroundColor)),
                     Text(
                         reminderValue.value == null
                             ? 'No Time Selected'
                             : '${DateFormat('dd MMM yy hh:mm a').format(reminderValue.value!)}',
                         style: TextStyle(
                             color: reminderValue.value == null
-                                ? Colors.grey[400]
+                                ? CustomTheme.incompleteColor
                                 : Colors.lightGreenAccent[400]))
                   ],
                 ),

@@ -318,7 +318,7 @@ class TrackerTile extends HookWidget {
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold)),
                                 Text(task['milestones'].isEmpty
-                                    ? 'No milestone'
+                                    ? '-'
                                     : getNextMilestone(
                                         task['milestones'],
                                         DateTime.now()
