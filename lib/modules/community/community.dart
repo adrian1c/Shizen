@@ -344,7 +344,9 @@ class PostListTile extends HookWidget {
                                     constraints: BoxConstraints(minWidth: 25.w),
                                     height: 5.h,
                                     decoration: BoxDecoration(
-                                        color: Colors.amber,
+                                        color: Theme.of(context)
+                                            .primaryColor
+                                            .withAlpha(200),
                                         borderRadius: BorderRadius.only(
                                             topLeft: Radius.circular(15),
                                             topRight: Radius.circular(15))),
@@ -352,8 +354,11 @@ class PostListTile extends HookWidget {
                                         child: Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 15.0),
-                                      child:
-                                          Text(postData['attachment']['title']),
+                                      child: Text(
+                                          postData['attachment']['title'],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headline4),
                                     ))),
                                 Text(postData['attachment']['timeCompleted'] !=
                                         null
@@ -366,13 +371,14 @@ class PostListTile extends HookWidget {
                                     minHeight: 5.h, minWidth: 100.w),
                                 child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.amber[200],
-                                      border: Border.all(
-                                          color: Colors.amber, width: 5),
+                                      color: Theme.of(context)
+                                          .primaryColor
+                                          .withAlpha(200),
                                       borderRadius: BorderRadius.only(
-                                          bottomLeft: Radius.circular(5),
-                                          bottomRight: Radius.circular(5),
-                                          topRight: Radius.circular(5)),
+                                          bottomLeft: Radius.circular(15),
+                                          bottomRight: Radius.circular(15),
+                                          topRight: Radius.circular(15)),
+                                      boxShadow: CustomTheme.boxShadow,
                                     ),
                                     child: ListView.builder(
                                         physics: NeverScrollableScrollPhysics(),
@@ -388,13 +394,60 @@ class PostListTile extends HookWidget {
                                                   color: postData['attachment']
                                                               ['taskList']
                                                           [index]['status']
-                                                      ? Colors.lightGreen[400]
-                                                      : null),
+                                                      ? CustomTheme
+                                                          .completeColor
+                                                      : Theme.of(context)
+                                                          .backgroundColor,
+                                                  borderRadius: index == 0
+                                                      ? BorderRadius.only(
+                                                          topLeft:
+                                                              Radius.circular(
+                                                                  15),
+                                                          topRight:
+                                                              Radius.circular(
+                                                                  15),
+                                                          bottomLeft: postData[
+                                                                              'attachment']
+                                                                          [
+                                                                          'taskList']
+                                                                      .length ==
+                                                                  1
+                                                              ? Radius.circular(
+                                                                  15)
+                                                              : Radius.zero,
+                                                          bottomRight: postData[
+                                                                              'attachment']
+                                                                          [
+                                                                          'taskList']
+                                                                      .length ==
+                                                                  1
+                                                              ? Radius.circular(
+                                                                  15)
+                                                              : Radius.zero,
+                                                        )
+                                                      : index ==
+                                                              postData['attachment']
+                                                                          [
+                                                                          'taskList']
+                                                                      .length -
+                                                                  1
+                                                          ? BorderRadius.only(
+                                                              bottomLeft: Radius
+                                                                  .circular(15),
+                                                              bottomRight:
+                                                                  Radius
+                                                                      .circular(
+                                                                          15),
+                                                            )
+                                                          : null),
                                               child: Row(
                                                 children: [
                                                   Checkbox(
                                                     shape: CircleBorder(),
                                                     activeColor:
+                                                        Theme.of(context)
+                                                            .backgroundColor,
+                                                    checkColor:
                                                         Colors.lightGreen[700],
                                                     value:
                                                         postData['attachment']

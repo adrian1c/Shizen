@@ -21,7 +21,7 @@ class TextDivider extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w200,
               color: Theme.of(context).primaryColor),
         ),
         Expanded(

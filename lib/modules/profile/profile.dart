@@ -93,6 +93,12 @@ class ProfilePage extends HookWidget {
         ),
         Container(
           width: 80.w,
+          decoration: BoxDecoration(
+            color: Theme.of(context).backgroundColor,
+            borderRadius: BorderRadius.circular(
+              25.0,
+            ),
+          ),
           child: TabBar(
             controller: tabController,
             // give the indicator a decoration (color and border radius)

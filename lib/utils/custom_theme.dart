@@ -2,12 +2,14 @@ import 'package:google_fonts/google_fonts.dart';
 import './allUtils.dart';
 
 class CustomTheme {
-  static const Color _lightPrimaryColor = Color(0xff3d4785);
-  static const Color _lightSecondaryColor = Color.fromARGB(255, 220, 224, 233);
+  // static const Color _primaryColor = Color(0xff3d4785);
+  // static const Color _scaffoldBackground = Color.fromARGB(255, 220, 224, 233);
+  static const Color _primaryColor = Color(0xff557174);
+  static const Color _scaffoldBackground = Color.fromARGB(255, 238, 235, 229);
 
   static const Color _white = Color.fromARGB(255, 245, 243, 248);
 
-  static const Color completeColor = Color.fromARGB(255, 175, 221, 122);
+  static const Color completeColor = Color(0xffD3E4CD);
   static const Color incompleteColor = Color.fromARGB(100, 199, 201, 211);
 
   static const Color activeIcon = Color.fromARGB(255, 81, 96, 211);
@@ -56,20 +58,20 @@ class CustomTheme {
 
   static ThemeData get lightTheme {
     return ThemeData(
-      primaryColor: _lightPrimaryColor,
+      primaryColor: _primaryColor,
       primaryColorDark: Color(0xff444444),
       backgroundColor: _white,
-      appBarTheme: AppBarTheme(backgroundColor: _lightPrimaryColor),
-      scaffoldBackgroundColor: _lightSecondaryColor,
+      appBarTheme: AppBarTheme(backgroundColor: _primaryColor),
+      scaffoldBackgroundColor: _scaffoldBackground,
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: _lightPrimaryColor, foregroundColor: _white),
+          backgroundColor: _primaryColor, foregroundColor: _white),
       dialogTheme: DialogTheme(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
-            return _lightPrimaryColor;
+            return _primaryColor;
           }
           return Colors.white;
         }),

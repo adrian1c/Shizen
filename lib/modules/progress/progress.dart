@@ -49,7 +49,7 @@ class ProgressPage extends HookWidget {
           child: Container(
             width: 60.w,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Theme.of(context).backgroundColor,
               borderRadius: BorderRadius.circular(
                 25.0,
               ),
@@ -211,14 +211,15 @@ class TodoTaskProgressTile extends StatelessWidget {
                   constraints: BoxConstraints(minWidth: 25.w),
                   height: 5.h,
                   decoration: BoxDecoration(
-                      color: Colors.amber,
+                      color: Theme.of(context).primaryColor.withAlpha(200),
                       borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(15),
                           topRight: Radius.circular(15))),
                   child: Center(
                       child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                    child: Text(title),
+                    child: Text(title,
+                        style: Theme.of(context).textTheme.headline4),
                   ))),
               Text(
                   'Completed at ${DateFormat("hh:mm a").format(timeCompleted)}')
@@ -228,12 +229,12 @@ class TodoTaskProgressTile extends StatelessWidget {
               constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
               child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.amber[200],
-                    border: Border.all(color: Colors.amber, width: 5),
+                    color: Theme.of(context).primaryColor.withAlpha(200),
                     borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(5),
-                        bottomRight: Radius.circular(5),
-                        topRight: Radius.circular(5)),
+                        bottomLeft: Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                        topRight: Radius.circular(15)),
+                    boxShadow: CustomTheme.boxShadow,
                   ),
                   child: ListView.builder(
                       physics: NeverScrollableScrollPhysics(),
@@ -245,13 +246,32 @@ class TodoTaskProgressTile extends StatelessWidget {
                           child: Container(
                             decoration: BoxDecoration(
                                 color: taskList[index]['status']
-                                    ? Colors.lightGreen[400]
-                                    : null),
+                                    ? CustomTheme.completeColor
+                                    : Theme.of(context).backgroundColor,
+                                borderRadius: index == 0
+                                    ? BorderRadius.only(
+                                        topLeft: Radius.circular(15),
+                                        topRight: Radius.circular(15),
+                                        bottomLeft: taskList.length == 1
+                                            ? Radius.circular(15)
+                                            : Radius.zero,
+                                        bottomRight: taskList.length == 1
+                                            ? Radius.circular(15)
+                                            : Radius.zero,
+                                      )
+                                    : index == taskList.length - 1
+                                        ? BorderRadius.only(
+                                            bottomLeft: Radius.circular(15),
+                                            bottomRight: Radius.circular(15),
+                                          )
+                                        : null),
                             child: Row(
                               children: [
                                 Checkbox(
                                   shape: CircleBorder(),
-                                  activeColor: Colors.lightGreen[700],
+                                  activeColor:
+                                      Theme.of(context).backgroundColor,
+                                  checkColor: Colors.lightGreen[700],
                                   value: taskList[index]['status'],
                                   onChanged: (value) {},
                                 ),
@@ -362,12 +382,11 @@ class TrackerProgressTile extends HookWidget {
       return Padding(
         padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
         child: Container(
-          padding: const EdgeInsets.all(5),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-              color: Colors.lightBlue[50],
-              border:
-                  Border.all(color: Theme.of(context).primaryColor, width: 5),
-              borderRadius: BorderRadius.circular(10)),
+              borderRadius: BorderRadius.circular(20),
+              color: Theme.of(context).backgroundColor,
+              boxShadow: CustomTheme.boxShadow),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -376,14 +395,16 @@ class TrackerProgressTile extends HookWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(tracker['title'],
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: Theme.of(context).textTheme.headline4?.copyWith(
+                          color:
+                              Theme.of(context).primaryColor.withAlpha(200))),
                   Text(
                       'Checked-in at \n${DateFormat("hh:mm a").format(timeCompleted)}',
-                      style: TextStyle(fontSize: 13.sp),
                       textAlign: TextAlign.right),
                 ],
               ),
               Padding(padding: EdgeInsets.symmetric(vertical: 5)),
+              Divider(),
               Text(note)
             ],
           ),

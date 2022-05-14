@@ -134,7 +134,11 @@ class TabProvider extends ChangeNotifier {
 
   void changeTabPage(index) {
     selectedIndex = index;
-    pageController.jumpToPage(selectedIndex);
+    pageController.animateToPage(
+      selectedIndex,
+      curve: Curves.linear,
+      duration: Duration(milliseconds: 600),
+    );
     notifyListeners();
   }
 

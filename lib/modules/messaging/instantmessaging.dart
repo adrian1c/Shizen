@@ -15,11 +15,11 @@ class InstantMessagingPage extends HookWidget {
     final chatStream = useStream(stream);
     return Scaffold(
         appBar: AppBar(
-          title: Text('CHATS'),
+          title: Text('Chats'),
           centerTitle: true,
           actions: [
             IconButton(
-              icon: Icon(Icons.accessibility_new_sharp),
+              icon: Icon(Icons.chat_rounded),
               onPressed: () {
                 Navigator.push(
                     context,
@@ -29,103 +29,108 @@ class InstantMessagingPage extends HookWidget {
             ),
           ],
         ),
-        body: Column(
-          children: [
-            chatStream.hasData
-                ? chatStream.data.docs.length > 0
-                    ? ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: chatStream.data.docs.length,
-                        itemBuilder: (context, index) {
-                          final friend = chatStream.data.docs[index];
-                          return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 15.0),
-                            child: Column(
-                              children: [
-                                Divider(),
-                                ListTile(
-                                  onTap: () async {
-                                    Database(uid)
-                                        .chattingWith(friend['peerId']);
-                                    if (friend['unreadCount'] > 0) {
+        body: chatStream.hasData
+            ? chatStream.data.docs.length > 0
+                ? Column(
+                    children: [
+                      ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: chatStream.data.docs.length,
+                          itemBuilder: (context, index) {
+                            final friend = chatStream.data.docs[index];
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 15.0),
+                              child: Column(
+                                children: [
+                                  Divider(),
+                                  ListTile(
+                                    onTap: () async {
                                       Database(uid)
-                                          .resetUnread(friend['peerId']);
-                                    }
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => ChatPage(
-                                                peerId: friend['peerId'],
-                                                peerName: friend['user']
-                                                    ['name'])));
-                                  },
-                                  leading: Padding(
-                                    padding: const EdgeInsets.only(right: 10.0),
-                                    child: CircleAvatar(
-                                      foregroundImage:
-                                          CachedNetworkImageProvider(
-                                              friend['user']['image']),
-                                      backgroundColor: Colors.grey,
-                                      radius: 3.h,
+                                          .chattingWith(friend['peerId']);
+                                      if (friend['unreadCount'] > 0) {
+                                        Database(uid)
+                                            .resetUnread(friend['peerId']);
+                                      }
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => ChatPage(
+                                                  peerId: friend['peerId'],
+                                                  peerName: friend['user']
+                                                      ['name'])));
+                                    },
+                                    leading: Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 10.0),
+                                      child: CircleAvatar(
+                                        foregroundImage:
+                                            CachedNetworkImageProvider(
+                                                friend['user']['image']),
+                                        backgroundColor: Colors.grey,
+                                        radius: 3.h,
+                                      ),
                                     ),
+                                    title: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          "${friend['user']['name']}",
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 20.sp),
+                                        ),
+                                        Text(
+                                          DateFormat("hh:mm a")
+                                              .format((friend['lastMsgTime']
+                                                      as Timestamp)
+                                                  .toDate())
+                                              .toString(),
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12.sp),
+                                        ),
+                                      ],
+                                    ),
+                                    subtitle: Text(
+                                      "${friend['lastMsg']}",
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          color: Colors.black, fontSize: 13.sp),
+                                    ),
+                                    trailing: friend['unreadCount'] > 0
+                                        ? Container(
+                                            alignment: Alignment.center,
+                                            width: 7.w,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                            ),
+                                            child: Text(
+                                                friend['unreadCount']
+                                                    .toString(),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyText1),
+                                          )
+                                        : null,
+                                    horizontalTitleGap: 0,
+                                    tileColor: Colors.transparent,
                                   ),
-                                  title: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "${friend['user']['name']}",
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 20.sp),
-                                      ),
-                                      Text(
-                                        DateFormat("hh:mm a")
-                                            .format((friend['lastMsgTime']
-                                                    as Timestamp)
-                                                .toDate())
-                                            .toString(),
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 12.sp),
-                                      ),
-                                    ],
-                                  ),
-                                  subtitle: Text(
-                                    "${friend['lastMsg']}",
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                        color: Colors.black, fontSize: 13.sp),
-                                  ),
-                                  trailing: friend['unreadCount'] > 0
-                                      ? Container(
-                                          alignment: Alignment.center,
-                                          width: 7.w,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
-                                          child: Text(
-                                              friend['unreadCount'].toString(),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyText1),
-                                        )
-                                      : null,
-                                  horizontalTitleGap: 0,
-                                  tileColor: Colors.transparent,
-                                ),
-                              ],
-                            ),
-                          );
-                        })
-                    : Text('No Chats')
-                : Text('Invalid')
-          ],
-        ));
+                                ],
+                              ),
+                            );
+                          }),
+                    ],
+                  )
+                : Text('No Chats')
+            : Center(
+                child: SpinKitWanderingCubes(
+                    color: Theme.of(context).primaryColor, size: 75),
+              ));
   }
 }
 
@@ -142,7 +147,7 @@ class FriendMessageListPage extends HookWidget {
       print(friendsList);
       return Scaffold(
           appBar: AppBar(
-            title: Text('NEW CHAT'),
+            title: Text('New Chat'),
             centerTitle: true,
           ),
           body: SingleChildScrollView(
@@ -192,12 +197,14 @@ class FriendMessageListPage extends HookWidget {
     }
     return Scaffold(
         appBar: AppBar(
-          title: Text('NEW CHAT'),
+          title: Text('New Chat'),
           centerTitle: true,
         ),
         body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Invalid'),
+            SpinKitWanderingCubes(
+                color: Theme.of(context).primaryColor, size: 75),
           ],
         ));
   }

@@ -618,9 +618,11 @@ class ReminderButton extends HookWidget {
                   : () {
                       DatePicker.showDateTimePicker(
                         context,
-                        minTime: DateTime.now(),
-                        currentTime: reminderValue.value,
+                        minTime: DateTime.now().add(Duration(minutes: 2)),
+                        currentTime:
+                            reminderValue.value?.add(Duration(minutes: 1)),
                         onConfirm: (time) {
+                          print(time);
                           reminderValue.value = time;
                         },
                       );
