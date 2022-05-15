@@ -4,12 +4,13 @@ import './allUtils.dart';
 class CustomTheme {
   // static const Color _primaryColor = Color(0xff3d4785);
   // static const Color _scaffoldBackground = Color.fromARGB(255, 220, 224, 233);
-  static const Color _primaryColor = Color(0xff557174);
-  static const Color _scaffoldBackground = Color.fromARGB(255, 238, 235, 229);
 
-  static const Color _white = Color.fromARGB(255, 245, 243, 248);
+  static const Color _primaryColor = Color.fromARGB(255, 72, 97, 100);
+  static const Color _scaffoldBackground = Color.fromARGB(255, 216, 208, 208);
 
-  static const Color completeColor = Color(0xffD3E4CD);
+  static const Color _white = Color.fromARGB(255, 239, 235, 241);
+
+  static const Color completeColor = Color.fromARGB(255, 150, 175, 138);
   static const Color incompleteColor = Color.fromARGB(100, 199, 201, 211);
 
   static const Color activeIcon = Color.fromARGB(255, 81, 96, 211);

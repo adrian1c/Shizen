@@ -235,8 +235,9 @@ class TodoTaskDisplay extends StatelessWidget {
                                                   api: Database(uid)
                                                       .completeTask(
                                                           taskId, taskList),
-                                                  msg:
-                                                      'Congratulations! I\'m proud of you',
+                                                  msg: value!
+                                                      ? 'Congratulations! Almost there!'
+                                                      : 'Undo-ed',
                                                   isSuccess: true)
                                               .show();
                                       Provider.of<TabProvider>(context,
