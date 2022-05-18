@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:shizen_app/modules/profile/profile.dart';
 import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/utils/allUtils.dart';
@@ -133,20 +132,10 @@ class CommunityPostList extends HookWidget {
                 )));
     }
 
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: ListView.builder(
-          physics: BouncingScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: 10,
-          itemBuilder: (context, index) {
-            return Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                width: 80.w,
-                height: 30.h,
-                color: Colors.white);
-          }),
+    return Padding(
+      padding: const EdgeInsets.all(30),
+      child: SpinKitWanderingCubes(
+          color: Theme.of(context).primaryColor, size: 75),
     );
   }
 }

@@ -7,13 +7,14 @@ import 'package:intl/intl.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
 import 'package:sticky_grouped_list/sticky_grouped_list.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 class ProgressPage extends HookWidget {
   const ProgressPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final filterValue = useState(null);
+    final ValueNotifier<PickerDateRange?> filterValue = useValueNotifier(null);
     final searchValue = useState(null);
     final tabController = useTabController(
       initialLength: 2,
@@ -27,18 +28,61 @@ class ProgressPage extends HookWidget {
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Column(
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.filter_alt),
-                        Text("Filter", style: TextStyle(fontSize: 15.sp)),
-                      ],
-                    ),
-                  ],
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: CustomTheme.activeIcon,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    minimumSize:
+                        Size((MediaQuery.of(context).size.width * 0.65), 45),
+                  ),
+                  onPressed: () {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Row(
+                              children: [
+                                Text('Selct Date / Range'),
+                                TextButton(
+                                    onPressed: () {
+                                      filterValue.value = null;
+                                      Provider.of<TabProvider>(context,
+                                              listen: false)
+                                          .rebuildPage('progress');
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text('CLEAR'))
+                              ],
+                            ),
+                            content: SfDateRangePicker(
+                              initialSelectedRange: filterValue.value,
+                              selectionMode: DateRangePickerSelectionMode.range,
+                              showActionButtons: true,
+                              maxDate: DateTime.now(),
+                              onCancel: () => Navigator.pop(context),
+                              onSubmit: (value) {
+                                filterValue.value = value as PickerDateRange?;
+                                Provider.of<TabProvider>(context, listen: false)
+                                    .rebuildPage('progress');
+                                Navigator.pop(context);
+                              },
+                            ),
+                          );
+                        });
+                  },
+                  child: Row(
+                    children: [
+                      Icon(Icons.filter_alt),
+                      Text(filterValue.value != null
+                          ? filterValue.value!.endDate != null
+                              ? '${DateFormat("dd MMM yyyy").format((filterValue.value!.startDate!))} - ${DateFormat("dd MMM yyyy").format((filterValue.value!.endDate!))}'
+                              : '${DateFormat("dd MMM yyyy").format((filterValue.value!.startDate!))}'
+                          : 'Filter'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -87,7 +131,7 @@ class ProgressPage extends HookWidget {
                 KeepAlivePage(
                   child: Column(
                     children: [
-                      TextDivider('TO DO TASKS'),
+                      TextDivider('COMPLETED TASKS'),
                       Expanded(
                         child: TodoTaskProgressList(
                             filterValue: filterValue, searchValue: searchValue),
@@ -98,7 +142,7 @@ class ProgressPage extends HookWidget {
                 KeepAlivePage(
                   child: Column(
                     children: [
-                      TextDivider('DAILY TRACKER'),
+                      TextDivider('CHECK-INS'),
                       Expanded(
                         child: TrackerProgressList(
                             filterValue: filterValue, searchValue: searchValue),
@@ -127,7 +171,7 @@ class TodoTaskProgressList extends HookWidget {
     final future = useMemoized(
         () => Database(uid)
             .getTodoProgressList(filterValue.value, searchValue.value),
-        [filterValue.value, searchValue.value]);
+        [Provider.of<TabProvider>(context).progress]);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
       return snapshot.data.length > 0
@@ -303,8 +347,10 @@ class TrackerProgressList extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).user.uid;
-    final future =
-        useMemoized(() => Database(uid).getTrackerProgressList(), []);
+    final future = useMemoized(
+        () => Database(uid)
+            .getTrackerProgressList(filterValue.value, searchValue.value),
+        [Provider.of<TabProvider>(context).progress]);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
       return snapshot.data.length > 0

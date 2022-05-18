@@ -127,6 +127,7 @@ class TabProvider extends ChangeNotifier {
   int tracker = 0;
   int community = 0;
   int comment = 0;
+  int progress = 0;
   int profileUser = 0;
   int profileTracker = 0;
   int profileTodo = 0;
@@ -160,6 +161,9 @@ class TabProvider extends ChangeNotifier {
         break;
       case 'comment':
         comment++;
+        break;
+      case 'progress':
+        progress++;
         break;
       case 'profileUser':
         profileUser++;

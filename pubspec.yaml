@@ -60,6 +60,7 @@ dependencies:
   timezone: ^0.8.0
   sticky_grouped_list: ^2.1.0
   scrollable_positioned_list: ^0.2.3
+  syncfusion_flutter_datepicker: ^20.1.55
 
 dev_dependencies:
   flutter_test:

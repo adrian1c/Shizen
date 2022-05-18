@@ -830,19 +830,20 @@ class Database {
         .get();
   }
 
-  Future getTrackerProgressList() async {
+  Future getTrackerProgressList(filter, search) async {
     List<Map> progressList = [];
 
     await userDoc
         .collection('trackerCheckIn')
+        .where('dateCreated', isGreaterThanOrEqualTo: filter?.startDate)
+        .where('dateCreated',
+            isLessThanOrEqualTo: filter?.endDate?.add(Duration(days: 1)) ??
+                filter?.startDate.add(Duration(days: 1)))
         .orderBy('dateCreated', descending: false)
         .get()
         .then((value) {
       value.docs.forEach((element) {
         var currElement = element.data();
-        // currElement['dateCreatedDay'] = new DateFormat("dd MMM yy").format(
-        //     DateTime.parse(
-        //         (currElement['dateCreated'] as Timestamp).toDate().toString()));
         currElement['dateCreated'] =
             (currElement['dateCreated'] as Timestamp).toDate();
         progressList.add(currElement);
@@ -860,32 +861,27 @@ class Database {
     print("Firing getProgressList");
 
     List<Map> progressList = [];
+
     await userDoc
         .collection('todo')
         .where('allComplete', isEqualTo: true)
+        .where('dateCompleted', isGreaterThanOrEqualTo: filter?.startDate)
+        .where('dateCompleted',
+            isLessThanOrEqualTo: filter?.endDate?.add(Duration(days: 1)) ??
+                filter?.startDate.add(Duration(days: 1)))
         .orderBy('dateCompleted', descending: false)
         .get()
         .then((value) {
       value.docs.forEach((element) {
         var currElement = element.data();
         currElement['taskId'] = element.id;
-        // currElement['dateCompletedDay'] = new DateFormat("dd MMM yy").format(
-        //     DateTime.parse((currElement['dateCompleted'] as Timestamp)
-        //         .toDate()
-        //         .toString()));
         currElement['dateCompleted'] =
             (currElement['dateCompleted'] as Timestamp).toDate();
         progressList.add(currElement);
       });
     });
+
     return progressList;
-
-    // var groupByDate = groupBy(progressList,
-    //     (Map obj) => obj['dateCompleted'].toString().substring(0, 10));
-
-    // List test = [];
-
-    // groupByDate.forEach((k, v) => test.add([k, v]));
   }
 
   //-----------------------------------------------------

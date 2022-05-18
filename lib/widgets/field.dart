@@ -73,6 +73,8 @@ class StyledInputField {
         borderRadius: new BorderRadius.circular(5),
         borderSide: new BorderSide(),
       ),
+      filled: true,
+      fillColor: CustomTheme.lightTheme.backgroundColor,
     );
   }
 }

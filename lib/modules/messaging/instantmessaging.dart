@@ -340,7 +340,7 @@ class ChatPage extends HookWidget {
                                   padding: const EdgeInsets.all(10),
                                   constraints: BoxConstraints(maxWidth: 75.w),
                                   decoration: BoxDecoration(
-                                      color: Color.fromARGB(255, 114, 180, 101),
+                                      color: Color.fromARGB(255, 126, 180, 109),
                                       borderRadius: BorderRadius.only(
                                           topLeft: Radius.circular(15),
                                           topRight: Radius.circular(15),
@@ -407,15 +407,9 @@ class ChatPage extends HookWidget {
           ));
     }
     return Scaffold(
-        appBar: AppBar(
-          title: Text(peerId),
-          centerTitle: true,
-        ),
-        body: Column(
-          children: [
-            Text('Invalid'),
-          ],
-        ));
+        appBar: AppBar(),
+        body: SpinKitWanderingCubes(
+            color: Theme.of(context).primaryColor, size: 75));
   }
 }
 

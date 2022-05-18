@@ -13,7 +13,7 @@ class CustomTheme {
   static const Color completeColor = Color.fromARGB(255, 150, 175, 138);
   static const Color incompleteColor = Color.fromARGB(100, 199, 201, 211);
 
-  static const Color activeIcon = Color.fromARGB(255, 81, 96, 211);
+  static const Color activeIcon = Color.fromARGB(255, 71, 102, 148);
   static const Color inactiveIcon = Color.fromARGB(66, 121, 121, 121);
 
   static const Color greyedButton = Color.fromARGB(255, 199, 199, 199);
