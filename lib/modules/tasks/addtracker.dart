@@ -175,7 +175,10 @@ class AddTrackerTask extends HookWidget {
                                       children: [
                                         Text(
                                             '${DateTime.now().difference(startDate.value).inDays + 1}'),
-                                        Icon(Icons.brush_sharp)
+                                        Icon(
+                                          Icons.park_rounded,
+                                          color: CustomTheme.completeColor,
+                                        )
                                       ],
                                     ),
                                   )
@@ -427,11 +430,15 @@ class MilestoneTile extends StatelessWidget {
                     width: 30.w,
                     height: 5.h,
                     decoration: BoxDecoration(
-                        color: Colors.amber,
+                        color: CustomTheme.milestoneHeader,
                         borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(15),
                             topRight: Radius.circular(15))),
-                    child: Center(child: Text('Day ${milestones['day']}'))),
+                    child: Center(
+                        child: Text(
+                      'Day ${milestones['day']}',
+                      style: Theme.of(context).textTheme.headline4,
+                    ))),
                 InkWell(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
@@ -460,8 +467,9 @@ class MilestoneTile extends StatelessWidget {
                 width: 100.w,
                 height: 7.h,
                 decoration: BoxDecoration(
-                  color: Colors.amber[200],
-                  border: Border.all(color: Colors.amber, width: 5),
+                  color: CustomTheme.milestoneBody,
+                  border:
+                      Border.all(color: CustomTheme.milestoneHeader, width: 5),
                   borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(5),
                       bottomRight: Radius.circular(5),
@@ -471,7 +479,9 @@ class MilestoneTile extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                   child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(milestones['reward'])),
+                      child: Text(
+                        milestones['reward'],
+                      )),
                 )),
           ],
         ),

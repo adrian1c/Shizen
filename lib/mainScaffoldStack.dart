@@ -8,6 +8,7 @@ import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/utils/notifications.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
+import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
 import './modules/tasks/tasks.dart';
 import './modules/friends/friends.dart';
@@ -157,8 +158,9 @@ class FABubble extends StatelessWidget {
           context: context,
           builder: (context) => AlertDialog(
               title: Text('Create a Task'),
-              content: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 30),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   InkWell(
                     onTap: () {
@@ -168,15 +170,11 @@ class FABubble extends StatelessWidget {
                           MaterialPageRoute(
                               builder: (context) => AddToDoTask()));
                     },
-                    child: Container(
-                      alignment: Alignment.center,
-                      width: 30.w,
-                      height: 30.h,
-                      decoration: BoxDecoration(color: Colors.amber[200]),
-                      child: Text('To Do Task'),
-                    ),
+                    child: DemoToDoTask(),
                   ),
-                  Padding(padding: const EdgeInsets.symmetric(horizontal: 5.0)),
+                  Padding(padding: const EdgeInsets.symmetric(vertical: 5.0)),
+                  TextDivider('OR'),
+                  Padding(padding: const EdgeInsets.symmetric(vertical: 5.0)),
                   InkWell(
                     onTap: () {
                       Navigator.pop(context);
@@ -185,12 +183,7 @@ class FABubble extends StatelessWidget {
                           MaterialPageRoute(
                               builder: (context) => AddTrackerTask()));
                     },
-                    child: Container(
-                        alignment: Alignment.center,
-                        width: 30.w,
-                        height: 30.h,
-                        decoration: BoxDecoration(color: Colors.amber[200]),
-                        child: Text('Daily Tracker')),
+                    child: DemoTrackerTask(),
                   )
                 ],
               )),
@@ -198,6 +191,196 @@ class FABubble extends StatelessWidget {
       },
       child: Icon(
         Icons.add_rounded,
+      ),
+    );
+  }
+}
+
+class DemoToDoTask extends StatelessWidget {
+  const DemoToDoTask({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                  constraints: BoxConstraints(minWidth: 25.w),
+                  height: 5.h,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withAlpha(200),
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15))),
+                  child: Center(
+                      child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: Text('Task',
+                        style: Theme.of(context).textTheme.headline4),
+                  ))),
+            ],
+          ),
+          ConstrainedBox(
+              constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
+              child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withAlpha(200),
+                    borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                        topRight: Radius.circular(15)),
+                    boxShadow: CustomTheme.boxShadow,
+                  ),
+                  child: ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: 3,
+                      itemBuilder: (context, index) {
+                        return SizedBox(
+                          height: 5.h,
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: index == 2
+                                    ? CustomTheme.completeColor
+                                    : Theme.of(context).backgroundColor,
+                                borderRadius: index == 0
+                                    ? BorderRadius.only(
+                                        topLeft: Radius.circular(15),
+                                        topRight: Radius.circular(15),
+                                        bottomLeft: Radius.zero,
+                                        bottomRight: Radius.zero,
+                                      )
+                                    : index == 2
+                                        ? BorderRadius.only(
+                                            bottomLeft: Radius.circular(15),
+                                            bottomRight: Radius.circular(15),
+                                          )
+                                        : null),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  shape: CircleBorder(),
+                                  activeColor:
+                                      Theme.of(context).backgroundColor,
+                                  checkColor: Colors.lightGreen[700],
+                                  value: index == 2 ? true : false,
+                                  onChanged: (value) async {},
+                                ),
+                                Text('To Do Task $index',
+                                    softWrap: false,
+                                    style: TextStyle(
+                                        decoration: index == 2
+                                            ? TextDecoration.lineThrough
+                                            : null)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }))),
+        ],
+      ),
+    );
+  }
+}
+
+class DemoTrackerTask extends StatelessWidget {
+  const DemoTrackerTask({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Expanded(
+            flex: 10,
+            child: Container(
+                padding: const EdgeInsets.all(10.0),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Theme.of(context).backgroundColor,
+                    boxShadow: CustomTheme.boxShadow),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Daily Tracker',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headline4
+                                ?.copyWith(
+                                    color: Theme.of(context)
+                                        .primaryColor
+                                        .withAlpha(200))),
+                        Row(
+                          children: [
+                            Text('90',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            Icon(Icons.park_rounded,
+                                color: Color.fromARGB(255, 147, 182, 117))
+                          ],
+                        )
+                      ],
+                    ),
+                    Divider(),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Next Milestone',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                Text('-'),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color.fromARGB(255, 252, 212, 93)),
+                            child: Icon(
+                              Icons.flag_rounded,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Center(
+                        child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: CustomTheme.completeColor,
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(18.0),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle_outline_rounded,
+                              color: Theme.of(context).backgroundColor),
+                          Text('Checked-in Today',
+                              style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                    )),
+                  ],
+                )),
+          ),
+        ],
       ),
     );
   }

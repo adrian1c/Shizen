@@ -1,4 +1,5 @@
 import 'package:shimmer/shimmer.dart';
+import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/modules/tasks/tasks.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -32,7 +33,9 @@ class ProgressPage extends HookWidget {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    primary: CustomTheme.activeIcon,
+                    primary: filterValue.value == null
+                        ? CustomTheme.activeIcon
+                        : CustomTheme.activeButton,
                     shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(10))),
                     minimumSize:
@@ -243,94 +246,148 @@ class TodoTaskProgressTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                  constraints: BoxConstraints(minWidth: 25.w),
-                  height: 5.h,
-                  decoration: BoxDecoration(
+    return InkWell(
+      onTap: () async {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(title: Text('Create Similar Task?'), actions: [
+                TextButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      List task = [];
+
+                      for (var i = 0; i < taskList.length; i++) {
+                        var tempMap = {
+                          'task': taskList[i]['task'],
+                          'status': false
+                        };
+                        task.add(tempMap);
+                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddToDoTask(
+                            editParams: {
+                              'id': null,
+                              'title': title,
+                              'desc': task,
+                              'recur': [
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false,
+                                false
+                              ],
+                              'reminder': null,
+                              'isPublic': false,
+                            },
+                            isEdit: false,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text("Yes")),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Cancel"),
+                ),
+              ]);
+            });
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                    constraints: BoxConstraints(minWidth: 25.w),
+                    height: 5.h,
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withAlpha(200),
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15))),
+                    child: Center(
+                        child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                      child: Text(title,
+                          style: Theme.of(context).textTheme.headline4),
+                    ))),
+                Text(
+                    'Completed at ${DateFormat("hh:mm a").format(timeCompleted)}')
+              ],
+            ),
+            ConstrainedBox(
+                constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
+                child: Container(
+                    decoration: BoxDecoration(
                       color: Theme.of(context).primaryColor.withAlpha(200),
                       borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(15),
-                          topRight: Radius.circular(15))),
-                  child: Center(
-                      child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                    child: Text(title,
-                        style: Theme.of(context).textTheme.headline4),
-                  ))),
-              Text(
-                  'Completed at ${DateFormat("hh:mm a").format(timeCompleted)}')
-            ],
-          ),
-          ConstrainedBox(
-              constraints: BoxConstraints(minHeight: 5.h, minWidth: 100.w),
-              child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withAlpha(200),
-                    borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(15),
-                        bottomRight: Radius.circular(15),
-                        topRight: Radius.circular(15)),
-                    boxShadow: CustomTheme.boxShadow,
-                  ),
-                  child: ListView.builder(
-                      physics: NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: taskList.length,
-                      itemBuilder: (context, index) {
-                        return SizedBox(
-                          height: 5.h,
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: taskList[index]['status']
-                                    ? CustomTheme.completeColor
-                                    : Theme.of(context).backgroundColor,
-                                borderRadius: index == 0
-                                    ? BorderRadius.only(
-                                        topLeft: Radius.circular(15),
-                                        topRight: Radius.circular(15),
-                                        bottomLeft: taskList.length == 1
-                                            ? Radius.circular(15)
-                                            : Radius.zero,
-                                        bottomRight: taskList.length == 1
-                                            ? Radius.circular(15)
-                                            : Radius.zero,
-                                      )
-                                    : index == taskList.length - 1
-                                        ? BorderRadius.only(
-                                            bottomLeft: Radius.circular(15),
-                                            bottomRight: Radius.circular(15),
-                                          )
-                                        : null),
-                            child: Row(
-                              children: [
-                                Checkbox(
-                                  shape: CircleBorder(),
-                                  activeColor:
-                                      Theme.of(context).backgroundColor,
-                                  checkColor: Colors.lightGreen[700],
-                                  value: taskList[index]['status'],
-                                  onChanged: (value) {},
-                                ),
-                                Text(taskList[index]['task'],
-                                    softWrap: false,
-                                    style: TextStyle(
-                                        decoration: taskList[index]['status']
-                                            ? TextDecoration.lineThrough
-                                            : null)),
-                              ],
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15),
+                          topRight: Radius.circular(15)),
+                      boxShadow: CustomTheme.boxShadow,
+                    ),
+                    child: ListView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: taskList.length,
+                        itemBuilder: (context, index) {
+                          return SizedBox(
+                            height: 5.h,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: taskList[index]['status']
+                                      ? CustomTheme.completeColor
+                                      : Theme.of(context).backgroundColor,
+                                  borderRadius: index == 0
+                                      ? BorderRadius.only(
+                                          topLeft: Radius.circular(15),
+                                          topRight: Radius.circular(15),
+                                          bottomLeft: taskList.length == 1
+                                              ? Radius.circular(15)
+                                              : Radius.zero,
+                                          bottomRight: taskList.length == 1
+                                              ? Radius.circular(15)
+                                              : Radius.zero,
+                                        )
+                                      : index == taskList.length - 1
+                                          ? BorderRadius.only(
+                                              bottomLeft: Radius.circular(15),
+                                              bottomRight: Radius.circular(15),
+                                            )
+                                          : null),
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    shape: CircleBorder(),
+                                    activeColor:
+                                        Theme.of(context).backgroundColor,
+                                    checkColor: Colors.lightGreen[700],
+                                    value: taskList[index]['status'],
+                                    onChanged: (value) {},
+                                  ),
+                                  Text(taskList[index]['task'],
+                                      softWrap: false,
+                                      style: TextStyle(
+                                          decoration: taskList[index]['status']
+                                              ? TextDecoration.lineThrough
+                                              : null)),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }))),
-        ],
+                          );
+                        }))),
+          ],
+        ),
       ),
     );
   }

@@ -311,24 +311,32 @@ class TrackerTile extends HookWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Next Milestone',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                Text(task['milestones'].isEmpty
-                                    ? '-'
-                                    : getNextMilestone(
-                                        task['milestones'],
-                                        DateTime.now()
-                                                .difference(
-                                                    (task['currStreakDate']
-                                                            as Timestamp)
-                                                        .toDate())
-                                                .inDays +
-                                            1)),
-                              ],
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Next Milestone',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Text(
+                                    task['milestones'].isEmpty
+                                        ? '-'
+                                        : getNextMilestone(
+                                            task['milestones'],
+                                            DateTime.now()
+                                                    .difference(
+                                                        (task['currStreakDate']
+                                                                as Timestamp)
+                                                            .toDate())
+                                                    .inDays +
+                                                1),
+                                    maxLines: isExpanded.value ? null : 2,
+                                    overflow: isExpanded.value
+                                        ? null
+                                        : TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
                             ElevatedButton(
                               onPressed: () {
@@ -697,12 +705,14 @@ class MilestonePopupTile extends StatelessWidget {
                   height: 5.h,
                   decoration: BoxDecoration(
                       color: minDay < milestone['day']
-                          ? Colors.amber
-                          : Colors.lightGreen,
+                          ? CustomTheme.milestoneHeader
+                          : CustomTheme.milestoneDoneHeader,
                       borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(15),
                           topRight: Radius.circular(15))),
-                  child: Center(child: Text('Day ${milestone['day']}'))),
+                  child: Center(
+                      child: Text('Day ${milestone['day']}',
+                          style: Theme.of(context).textTheme.headline4))),
             ],
           ),
           Container(
@@ -710,12 +720,12 @@ class MilestonePopupTile extends StatelessWidget {
               height: 7.h,
               decoration: BoxDecoration(
                 color: minDay < milestone['day']
-                    ? Colors.amber[200]
-                    : Colors.lightGreen[200],
+                    ? CustomTheme.milestoneBody
+                    : CustomTheme.milestoneDoneBody,
                 border: Border.all(
                     color: minDay < milestone['day']
-                        ? Colors.amber
-                        : Colors.lightGreen,
+                        ? CustomTheme.milestoneHeader
+                        : CustomTheme.milestoneDoneHeader,
                     width: 5),
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),

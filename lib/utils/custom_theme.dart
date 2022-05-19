@@ -16,7 +16,15 @@ class CustomTheme {
   static const Color activeIcon = Color.fromARGB(255, 71, 102, 148);
   static const Color inactiveIcon = Color.fromARGB(66, 121, 121, 121);
 
+  static const Color activeButton = Color.fromARGB(255, 100, 158, 100);
+
   static const Color greyedButton = Color.fromARGB(255, 199, 199, 199);
+
+  static const Color milestoneHeader = Color.fromARGB(255, 100, 127, 168);
+  static const Color milestoneBody = Color.fromARGB(255, 175, 183, 196);
+
+  static const Color milestoneDoneHeader = Color.fromARGB(255, 117, 165, 117);
+  static const Color milestoneDoneBody = Color.fromARGB(255, 162, 185, 162);
 
   static final boxShadow = kElevationToShadow[3];
 
