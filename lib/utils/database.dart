@@ -499,6 +499,23 @@ class Database {
     return userCol.doc(targetUserID).get();
   }
 
+  Future getTrackerCheckInCount(targetUID) {
+    return userCol
+        .doc(targetUID)
+        .collection('trackerCheckIn')
+        .get()
+        .then((value) => value.docs.length);
+  }
+
+  Future getCompletedTasksCount(targetUID) {
+    return userCol
+        .doc(targetUID)
+        .collection('todo')
+        .where('allComplete', isEqualTo: true)
+        .get()
+        .then((value) => value.docs.length);
+  }
+
   Future uploadProfilePic(image, {hasPic = false, currPicUrl}) async {
     print("Firing uploadProfilePic");
 

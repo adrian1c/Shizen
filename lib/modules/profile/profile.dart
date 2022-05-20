@@ -15,6 +15,7 @@ import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:shizen_app/widgets/todotile.dart';
 
 class ProfilePage extends HookWidget {
   const ProfilePage({Key? key, this.viewId}) : super(key: key);
@@ -29,6 +30,14 @@ class ProfilePage extends HookWidget {
         () => Database(uid).getCurrentUserData(),
         [Provider.of<TabProvider>(context).profileUser]);
     final snapshotUserProfileData = useFuture(futureUserProfileData);
+    final tasksCompletedData = useMemoized(
+        () => Database(uid).getCompletedTasksCount(uid),
+        [Provider.of<TabProvider>(context).profileUser]);
+    final snapshotTasksCompletedData = useFuture(tasksCompletedData);
+    final checkinData = useMemoized(
+        () => Database(uid).getTrackerCheckInCount(uid),
+        [Provider.of<TabProvider>(context).profileUser]);
+    final snapshotCheckinData = useFuture(checkinData);
     final tabController = useTabController(
       initialLength: 3,
       initialIndex: 0,
@@ -39,15 +48,17 @@ class ProfilePage extends HookWidget {
         Container(
             padding: const EdgeInsets.all(20),
             width: double.infinity,
-            height: 17.h,
+            height: 20.h,
             color: Color.fromARGB(255, 186, 195, 201),
-            child: snapshotUserProfileData.hasData
+            child: snapshotUserProfileData.hasData &&
+                    snapshotTasksCompletedData.hasData
                 ? UserProfileData(
                     data: snapshotUserProfileData.data,
                     uid: uid,
                     nameController: nameController,
                     viewId: viewId,
-                  )
+                    tasksCompleted: snapshotTasksCompletedData.data,
+                    checkinData: snapshotCheckinData.data)
                 : Shimmer.fromColors(
                     baseColor: Colors.grey[300]!,
                     highlightColor: Colors.grey[100]!,
@@ -178,242 +189,11 @@ class ProfileToDo extends HookWidget {
                             var title = taskDoc['title'];
                             var taskList = taskDoc['desc'];
 
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(10, 15, 10, 15),
-                              child: InkWell(
-                                onTap: ownProfile
-                                    ? () async {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => AddToDoTask(
-                                              editParams: {
-                                                'id': taskDoc.id,
-                                                'title': taskDoc['title'],
-                                                'desc': taskList,
-                                                'recur': List<bool>.from(
-                                                    taskDoc['recur']),
-                                                'reminder':
-                                                    ToDoTask.convertTimestamp(
-                                                        taskDoc['reminder']),
-                                                'isPublic': taskDoc['isPublic'],
-                                              },
-                                              isEdit: true,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    : () async {
-                                        showDialog(
-                                            context: context,
-                                            builder: (context) {
-                                              return AlertDialog(
-                                                  title: Text(
-                                                      'Create Similar Task?'),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () async {
-                                                          Navigator.pop(
-                                                              context);
-                                                          List task = [];
-
-                                                          for (var i = 0;
-                                                              i <
-                                                                  taskList
-                                                                      .length;
-                                                              i++) {
-                                                            var tempMap = {
-                                                              'task':
-                                                                  taskList[i]
-                                                                      ['task'],
-                                                              'status': false
-                                                            };
-                                                            task.add(tempMap);
-                                                          }
-                                                          Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      AddToDoTask(
-                                                                editParams: {
-                                                                  'id': null,
-                                                                  'title':
-                                                                      title,
-                                                                  'desc': task,
-                                                                  'recur': [
-                                                                    false,
-                                                                    false,
-                                                                    false,
-                                                                    false,
-                                                                    false,
-                                                                    false,
-                                                                    false
-                                                                  ],
-                                                                  'reminder':
-                                                                      null,
-                                                                  'isPublic':
-                                                                      false,
-                                                                },
-                                                                isEdit: false,
-                                                              ),
-                                                            ),
-                                                          );
-                                                        },
-                                                        child: Text("Yes")),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: Text("Cancel"),
-                                                    ),
-                                                  ]);
-                                            });
-                                      },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                            constraints:
-                                                BoxConstraints(minWidth: 25.w),
-                                            height: 5.h,
-                                            decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .primaryColor
-                                                    .withAlpha(200),
-                                                borderRadius: BorderRadius.only(
-                                                    topLeft:
-                                                        Radius.circular(15),
-                                                    topRight:
-                                                        Radius.circular(15))),
-                                            child: Center(
-                                                child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 15.0),
-                                              child: Text(title,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headline4),
-                                            ))),
-                                      ],
-                                    ),
-                                    ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                            minHeight: 5.h, minWidth: 100.w),
-                                        child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Theme.of(context)
-                                                  .primaryColor
-                                                  .withAlpha(200),
-                                              borderRadius: BorderRadius.only(
-                                                  bottomLeft:
-                                                      Radius.circular(15),
-                                                  bottomRight:
-                                                      Radius.circular(15),
-                                                  topRight:
-                                                      Radius.circular(15)),
-                                              boxShadow: CustomTheme.boxShadow,
-                                            ),
-                                            child: ListView.builder(
-                                                physics:
-                                                    NeverScrollableScrollPhysics(),
-                                                shrinkWrap: true,
-                                                itemCount: taskList.length,
-                                                itemBuilder: (context, index) {
-                                                  return SizedBox(
-                                                    height: 5.h,
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                          color: taskList[index]
-                                                                  ['status']
-                                                              ? CustomTheme
-                                                                  .completeColor
-                                                              : Theme.of(
-                                                                      context)
-                                                                  .backgroundColor,
-                                                          borderRadius: index ==
-                                                                  0
-                                                              ? BorderRadius
-                                                                  .only(
-                                                                  topLeft: Radius
-                                                                      .circular(
-                                                                          15),
-                                                                  topRight: Radius
-                                                                      .circular(
-                                                                          15),
-                                                                  bottomLeft: taskList
-                                                                              .length ==
-                                                                          1
-                                                                      ? Radius
-                                                                          .circular(
-                                                                              15)
-                                                                      : Radius
-                                                                          .zero,
-                                                                  bottomRight: taskList
-                                                                              .length ==
-                                                                          1
-                                                                      ? Radius
-                                                                          .circular(
-                                                                              15)
-                                                                      : Radius
-                                                                          .zero,
-                                                                )
-                                                              : index ==
-                                                                      taskList.length -
-                                                                          1
-                                                                  ? BorderRadius
-                                                                      .only(
-                                                                      bottomLeft:
-                                                                          Radius.circular(
-                                                                              15),
-                                                                      bottomRight:
-                                                                          Radius.circular(
-                                                                              15),
-                                                                    )
-                                                                  : null),
-                                                      child: Row(
-                                                        children: [
-                                                          Checkbox(
-                                                            shape:
-                                                                CircleBorder(),
-                                                            activeColor: Theme
-                                                                    .of(context)
-                                                                .backgroundColor,
-                                                            checkColor: Colors
-                                                                    .lightGreen[
-                                                                700],
-                                                            value:
-                                                                taskList[index]
-                                                                    ['status'],
-                                                            onChanged:
-                                                                (value) async {},
-                                                          ),
-                                                          Text(
-                                                              taskList[index]
-                                                                  ['task'],
-                                                              softWrap: false,
-                                                              style: TextStyle(
-                                                                  decoration: taskList[
-                                                                              index]
-                                                                          [
-                                                                          'status']
-                                                                      ? TextDecoration
-                                                                          .lineThrough
-                                                                      : null)),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  );
-                                                }))),
-                                  ],
-                                ),
-                              ),
-                            );
+                            return ToDoTileShare(
+                                ownProfile: ownProfile,
+                                taskDoc: taskDoc,
+                                taskList: taskList,
+                                title: title);
                           }))
                       : Center(
                           child: Text('No To Do tasks to show',
@@ -458,46 +238,78 @@ class ProfileTracker extends HookWidget {
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ProfileSelectTracker(),
-                              ));
-                        },
-                        icon: Icon(Icons.edit),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProfileSelectTracker(),
+                                ));
+                          },
+                          child: Row(
+                            children: [Icon(Icons.edit), Text('Edit')],
+                          ),
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(
+                                CustomTheme.activeButton),
+                            shape: MaterialStateProperty.all(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(40),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                       task != null
-                          ? IconButton(
-                              onPressed: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                          content: Text(
-                                              'Do you want to stop displaying this tracker in your profile?'),
-                                          actions: [
-                                            TextButton(
-                                                onPressed: () async {
-                                                  await Database(uid)
-                                                      .setHighlightTracker(
-                                                          null);
-                                                  Provider.of<TabProvider>(
-                                                          context,
-                                                          listen: false)
-                                                      .rebuildPage(
-                                                          'profileTracker');
-                                                  Navigator.pop(context);
-                                                },
-                                                child: Text('Remove')),
-                                            TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(context),
-                                                child: Text('Cancel')),
-                                          ],
-                                        ));
-                              },
-                              icon: Icon(Icons.remove_circle),
+                          ? Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            content: Text(
+                                                'Do you want to stop displaying this tracker in your profile?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () async {
+                                                    await Database(uid)
+                                                        .setHighlightTracker(
+                                                            null);
+                                                    Provider.of<TabProvider>(
+                                                            context,
+                                                            listen: false)
+                                                        .rebuildPage(
+                                                            'profileTracker');
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Text('Remove')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: Text('Cancel')),
+                                            ],
+                                          ));
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.remove_circle),
+                                    Text('Remove')
+                                  ],
+                                ),
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all(
+                                      CustomTheme.redButton),
+                                  shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(40),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             )
                           : Container()
                     ],
@@ -580,9 +392,8 @@ class ProfileSelectTracker extends HookWidget {
                       },
                       child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
                             color: selectedIndex.value == index
-                                ? Colors.lightBlueAccent[100]
+                                ? CustomTheme.activeIcon
                                 : Colors.transparent,
                           ),
                           padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
@@ -881,12 +692,16 @@ class UserProfileData extends StatelessWidget {
     required this.uid,
     required this.nameController,
     this.viewId,
+    required this.tasksCompleted,
+    required this.checkinData,
   }) : super(key: key);
 
   final data;
   final String uid;
   final nameController;
   final String? viewId;
+  final tasksCompleted;
+  final checkinData;
 
   @override
   Widget build(BuildContext context) {
@@ -997,11 +812,30 @@ class UserProfileData extends StatelessWidget {
                   child:
                       Text(data!['name'], style: TextStyle(fontSize: 25.sp))),
               Text(data!['email'], style: TextStyle(fontSize: 15.sp)),
-              Text(
-                  data.data().containsKey('bio')
-                      ? "Nice"
-                      : "I do not have a bio...",
-                  overflow: TextOverflow.fade),
+              Row(
+                children: [
+                  Text(
+                    'Tasks Completed: \t',
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    '$tasksCompleted',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  )
+                ],
+              ),
+              Row(
+                children: [
+                  Text(
+                    'Check-ins: \t',
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    '$checkinData',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  )
+                ],
+              )
             ],
           ),
         ),

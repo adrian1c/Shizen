@@ -78,11 +78,11 @@ class AddToDoTask extends HookWidget {
                   )
                 ],
               ),
-              RecurButton(
-                taskList: taskList,
-                recurValue: recurValue,
-                isValid: isValid,
-              ),
+              // RecurButton(
+              //   taskList: taskList,
+              //   recurValue: recurValue,
+              //   isValid: isValid,
+              // ),
               ReminderButton(taskList: taskList, reminderValue: reminderValue),
               Padding(
                 padding: const EdgeInsets.fromLTRB(50, 20, 50, 20),
@@ -231,7 +231,7 @@ class TodoTaskList extends HookWidget {
                   child: taskList.value.length == 0
                       ? Container(
                           decoration: BoxDecoration(
-                              color: Colors.grey[400],
+                              color: CustomTheme.greyedOutField,
                               borderRadius: BorderRadius.circular(15)),
                           height: 5.h,
                           padding: EdgeInsets.only(top: 10, bottom: 10),
@@ -519,7 +519,7 @@ class RecurButton extends HookWidget {
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: taskList.value.length == 0
-                        ? Colors.grey[400]
+                        ? CustomTheme.greyedOutField
                         : Theme.of(context).primaryColor.withAlpha(200)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -538,14 +538,17 @@ class RecurButton extends HookWidget {
                         return Align(
                             alignment: Alignment.center,
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 3),
-                              child: Text(recurDay[index][0],
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 3),
+                                child: Text(
+                                  recurDay[index][0],
                                   style: TextStyle(
                                       color: recurValue.value[index]
                                           ? Colors.lightGreenAccent[400]
-                                          : CustomTheme.incompleteColor)),
-                            ));
+                                          : Theme.of(context)
+                                              .backgroundColor
+                                              .withAlpha(150)),
+                                )));
                       },
                     )
                   ],
@@ -634,7 +637,7 @@ class ReminderButton extends HookWidget {
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: taskList.value.length == 0
-                        ? Colors.grey[400]
+                        ? CustomTheme.greyedOutField
                         : Theme.of(context).primaryColor.withAlpha(200)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -648,7 +651,9 @@ class ReminderButton extends HookWidget {
                             : '${DateFormat('dd MMM yy hh:mm a').format(reminderValue.value!)}',
                         style: TextStyle(
                             color: reminderValue.value == null
-                                ? CustomTheme.incompleteColor
+                                ? Theme.of(context)
+                                    .backgroundColor
+                                    .withAlpha(150)
                                 : Colors.lightGreenAccent[400]))
                   ],
                 ),

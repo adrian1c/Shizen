@@ -157,7 +157,15 @@ class FABubble extends StatelessWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-              title: Text('Create a Task'),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Create a Task'),
+                  Divider(
+                    thickness: 1,
+                  ),
+                ],
+              ),
               contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 30),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
