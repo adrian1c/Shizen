@@ -17,6 +17,7 @@ class Dropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MenuButton<String>(
+      menuButtonBackgroundColor: Colors.transparent,
       child: VisibilityItem(value: value),
       items: items,
       itemBuilder: (String value) => Container(
@@ -24,9 +25,6 @@ class Dropdown extends StatelessWidget {
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16),
         child: Text(value),
-        decoration: BoxDecoration(
-          color: Theme.of(context).backgroundColor,
-        ),
       ),
       toggledChild: Container(
         child: VisibilityItem(value: value),

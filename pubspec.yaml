@@ -61,6 +61,8 @@ dependencies:
   sticky_grouped_list: ^2.1.0
   scrollable_positioned_list: ^0.2.3
   syncfusion_flutter_datepicker: ^20.1.55
+  shared_preferences: ^2.0.15
+  page_transition: ^2.0.5
 
 dev_dependencies:
   flutter_test:

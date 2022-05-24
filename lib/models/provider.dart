@@ -3,9 +3,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shizen_app/main.dart';
 import 'package:shizen_app/mainscaffoldstack.dart';
 import 'package:shizen_app/models/user.dart';
+import 'package:shizen_app/widgets/onboarding.dart';
 
 class UserProvider extends ChangeNotifier {
   UserModel user = UserModel('', '', '', '', '');
@@ -59,13 +61,25 @@ class UserProvider extends ChangeNotifier {
             .doc(user.uid)
             .set({'pushToken': token}, SetOptions(merge: true));
       });
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => MainScaffoldStack(),
-        ),
-        (route) => false,
-      );
+      final pref = await SharedPreferences.getInstance();
+      var onboarding = pref.getBool('onboarding');
+      if (onboarding != true) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => OnboardingPage(),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => MainScaffoldStack(),
+          ),
+          (route) => false,
+        );
+      }
     }).catchError((err) {
       showDialog(
           context: context,
@@ -185,10 +199,20 @@ class TabProvider extends ChangeNotifier {
 }
 
 class AppTheme extends ChangeNotifier {
-  bool darkTheme = false;
+  AppTheme({required this.darkTheme});
 
-  void toggleTheme() {
-    darkTheme = darkTheme ? false : true;
+  final _prefs = SharedPreferences.getInstance();
+  bool darkTheme;
+
+  Future toggleTheme() async {
+    final prefs = await _prefs;
+    if (darkTheme) {
+      darkTheme = false;
+      await prefs.remove('darkTheme');
+    } else {
+      darkTheme = true;
+      await prefs.setInt('darkTheme', 1);
+    }
     notifyListeners();
   }
 }

@@ -10,6 +10,7 @@ import 'package:shizen_app/utils/notifications.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
+import 'package:shizen_app/widgets/onboarding.dart';
 import './modules/tasks/tasks.dart';
 import './modules/friends/friends.dart';
 import './modules/community/community.dart';
@@ -54,8 +55,8 @@ class MainScaffoldStack extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final ValueNotifier<bool> isSwitching = useState(true);
+
     return Scaffold(
-        // extendBodyBehindAppBar: true,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -271,13 +272,15 @@ class DemoToDoTask extends StatelessWidget {
                                         : null),
                             child: Row(
                               children: [
-                                Checkbox(
-                                  shape: CircleBorder(),
-                                  activeColor:
-                                      Theme.of(context).backgroundColor,
-                                  checkColor: Colors.lightGreen[700],
-                                  value: index == 2 ? true : false,
-                                  onChanged: (value) async {},
+                                AbsorbPointer(
+                                  child: Checkbox(
+                                    shape: CircleBorder(),
+                                    activeColor:
+                                        Theme.of(context).backgroundColor,
+                                    checkColor: Colors.lightGreen[700],
+                                    value: index == 2 ? true : false,
+                                    onChanged: (value) async {},
+                                  ),
                                 ),
                                 Text('To Do Task $index',
                                     softWrap: false,
@@ -529,8 +532,9 @@ class SettingsPage extends StatelessWidget {
           children: [
             Text('Dark Theme'),
             Switch(
-              onChanged: (value) {
-                Provider.of<AppTheme>(context, listen: false).toggleTheme();
+              onChanged: (value) async {
+                await Provider.of<AppTheme>(context, listen: false)
+                    .toggleTheme();
               },
               value: Provider.of<AppTheme>(context, listen: false).darkTheme,
             )

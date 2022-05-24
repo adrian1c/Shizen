@@ -108,6 +108,13 @@ class CommunityPostList extends HookWidget {
             .getCommunityPost(visibilityValue.value, hashtag.value),
         [visibilityValue.value, hashtag.value]);
     final snapshot = useFuture(future);
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Padding(
+        padding: const EdgeInsets.all(30),
+        child: SpinKitWanderingCubes(
+            color: Theme.of(context).primaryColor, size: 75),
+      );
+    }
     if (snapshot.hasData) {
       return Container(
           child: snapshot.data!.length > 0
@@ -165,8 +172,6 @@ class PostListTile extends HookWidget {
         padding: const EdgeInsets.only(top: 15, bottom: 15),
         decoration: BoxDecoration(
             color: Theme.of(context).backgroundColor,
-            // border: Border.all(
-            //     color: Theme.of(context).primaryColor.withAlpha(100), width: 2),
             borderRadius: BorderRadius.circular(20),
             boxShadow: CustomTheme.boxShadow),
         child: Column(
@@ -431,18 +436,20 @@ class PostListTile extends HookWidget {
                                                           : null),
                                               child: Row(
                                                 children: [
-                                                  Checkbox(
-                                                    shape: CircleBorder(),
-                                                    activeColor:
-                                                        Theme.of(context)
-                                                            .backgroundColor,
-                                                    checkColor:
-                                                        Colors.lightGreen[700],
-                                                    value:
-                                                        postData['attachment']
-                                                                ['taskList']
-                                                            [index]['status'],
-                                                    onChanged: (value) {},
+                                                  AbsorbPointer(
+                                                    child: Checkbox(
+                                                      shape: CircleBorder(),
+                                                      activeColor:
+                                                          Theme.of(context)
+                                                              .backgroundColor,
+                                                      checkColor: Colors
+                                                          .lightGreen[700],
+                                                      value:
+                                                          postData['attachment']
+                                                                  ['taskList']
+                                                              [index]['status'],
+                                                      onChanged: (value) {},
+                                                    ),
                                                   ),
                                                   Text(
                                                       postData['attachment']
@@ -465,6 +472,49 @@ class PostListTile extends HookWidget {
                                         }))),
                           ],
                         ),
+                      ),
+                    ),
+                  ),
+                if (postData['attachmentType'] == 'tracker')
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: Theme.of(context).backgroundColor,
+                          boxShadow: CustomTheme.boxShadow),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(postData['attachment']['title'],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headline4
+                                      ?.copyWith(
+                                          color: Theme.of(context)
+                                              .primaryColor
+                                              .withAlpha(200))),
+                              Row(
+                                children: [
+                                  Text(
+                                      '${postData['attachment']['currStreak']}',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Icon(Icons.park_rounded,
+                                      color: Color.fromARGB(255, 147, 182, 117))
+                                ],
+                              )
+                            ],
+                          ),
+                          Padding(padding: EdgeInsets.symmetric(vertical: 5)),
+                          Divider(),
+                          Text(postData['attachment']['note'])
+                        ],
                       ),
                     ),
                   ),
@@ -642,7 +692,9 @@ class HashtagFilter extends StatelessWidget {
           LengthLimitingTextInputFormatter(20),
         ],
         decoration: StyledInputField(
-                hintText: '# Search...', controller: hashtagController)
+                hintText: '# Search...',
+                controller: hashtagController,
+                inputValue: hashtagValue)
             .inputDecoration(),
         onFieldSubmitted: (value) {
           hashtagValue.value = value;

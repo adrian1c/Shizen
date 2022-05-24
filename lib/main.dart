@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/loaderOverlay.dart';
+import 'package:shizen_app/widgets/onboarding.dart';
 
 import './modules/signup/signup.dart';
 import './modules/login/login.dart';
@@ -13,9 +14,15 @@ import 'package:loader_overlay/loader_overlay.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shizen_app/utils/notifications.dart';
 
-void main() {
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  NotificationService().initNotifications();
+  await Firebase.initializeApp();
+  await NotificationService().initNotifications();
+  var sp = await SharedPreferences.getInstance();
+  var theme = sp.getInt('darkTheme');
+  print(theme);
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider<UserProvider>(
@@ -23,20 +30,25 @@ void main() {
         create: (context) => UserProvider(),
       ),
       ChangeNotifierProvider(create: (context) => TabProvider()),
-      ChangeNotifierProvider(create: (context) => AppTheme())
+      ChangeNotifierProvider(
+          create: (context) =>
+              AppTheme(darkTheme: theme != null ? true : false))
     ],
     child: MyApp(),
   ));
 }
 
 class MyApp extends StatelessWidget {
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+  Future getOnboarding() async {
+    final pref = await SharedPreferences.getInstance();
+    var result = pref.getBool('onboarding');
+    return result;
+  }
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: _initialization,
+      future: Firebase.initializeApp(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           //TODO: Make error display
@@ -50,29 +62,34 @@ class MyApp extends StatelessWidget {
             child: Sizer(
               builder: (context, orientation, deviceType) {
                 return GlobalLoaderOverlay(
-                  useDefaultLoading: false,
-                  overlayWidget: Loader(),
-                  child: MaterialApp(
-                    scrollBehavior: MyCustomScrollBehavior(),
-                    debugShowCheckedModeBanner: false,
-                    title: 'Shizen',
-                    theme: Provider.of<AppTheme>(context).darkTheme
-                        ? CustomTheme.darkTheme
-                        : CustomTheme.lightTheme,
-                    home: Provider.of<UserProvider>(context).checkLoggedIn()
-                        ? FutureBuilder(
-                            future: _initialization,
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.done) {
-                                return MainScaffoldStack();
-                              }
+                    useDefaultLoading: false,
+                    overlayWidget: Loader(),
+                    child: MaterialApp(
+                      scrollBehavior: MyCustomScrollBehavior(),
+                      debugShowCheckedModeBanner: false,
+                      title: 'Shizen',
+                      theme: Provider.of<AppTheme>(context).darkTheme
+                          ? CustomTheme.darkTheme
+                          : CustomTheme.lightTheme,
+                      home: Provider.of<UserProvider>(context).checkLoggedIn()
+                          ? FutureBuilder(
+                              future: getOnboarding(),
+                              builder: (context, data) {
+                                if (data.hasData && data.data == true) {
+                                  return MainScaffoldStack();
+                                }
 
-                              return Center(child: Container());
-                            })
-                        : WelcomePage(),
-                  ),
-                );
+                                if (data.hasData && data.data == false) {
+                                  return OnboardingPage();
+                                }
+
+                                return SpinKitWanderingCubes(
+                                  color: Theme.of(context).primaryColor,
+                                  size: 75.0,
+                                );
+                              })
+                          : WelcomePage(),
+                    ));
               },
             ),
           );
@@ -104,69 +121,70 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 120, 8, 0),
-          child: Column(
-            // Invoke "debug painting" (press "p" in the console, choose the
-            // "Toggle Debug Paint" action from the Flutter Inspector in Android
-            // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-            // to see the wireframe for each widget.
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                Words.appTitle,
-                style: Theme.of(context).textTheme.headline1,
-              ),
-              Text(
-                Words.appDesc,
-                style: Theme.of(context).textTheme.headline2,
-              ),
-              Container(
-                padding: const EdgeInsets.fromLTRB(0, 50, 0, 50),
-                width: (MediaQuery.of(context).size.width * 0.8),
-                child: Images.bonsai,
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Color(0xff4B7586),
-                  shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                  minimumSize:
-                      Size((MediaQuery.of(context).size.width * 0.65), 45),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 120, 8, 0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  Words.appTitle,
+                  style: CustomTheme.titleTextStyle,
                 ),
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EmailLogIn(),
-                      ));
-                },
-                child: Text(Words.loginButton,
-                    style: Theme.of(context).textTheme.bodyText1),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 30),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Color(0xff58865C),
-                  shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                  minimumSize:
-                      Size((MediaQuery.of(context).size.width * 0.65), 45),
+                Text(
+                  Words.appDesc,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headline2!
+                      .copyWith(color: Colors.black),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EmailSignUp(),
-                      ));
-                },
-                child: Text(Words.signupButton,
-                    style: Theme.of(context).textTheme.bodyText1),
-              ),
-            ],
+                Container(
+                  padding: const EdgeInsets.fromLTRB(0, 50, 0, 50),
+                  width: (MediaQuery.of(context).size.width * 0.8),
+                  child: Images.bonsai,
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Color(0xff4B7586),
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    minimumSize:
+                        Size((MediaQuery.of(context).size.width * 0.65), 45),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        PageTransition(
+                            type: PageTransitionType.rightToLeft,
+                            child: EmailLogIn()));
+                  },
+                  child: Text(Words.loginButton,
+                      style: Theme.of(context).textTheme.bodyText1),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 30),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Color(0xff58865C),
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    minimumSize:
+                        Size((MediaQuery.of(context).size.width * 0.65), 45),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        PageTransition(
+                            type: PageTransitionType.rightToLeft,
+                            child: EmailSignUp()));
+                  },
+                  child: Text(Words.signupButton,
+                      style: Theme.of(context).textTheme.bodyText1),
+                ),
+              ],
+            ),
           ),
         ),
       ),

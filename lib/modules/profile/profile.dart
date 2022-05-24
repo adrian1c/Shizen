@@ -47,8 +47,6 @@ class ProfilePage extends HookWidget {
       children: [
         Container(
             padding: const EdgeInsets.all(20),
-            width: double.infinity,
-            height: 20.h,
             color: Color.fromARGB(255, 186, 195, 201),
             child: snapshotUserProfileData.hasData &&
                     snapshotTasksCompletedData.hasData
@@ -65,37 +63,41 @@ class ProfilePage extends HookWidget {
                     child: Row(
                       children: [
                         Container(
-                          width: 25.w,
-                          height: 25.w,
+                          width: 10.h,
+                          height: 10.h,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(width: 1),
                             color: Colors.white,
                           ),
                         ),
-                        Padding(
-                            padding: const EdgeInsets.only(left: 20),
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 50.w,
-                                    height: 14.sp,
-                                    color: Colors.white,
-                                  ),
-                                  Spacer(),
-                                  Container(
-                                    width: 50.w,
-                                    height: 14.sp,
-                                    color: Colors.white,
-                                  ),
-                                  Spacer(),
-                                  Container(
-                                    width: 50.w,
-                                    height: 14.sp,
-                                    color: Colors.white,
-                                  ),
-                                ])),
+                        Flexible(
+                          child: Padding(
+                              padding: const EdgeInsets.only(left: 20),
+                              child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: 14.sp,
+                                      color: Colors.white,
+                                    ),
+                                    Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 6)),
+                                    Container(
+                                      height: 14.sp,
+                                      color: Colors.white,
+                                    ),
+                                    Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 6)),
+                                    Container(
+                                      height: 14.sp,
+                                      color: Colors.white,
+                                    ),
+                                  ])),
+                        ),
                       ],
                     ),
                   )),
@@ -708,135 +710,119 @@ class UserProfileData extends StatelessWidget {
     final _form = GlobalKey<FormState>();
     return Row(
       children: [
-        data.data()['image'] != ''
-            ? InkWell(
-                child: Container(
-                  width: 10.h,
-                  height: 10.h,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 5.0,
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    foregroundImage: CachedNetworkImageProvider(data!['image']),
-                    backgroundColor: Colors.grey,
-                  ),
-                ),
-                onTap: viewId != null
-                    ? () {}
-                    : () async =>
-                        await changeProfilePic(context, true, data['image']),
-              )
-            : InkWell(
-                child: Container(
-                  width: 10.h,
-                  height: 10.h,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 5.0,
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    foregroundImage: Images.defaultPic.image,
-                    backgroundColor: Colors.grey,
-                  ),
-                ),
-                onTap: viewId != null
-                    ? () {}
-                    : () async {
-                        await changeProfilePic(context, false);
-                      },
+        InkWell(
+          child: Container(
+            width: 10.h,
+            height: 10.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white,
+                width: 5.0,
               ),
-        Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              InkWell(
-                  onTap: viewId != null
-                      ? () {}
-                      : () {
-                          nameController.text = data!['name'];
-                          StyledPopup(
-                                  context: context,
-                                  title: 'Change Name?',
-                                  children: [
-                                    Form(
-                                      key: _form,
-                                      child: TextFormField(
-                                        controller: nameController,
-                                        decoration: InputDecoration(
-                                          labelText: 'Enter the Value',
+            ),
+            child: CircleAvatar(
+              foregroundImage: data.data()['image'] != ''
+                  ? CachedNetworkImageProvider(data!['image'])
+                  : Images.defaultPic.image,
+              backgroundColor: Colors.grey,
+            ),
+          ),
+          onTap: viewId != null
+              ? () {}
+              : data.data()['image'] != ''
+                  ? () async =>
+                      await changeProfilePic(context, true, data['image'])
+                  : () async => await changeProfilePic(context, false),
+        ),
+        Flexible(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                    onTap: viewId != null
+                        ? () {}
+                        : () {
+                            nameController.text = data!['name'];
+                            StyledPopup(
+                                    context: context,
+                                    title: 'Change Name?',
+                                    children: [
+                                      Form(
+                                        key: _form,
+                                        child: TextFormField(
+                                          controller: nameController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Enter the Value',
+                                          ),
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter.deny(
+                                                RegExp('[ ]')),
+                                          ],
+                                          validator: (value) {
+                                            if (value!.isEmpty) {
+                                              return 'Name cannot be empty';
+                                            }
+                                            return null;
+                                          },
                                         ),
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.deny(
-                                              RegExp('[ ]')),
-                                        ],
-                                        validator: (value) {
-                                          if (value!.isEmpty) {
-                                            return 'Name cannot be empty';
-                                          }
-                                          return null;
-                                        },
                                       ),
-                                    ),
-                                  ],
-                                  textButton: TextButton(
-                                      onPressed: () async {
-                                        if (_form.currentState!.validate()) {
-                                          var newName = nameController.text;
-                                          await LoaderWithToast(
-                                                  context: context,
-                                                  api: Database(uid)
-                                                      .editUserName(newName),
-                                                  msg: 'New name who dis',
-                                                  isSuccess: true)
-                                              .show();
-                                          Provider.of<TabProvider>(context,
-                                                  listen: false)
-                                              .rebuildPage('profileUser');
-                                          Provider.of<TabProvider>(context,
-                                                  listen: false)
-                                              .rebuildPage('profilePosts');
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                      child: Text('Save')))
-                              .showPopup();
-                        },
-                  child:
-                      Text(data!['name'], style: TextStyle(fontSize: 25.sp))),
-              Text(data!['email'], style: TextStyle(fontSize: 15.sp)),
-              Row(
-                children: [
-                  Text(
-                    'Tasks Completed: \t',
-                    textAlign: TextAlign.center,
-                  ),
-                  Text(
-                    '$tasksCompleted',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    'Check-ins: \t',
-                    textAlign: TextAlign.center,
-                  ),
-                  Text(
-                    '$checkinData',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  )
-                ],
-              )
-            ],
+                                    ],
+                                    textButton: TextButton(
+                                        onPressed: () async {
+                                          if (_form.currentState!.validate()) {
+                                            var newName = nameController.text;
+                                            await LoaderWithToast(
+                                                    context: context,
+                                                    api: Database(uid)
+                                                        .editUserName(newName),
+                                                    msg: 'New name who dis',
+                                                    isSuccess: true)
+                                                .show();
+                                            Provider.of<TabProvider>(context,
+                                                    listen: false)
+                                                .rebuildPage('profileUser');
+                                            Provider.of<TabProvider>(context,
+                                                    listen: false)
+                                                .rebuildPage('profilePosts');
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                        child: Text('Save')))
+                                .showPopup();
+                          },
+                    child:
+                        Text(data!['name'], style: TextStyle(fontSize: 20.sp))),
+                Text(data!['email'], style: TextStyle(fontSize: 13.sp)),
+                Row(
+                  children: [
+                    Text(
+                      'Tasks Completed: \t',
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      '$tasksCompleted',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    )
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Check-ins: \t',
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      '$checkinData',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    )
+                  ],
+                )
+              ],
+            ),
           ),
         ),
       ],

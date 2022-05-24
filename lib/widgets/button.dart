@@ -41,11 +41,11 @@ class CreateButton extends StatelessWidget {
           return ElevatedButton(
             style: ElevatedButton.styleFrom(
               primary: data != false
-                  ? Theme.of(context).primaryColor
-                  : Colors.grey[400],
+                  ? CustomTheme.activeButton
+                  : CustomTheme.greyedOutField,
               shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10))),
-              minimumSize: Size((MediaQuery.of(context).size.width * 0.25), 45),
+              minimumSize: Size((75.w), 45),
             ),
             onPressed: data != false ? onPressed : () {},
             child: Text(buttonLabel ?? "Create",

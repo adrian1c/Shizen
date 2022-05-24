@@ -202,6 +202,11 @@ class Database {
     await batch.commit();
   }
 
+  Stream getFriendsList() {
+    print("Firing friendsPageData");
+    return userDoc.collection('friends').snapshots();
+  }
+
   Future<Map<dynamic, dynamic>> friendsPageData() async {
     print("Firing friendsPageData");
 
@@ -235,7 +240,6 @@ class Database {
           break;
       }
     });
-
     return results;
   }
 
@@ -348,7 +352,6 @@ class Database {
             QuerySnapshot<Map<String, dynamic>> query = await postCol
                 .where('uid', isNotEqualTo: uid)
                 .where('hashtags', arrayContains: hashtag)
-                .orderBy('uid')
                 .orderBy('dateCreated', descending: true)
                 .limit(5)
                 .get();
@@ -361,7 +364,6 @@ class Database {
             QuerySnapshot<Map<String, dynamic>> query = await postCol
                 .where('uid', isNotEqualTo: uid)
                 .where('hashtags', arrayContains: hashtag)
-                .orderBy('uid')
                 .orderBy('dateCreated', descending: true)
                 .startAfter(lastDoc)
                 .limit(5)
@@ -373,15 +375,14 @@ class Database {
             });
           }
         } else {
-          QuerySnapshot<Map<String, dynamic>> query = await postCol
-              .where('uid', isNotEqualTo: uid)
-              .orderBy('uid')
-              .orderBy('dateCreated', descending: true)
-              .get();
+          QuerySnapshot<Map<String, dynamic>> query =
+              await postCol.orderBy('dateCreated', descending: true).get();
           query.docs.forEach((doc) {
             var data = doc.data();
             data['postId'] = doc.id;
-            results.add(data);
+            if (data['uid'] != uid) {
+              results.add(data);
+            }
           });
         }
         return results;
@@ -429,7 +430,6 @@ class Database {
       case 'Anonymous':
         if (hashtag != '') {
           QuerySnapshot<Map<String, dynamic>> query = await postCol
-              .where('uid', isNotEqualTo: uid)
               .where('visibility', isEqualTo: filter)
               .where('hashtags', arrayContains: hashtag)
               .get();
@@ -449,8 +449,10 @@ class Database {
             results.add(data);
           });
         }
+        await Future.delayed(Duration(seconds: 1));
         return results;
     }
+    await Future.delayed(Duration(seconds: 1));
     return results;
   }
 
@@ -481,6 +483,10 @@ class Database {
     print("Firing getAllTasks");
 
     return userDoc.collection('todo').orderBy('dateCreated').get();
+  }
+
+  Future getAllTrackers() async {
+    return userDoc.collection('trackers').orderBy('dateCreated').get();
   }
 
   //-----------------------------------------------------
@@ -736,9 +742,8 @@ class Database {
         .catchError((e) => print(e));
   }
 
-  Future checkInTracker(tid, day, note, attachment, ciid) async {
+  Future checkInTracker(tid, name, day, note, attachment, ciid) async {
     print("Firing checkInTracker");
-    print(tid);
 
     var newCheckInDoc;
     if (ciid != null) {
@@ -763,7 +768,7 @@ class Database {
           'day': day,
           'note': note,
           'attachment': attachment,
-          'trackerId': tid
+          'trackerName': name
         }));
     print(newCheckInDoc.id);
   }
@@ -919,7 +924,19 @@ class Database {
         .doc(chatId)
         .collection('messages')
         .orderBy('dateCreated', descending: true)
+        .limit(30)
         .snapshots();
+  }
+
+  Future loadMoreMsgs(chatId, lastMsgDoc) {
+    return firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('dateCreated', descending: true)
+        .startAfterDocument(lastMsgDoc)
+        .limit(15)
+        .get();
   }
 
   Future newChat(chatId, peerId) async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shizen_app/utils/allUtils.dart';
@@ -126,7 +128,11 @@ class InstantMessagingPage extends HookWidget {
                           }),
                     ],
                   )
-                : Text('No Chats')
+                : Center(
+                    child: Text(
+                    'No Chats.\n\nYou can start a new chat in the top-right corner!',
+                    textAlign: TextAlign.center,
+                  ))
             : Center(
                 child: SpinKitWanderingCubes(
                     color: Theme.of(context).primaryColor, size: 75),
@@ -151,49 +157,58 @@ class FriendMessageListPage extends HookWidget {
             centerTitle: true,
           ),
           body: SingleChildScrollView(
-              child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: friendsList.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: ListTile(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ChatPage(
-                                      peerId: friendsList[index].id,
-                                      peerName: friendsList[index]['name'])));
-                        },
-                        leading: Padding(
-                          padding: const EdgeInsets.only(right: 10.0),
-                          child: CircleAvatar(
-                            foregroundImage: CachedNetworkImageProvider(
-                                friendsList[index]['image']),
-                            backgroundColor: Colors.grey,
-                            radius: 3.h,
+              child: friendsList.length > 0
+                  ? ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: friendsList.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: ListTile(
+                            onTap: () {
+                              print(friendsList[index].id);
+                              print(friendsList[index]['name']);
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ChatPage(
+                                          peerId: friendsList[index].id,
+                                          peerName: friendsList[index]
+                                              ['name'])));
+                            },
+                            leading: Padding(
+                              padding: const EdgeInsets.only(right: 10.0),
+                              child: CircleAvatar(
+                                foregroundImage: CachedNetworkImageProvider(
+                                    friendsList[index]['image']),
+                                backgroundColor: Colors.grey,
+                                radius: 3.h,
+                              ),
+                            ),
+                            title: Text(
+                              "${friendsList[index]["name"]}",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 20.sp),
+                            ),
+                            subtitle: Text(
+                              "${friendsList[index]["email"]}",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 13.sp),
+                            ),
+                            horizontalTitleGap: 0,
+                            tileColor: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
-                        ),
-                        title: Text(
-                          "${friendsList[index]["name"]}",
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              TextStyle(color: Colors.white, fontSize: 20.sp),
-                        ),
-                        subtitle: Text(
-                          "${friendsList[index]["email"]}",
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              TextStyle(color: Colors.white, fontSize: 13.sp),
-                        ),
-                        horizontalTitleGap: 0,
-                        tileColor: Theme.of(context).primaryColor,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    );
-                  })));
+                        );
+                      })
+                  : Center(
+                      child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30.0),
+                      child: Text('Please add some friends first.'),
+                    ))));
     }
     return Scaffold(
         appBar: AppBar(
@@ -217,8 +232,26 @@ class ChatPage extends HookWidget {
   final peerId;
   final peerName;
 
+  Future loadMoreMsgs(uid, chatId, currentMsgList, lastMsgDoc) async {
+    var hasMoreData = true;
+    var newBatchOfMsgs = await Database(uid).loadMoreMsgs(chatId, lastMsgDoc);
+    print(newBatchOfMsgs.docs.length);
+    if (newBatchOfMsgs.docs.length != 0) {
+      currentMsgList.addAll(List<Map>.from(
+          newBatchOfMsgs.docs.map((doc) => Map.from(doc.data()))));
+      lastMsgDoc = newBatchOfMsgs.docs.last;
+      if (newBatchOfMsgs.docs.length < 15) {
+        hasMoreData = false;
+      }
+    }
+    return [currentMsgList, lastMsgDoc, hasMoreData];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final ValueNotifier<List<Map<dynamic, dynamic>>> msgs = useState([]);
+    final ValueNotifier<DocumentSnapshot?> lastMsg = useState(null);
+    final initialLoad = useState(false);
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final chatId =
         (uid.hashCode <= peerId.hashCode) ? '$uid-$peerId' : '$peerId-$uid';
@@ -230,12 +263,30 @@ class ChatPage extends HookWidget {
           detachedCallBack: () async => await Database(uid).chattingWith(null),
           resumeCallBack: () async => await Database(uid).chattingWith(peerId));
       WidgetsBinding.instance!.addObserver(observer);
-      return () => WidgetsBinding.instance!.removeObserver(observer);
+
+      stream.listen(
+        (event) {
+          if (event.docs.length > 0) {
+            msgs.value.add(event.docs[0].data());
+          }
+        },
+      );
+      return () {
+        WidgetsBinding.instance!.removeObserver(observer);
+      };
     }, []);
+
     if (messageStream.hasData) {
       var msgList = messageStream.data;
-      var msgs =
-          List<Map>.from(msgList.docs.map((doc) => Map.from(doc.data())));
+      if (!initialLoad.value) {
+        if (msgList.docs.length > 0) {
+          msgs.value =
+              List<Map>.from(msgList.docs.map((doc) => Map.from(doc.data())));
+          lastMsg.value = msgList.docs.last;
+        }
+        initialLoad.value = true;
+      }
+
       var mustInitializeDoc = false;
       if (msgList.docs.length == 0) {
         mustInitializeDoc = true;
@@ -244,6 +295,16 @@ class ChatPage extends HookWidget {
           appBar: AppBar(
             title: Text(peerName),
             centerTitle: true,
+            actions: [
+              TextButton(
+                  onPressed: () async {
+                    var results = await loadMoreMsgs(
+                        uid, chatId, msgs.value, lastMsg.value);
+                    msgs.value = results[0];
+                    lastMsg.value = results[1];
+                  },
+                  child: Text('Test'))
+            ],
           ),
           body: WillPopScope(
             onWillPop: () {
@@ -258,14 +319,29 @@ class ChatPage extends HookWidget {
                     child: StickyGroupedListView(
                       itemScrollController: GroupedItemScrollController(),
                       shrinkWrap: true,
-                      elements: msgs,
+                      elements: msgs.value,
                       groupBy: (Map element) => DateTime(
                           (element['dateCreated'] as Timestamp).toDate().year,
                           (element['dateCreated'] as Timestamp).toDate().month,
                           (element['dateCreated'] as Timestamp).toDate().day),
                       groupSeparatorBuilder: (Map element) {
-                        var formattedDate = DateFormat("dd MMM yyyy").format(
-                            (element['dateCreated'] as Timestamp).toDate());
+                        var formattedDate = '';
+                        final elementDate =
+                            (element['dateCreated'] as Timestamp).toDate();
+                        final now = DateTime.now();
+                        final today = DateTime(now.year, now.month, now.day);
+                        final yesterday =
+                            DateTime(now.year, now.month, now.day - 1);
+                        final elementDay = DateTime(elementDate.year,
+                            elementDate.month, elementDate.day);
+                        if (today == elementDay) {
+                          formattedDate = 'Today';
+                        } else if (yesterday == elementDay) {
+                          formattedDate = 'Yesterday';
+                        } else {
+                          formattedDate =
+                              DateFormat("dd MMM yyyy").format(elementDate);
+                        }
                         return Container(
                           height: 5.h,
                           child: Align(
@@ -294,7 +370,6 @@ class ChatPage extends HookWidget {
                               .compareTo(
                                   (item2['dateCreated'] as Timestamp).toDate()),
                       indexedItemBuilder: (context, Map element, index) {
-                        print(index);
                         if (element['idFrom'] == uid) {
                           return Padding(
                             padding: const EdgeInsets.all(5.0),
@@ -313,19 +388,21 @@ class ChatPage extends HookWidget {
                                           .toString(),
                                       style: TextStyle(fontSize: 12.sp)),
                                 ),
-                                Container(
-                                    padding: const EdgeInsets.all(10),
-                                    constraints: BoxConstraints(maxWidth: 70.w),
-                                    decoration: BoxDecoration(
-                                        color:
-                                            Color.fromARGB(255, 90, 134, 170),
-                                        borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(15),
-                                            topRight: Radius.circular(15),
-                                            bottomLeft: Radius.circular(15)),
-                                        boxShadow: CustomTheme.boxShadow),
-                                    child: Text(element['message'],
-                                        style: TextStyle(color: Colors.white))),
+                                Flexible(
+                                  child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                          color:
+                                              Color.fromARGB(255, 90, 134, 170),
+                                          borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(15),
+                                              topRight: Radius.circular(15),
+                                              bottomLeft: Radius.circular(15)),
+                                          boxShadow: CustomTheme.boxShadow),
+                                      child: Text(element['message'],
+                                          style:
+                                              TextStyle(color: Colors.white))),
+                                ),
                               ],
                             ),
                           );
@@ -336,18 +413,20 @@ class ChatPage extends HookWidget {
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Container(
-                                  padding: const EdgeInsets.all(10),
-                                  constraints: BoxConstraints(maxWidth: 75.w),
-                                  decoration: BoxDecoration(
-                                      color: Color.fromARGB(255, 126, 180, 109),
-                                      borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(15),
-                                          topRight: Radius.circular(15),
-                                          bottomRight: Radius.circular(15)),
-                                      boxShadow: CustomTheme.boxShadow),
-                                  child: Text(element['message'],
-                                      style: TextStyle(color: Colors.white))),
+                              Flexible(
+                                child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                        color:
+                                            Color.fromARGB(255, 126, 180, 109),
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(15),
+                                            topRight: Radius.circular(15),
+                                            bottomRight: Radius.circular(15)),
+                                        boxShadow: CustomTheme.boxShadow),
+                                    child: Text(element['message'],
+                                        style: TextStyle(color: Colors.white))),
+                              ),
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 5.0),

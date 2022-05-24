@@ -9,6 +9,9 @@ class CustomTheme {
   static const Color _scaffoldBackground = Color.fromARGB(255, 216, 208, 208);
 
   static const Color _white = Color.fromARGB(255, 239, 235, 241);
+  static const Color _black = Color(0xff444444);
+
+  static const Color onboardingColor = Color.fromARGB(255, 199, 209, 194);
 
   static const Color completeColor = Color.fromARGB(255, 150, 175, 138);
   static const Color incompleteColor = Color.fromARGB(100, 199, 201, 211);
@@ -16,7 +19,7 @@ class CustomTheme {
   static const Color activeIcon = Color.fromARGB(255, 71, 102, 148);
   static const Color inactiveIcon = Color.fromARGB(66, 121, 121, 121);
 
-  static const Color activeButton = Color.fromARGB(255, 100, 158, 100);
+  static const Color activeButton = Color.fromARGB(255, 99, 133, 99);
   static const Color redButton = Color.fromARGB(255, 184, 87, 87);
 
   static const Color greyedButton = Color.fromARGB(255, 199, 199, 199);
@@ -32,13 +35,14 @@ class CustomTheme {
   static final boxShadow = kElevationToShadow[3];
 
   static final TextTheme _lightTextTheme = TextTheme(
-      headline1: _headline1,
-      headline2: _headline2,
-      bodyText1: _bodyText1,
-      bodyText2: _bodyText2,
-      overline: _hashtagText,
-      headline4: _headline4,
-      headline5: _headline5);
+    headline1: _headline1,
+    headline2: _headline2,
+    bodyText1: _bodyText1,
+    bodyText2: _bodyText2,
+    overline: _hashtagText,
+    headline4: _headline4,
+    headline5: _headline5,
+  );
 
   static final TextStyle _headline1 = TextStyle(
       color: Colors.black87, fontSize: 16.sp, fontWeight: FontWeight.w600);
@@ -51,15 +55,21 @@ class CustomTheme {
   static final TextStyle _headline4 =
       TextStyle(color: _white, fontSize: 15.sp, fontWeight: FontWeight.w600);
 
-  static final TextStyle _headline5 = TextStyle(
-      color: Color(0xff444444), fontSize: 13.sp, fontWeight: FontWeight.w200);
+  static final TextStyle _headline5 =
+      TextStyle(color: _black, fontSize: 13.sp, fontWeight: FontWeight.w200);
   static final TextStyle _bodyText1 = TextStyle(
       color: Color.fromARGB(255, 230, 235, 245),
       fontSize: 15.sp,
       fontWeight: FontWeight.w600);
 
   static final TextStyle _bodyText2 =
-      TextStyle(color: Color(0xff444444), fontWeight: FontWeight.normal);
+      TextStyle(color: _black, fontWeight: FontWeight.normal);
+
+  static final TextStyle titleTextStyle = TextStyle(
+      color: _primaryColor,
+      fontWeight: FontWeight.bold,
+      fontSize: 50.sp,
+      letterSpacing: 10.sp);
 
   static final TextStyle _hashtagText = TextStyle(
       color: _white,
@@ -71,7 +81,7 @@ class CustomTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       primaryColor: _primaryColor,
-      primaryColorDark: Color(0xff444444),
+      primaryColorDark: _black,
       backgroundColor: _white,
       appBarTheme: AppBarTheme(backgroundColor: _primaryColor),
       scaffoldBackgroundColor: _scaffoldBackground,
@@ -83,13 +93,13 @@ class CustomTheme {
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
-            return _primaryColor;
+            return activeButton;
           }
           return Colors.white;
         }),
         trackColor: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
-            return Color.fromARGB(255, 140, 147, 189);
+            return Color.fromARGB(255, 128, 153, 130);
           }
           return Colors.grey;
         }),

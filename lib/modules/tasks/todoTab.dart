@@ -47,9 +47,12 @@ class ToDoTask extends HookWidget {
                       );
                     })
                 : Center(
+                    child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 30.0),
                     child: Text(
                         'You have no To Do tasks.\n\nYou can create tasks by\nhitting the button below!',
-                        textAlign: TextAlign.center)));
+                        textAlign: TextAlign.center),
+                  )));
   }
 }
 
@@ -133,11 +136,11 @@ class TodoTaskDisplay extends StatelessWidget {
                     ))),
                 Row(
                   children: [
-                    recur.contains(true)
-                        ? Icon(Icons.repeat_rounded,
-                            color: CustomTheme.activeIcon, size: 25)
-                        : Icon(Icons.repeat_rounded,
-                            color: CustomTheme.inactiveIcon, size: 25),
+                    // recur.contains(true)
+                    //     ? Icon(Icons.repeat_rounded,
+                    //         color: CustomTheme.activeIcon, size: 25)
+                    //     : Icon(Icons.repeat_rounded,
+                    //         color: CustomTheme.inactiveIcon, size: 25),
                     Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: reminder != null

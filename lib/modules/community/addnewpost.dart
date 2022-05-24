@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -36,6 +37,46 @@ class AddNewPost extends HookWidget {
         appBar: AppBar(
           title: const Text("New Post"),
           centerTitle: true,
+          actions: [
+            TextButton(
+              onPressed: () {
+                var postData = {
+                  'desc': postDescController.text,
+                  'attachment': attachment.value,
+                  'attachmentType': attachmentType.value,
+                  'hashtags': [
+                    hashtagController[0].text,
+                    hashtagController[1].text,
+                    hashtagController[2].text
+                  ]..removeWhere((item) => item == ''),
+                  'name': visibilityValue.value != 'Anonymous'
+                      ? Provider.of<UserProvider>(context, listen: false)
+                          .user
+                          .name
+                      : 'Anonymous',
+                  'email': visibilityValue.value != 'Anonymous'
+                      ? Provider.of<UserProvider>(context, listen: false)
+                          .user
+                          .email
+                      : 'anon@somewhere.com',
+                  'image': visibilityValue.value != 'Anonymous'
+                      ? Provider.of<UserProvider>(context, listen: false)
+                          .user
+                          .image
+                      : ''
+                };
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PreviewPage(postData: postData),
+                    ));
+              },
+              child: Text(
+                'PREVIEW',
+                style: TextStyle(color: Theme.of(context).backgroundColor),
+              ),
+            ),
+          ],
         ),
         body: SafeArea(
           minimum: const EdgeInsets.symmetric(horizontal: 20),
@@ -102,7 +143,62 @@ class AddNewPost extends HookWidget {
                                   ],
                                 )
                               : attachmentType.value == 'tracker'
-                                  ? null
+                                  ? Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          10, 15, 10, 15),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            color: Theme.of(context)
+                                                .backgroundColor,
+                                            boxShadow: CustomTheme.boxShadow),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(attachment.value['title'],
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headline4
+                                                        ?.copyWith(
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .primaryColor
+                                                                .withAlpha(
+                                                                    200))),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                        '${attachment.value['currStreak']}',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold)),
+                                                    Icon(Icons.park_rounded,
+                                                        color: Color.fromARGB(
+                                                            255, 147, 182, 117))
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                            Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 5)),
+                                            Divider(),
+                                            Text(attachment.value['note'])
+                                          ],
+                                        ),
+                                      ),
+                                    )
                                   : Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -214,22 +310,25 @@ class AddNewPost extends HookWidget {
                                                                               : null),
                                                               child: Row(
                                                                 children: [
-                                                                  Checkbox(
-                                                                    shape:
-                                                                        CircleBorder(),
-                                                                    activeColor:
-                                                                        Theme.of(context)
-                                                                            .backgroundColor,
-                                                                    checkColor:
-                                                                        Colors.lightGreen[
-                                                                            700],
-                                                                    value: attachment.value['taskList']
-                                                                            [
-                                                                            index]
-                                                                        [
-                                                                        'status'],
-                                                                    onChanged:
-                                                                        (value) {},
+                                                                  AbsorbPointer(
+                                                                    child:
+                                                                        Checkbox(
+                                                                      shape:
+                                                                          CircleBorder(),
+                                                                      activeColor:
+                                                                          Theme.of(context)
+                                                                              .backgroundColor,
+                                                                      checkColor:
+                                                                          Colors
+                                                                              .lightGreen[700],
+                                                                      value: attachment.value['taskList']
+                                                                              [
+                                                                              index]
+                                                                          [
+                                                                          'status'],
+                                                                      onChanged:
+                                                                          (value) {},
+                                                                    ),
                                                                   ),
                                                                   Text(
                                                                       attachment.value['taskList']
@@ -278,8 +377,8 @@ class AddNewPost extends HookWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(50, 20, 50, 20),
-                  child: Row(
+                  padding: const EdgeInsets.all(50),
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CreateButton(
@@ -312,6 +411,7 @@ class AddNewPost extends HookWidget {
                           Navigator.of(context).pop();
                         },
                         isValid: isValid,
+                        buttonLabel: 'Post',
                       ),
                       const CancelButton(),
                     ],
@@ -491,7 +591,7 @@ class AddNewPost extends HookWidget {
                           border: Border.all(width: 1),
                           borderRadius: BorderRadius.circular(10)),
                       child: InkWell(
-                          child: Center(child: Text("Select Task")),
+                          child: Center(child: Text("To Do Task")),
                           onTap: () async {
                             Navigator.pop(context);
                             var returnValue = await Navigator.push(
@@ -502,6 +602,30 @@ class AddNewPost extends HookWidget {
                             if (returnValue != null) {
                               attachment.value = returnValue;
                               attachmentType.value = 'task';
+                            }
+                          }),
+                    ),
+                  ),
+                  Padding(padding: const EdgeInsets.symmetric(vertical: 10)),
+                  SizedBox(
+                    width: 70.w,
+                    height: 7.h,
+                    child: Container(
+                      decoration: BoxDecoration(
+                          border: Border.all(width: 1),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: InkWell(
+                          child: Center(child: Text("Daily Tracker")),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            var returnValue = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SelectTrackerPage(),
+                                ));
+                            if (returnValue != null) {
+                              attachment.value = returnValue;
+                              attachmentType.value = 'tracker';
                             }
                           }),
                     ),
@@ -661,7 +785,6 @@ class SelectTaskPage extends HookWidget {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
                         color: selectedIndex.value == index
                             ? CustomTheme.activeIcon
                             : Colors.transparent,
@@ -763,16 +886,18 @@ class SelectTaskPage extends HookWidget {
                                                           : null),
                                               child: Row(
                                                 children: [
-                                                  Checkbox(
-                                                    shape: CircleBorder(),
-                                                    activeColor:
-                                                        Theme.of(context)
-                                                            .backgroundColor,
-                                                    checkColor:
-                                                        Colors.lightGreen[700],
-                                                    value: taskList[index]
-                                                        ['status'],
-                                                    onChanged: (value) {},
+                                                  AbsorbPointer(
+                                                    child: Checkbox(
+                                                      shape: CircleBorder(),
+                                                      activeColor:
+                                                          Theme.of(context)
+                                                              .backgroundColor,
+                                                      checkColor: Colors
+                                                          .lightGreen[700],
+                                                      value: taskList[index]
+                                                          ['status'],
+                                                      onChanged: (value) {},
+                                                    ),
                                                   ),
                                                   Text(taskList[index]['task'],
                                                       softWrap: false,
@@ -796,5 +921,511 @@ class SelectTaskPage extends HookWidget {
                 })
             : SpinKitWanderingCubes(
                 color: Theme.of(context).primaryColor, size: 75));
+  }
+}
+
+class SelectTrackerPage extends HookWidget {
+  const SelectTrackerPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).user.uid;
+    final selectedIndex = useState(-1);
+    final selectedTaskMap = useState({});
+    final future = useMemoized(() => Database(uid).getAllTrackers());
+    final snapshot = useFuture(future);
+    return Scaffold(
+        appBar: AppBar(
+            title: const Text("SELECT TASK"),
+            centerTitle: true,
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    if (selectedIndex.value != -1) {
+                      Navigator.pop(context, selectedTaskMap.value);
+                    } else {
+                      showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                                content:
+                                    Text('Please select at least one tracker.'),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text('OK'))
+                                ],
+                              ));
+                    }
+                  },
+                  child: Text('OK', style: TextStyle(color: Colors.white)))
+            ]),
+        body: snapshot.hasData
+            ? ListView.builder(
+                itemCount: snapshot.data.docs.length,
+                itemBuilder: (context, index) {
+                  final tracker = snapshot.data.docs[index];
+                  return InkWell(
+                      onTap: () {
+                        selectedIndex.value = index;
+                        selectedTaskMap.value = {
+                          'title': tracker['title'],
+                          'note': tracker['note'],
+                          'currStreak': DateTime.now()
+                                  .difference(
+                                      (tracker['currStreakDate'] as Timestamp)
+                                          .toDate())
+                                  .inDays +
+                              1
+                        };
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: selectedIndex.value == index
+                              ? CustomTheme.activeIcon
+                              : Colors.transparent,
+                        ),
+                        padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                        child: Transform.scale(
+                          scale: selectedIndex.value == index ? 0.9 : 1,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: Theme.of(context).backgroundColor,
+                                  boxShadow: CustomTheme.boxShadow),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(tracker['title'],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headline4
+                                              ?.copyWith(
+                                                  color: Theme.of(context)
+                                                      .primaryColor
+                                                      .withAlpha(200))),
+                                      Row(
+                                        children: [
+                                          Text(
+                                              '${DateTime.now().difference((tracker['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          Icon(Icons.park_rounded,
+                                              color: Color.fromARGB(
+                                                  255, 147, 182, 117))
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                  Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 5)),
+                                  Divider(),
+                                  Text(tracker['note'])
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ));
+                })
+            : SpinKitWanderingCubes(
+                color: Theme.of(context).primaryColor, size: 75));
+  }
+}
+
+class PreviewPage extends StatelessWidget {
+  const PreviewPage({Key? key, required this.postData}) : super(key: key);
+
+  final postData;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(title: Text('Post Preview')),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30.0),
+                child: Text(
+                    'This is how your post will look like to other people.'),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 15.0, vertical: 15.0),
+                child: Container(
+                  padding: const EdgeInsets.only(top: 15, bottom: 15),
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).backgroundColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: CustomTheme.boxShadow),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 5.h,
+                                  height: 5.h,
+                                  child: CircleAvatar(
+                                    foregroundImage: postData['image'] != ''
+                                        ? CachedNetworkImageProvider(
+                                            postData!['image'])
+                                        : Images.defaultPic.image,
+                                    backgroundColor: Colors.grey,
+                                    radius: 3.h,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        postData['name'],
+                                        style: TextStyle(fontSize: 16.sp),
+                                      ),
+                                      Text(postData['email']),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Divider(
+                            thickness: 2,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Text(postData['desc'],
+                                style: Theme.of(context).textTheme.headline5),
+                          ),
+                          if (postData['attachmentType'] != null)
+                            if (postData['attachmentType'] == 'image')
+                              CachedNetworkImage(
+                                  width: 100.w,
+                                  imageUrl: postData['attachment'],
+                                  progressIndicatorBuilder:
+                                      (context, url, downloadProgress) =>
+                                          SizedBox(
+                                            width: 100.w,
+                                            height: 100.w,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.black26,
+                                              ),
+                                            ),
+                                          ),
+                                  fit: BoxFit.fitWidth),
+                          if (postData['attachmentType'] == 'task')
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Transform.scale(
+                                scale: 0.9,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                            constraints:
+                                                BoxConstraints(minWidth: 25.w),
+                                            height: 5.h,
+                                            decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .primaryColor
+                                                    .withAlpha(200),
+                                                borderRadius: BorderRadius.only(
+                                                    topLeft:
+                                                        Radius.circular(15),
+                                                    topRight:
+                                                        Radius.circular(15))),
+                                            child: Center(
+                                                child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 15.0),
+                                              child: Text(
+                                                  postData['attachment']
+                                                      ['title'],
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headline4),
+                                            ))),
+                                        Text(postData['attachment']
+                                                    ['timeCompleted'] !=
+                                                null
+                                            ? 'Completed at ${DateFormat("hh:mm a").format(postData['attachment']['timeCompleted'])}'
+                                            : '')
+                                      ],
+                                    ),
+                                    ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                            minHeight: 5.h, minWidth: 100.w),
+                                        child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Theme.of(context)
+                                                  .primaryColor
+                                                  .withAlpha(200),
+                                              borderRadius: BorderRadius.only(
+                                                  bottomLeft:
+                                                      Radius.circular(15),
+                                                  bottomRight:
+                                                      Radius.circular(15),
+                                                  topRight:
+                                                      Radius.circular(15)),
+                                              boxShadow: CustomTheme.boxShadow,
+                                            ),
+                                            child: ListView.builder(
+                                                physics:
+                                                    NeverScrollableScrollPhysics(),
+                                                shrinkWrap: true,
+                                                itemCount:
+                                                    postData['attachment']
+                                                            ['taskList']
+                                                        .length,
+                                                itemBuilder: (context, index) {
+                                                  return SizedBox(
+                                                    height: 5.h,
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                          color: postData['attachment']
+                                                                          ['taskList']
+                                                                      [index]
+                                                                  ['status']
+                                                              ? CustomTheme
+                                                                  .completeColor
+                                                              : Theme.of(context)
+                                                                  .backgroundColor,
+                                                          borderRadius: index ==
+                                                                  0
+                                                              ? BorderRadius
+                                                                  .only(
+                                                                  topLeft: Radius
+                                                                      .circular(
+                                                                          15),
+                                                                  topRight: Radius
+                                                                      .circular(
+                                                                          15),
+                                                                  bottomLeft: postData['attachment']['taskList']
+                                                                              .length ==
+                                                                          1
+                                                                      ? Radius
+                                                                          .circular(
+                                                                              15)
+                                                                      : Radius
+                                                                          .zero,
+                                                                  bottomRight: postData['attachment']['taskList']
+                                                                              .length ==
+                                                                          1
+                                                                      ? Radius
+                                                                          .circular(
+                                                                              15)
+                                                                      : Radius
+                                                                          .zero,
+                                                                )
+                                                              : index ==
+                                                                      postData['attachment']['taskList']
+                                                                              .length -
+                                                                          1
+                                                                  ? BorderRadius
+                                                                      .only(
+                                                                      bottomLeft:
+                                                                          Radius.circular(
+                                                                              15),
+                                                                      bottomRight:
+                                                                          Radius.circular(
+                                                                              15),
+                                                                    )
+                                                                  : null),
+                                                      child: Row(
+                                                        children: [
+                                                          AbsorbPointer(
+                                                            child: Checkbox(
+                                                              shape:
+                                                                  CircleBorder(),
+                                                              activeColor: Theme
+                                                                      .of(context)
+                                                                  .backgroundColor,
+                                                              checkColor: Colors
+                                                                      .lightGreen[
+                                                                  700],
+                                                              value: postData[
+                                                                          'attachment']
+                                                                      [
+                                                                      'taskList']
+                                                                  [
+                                                                  index]['status'],
+                                                              onChanged:
+                                                                  (value) {},
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                              postData['attachment']
+                                                                          [
+                                                                          'taskList']
+                                                                      [index]
+                                                                  ['task'],
+                                                              softWrap: false,
+                                                              style: TextStyle(
+                                                                  decoration: postData['attachment']
+                                                                              [
+                                                                              'taskList'][index]
+                                                                          [
+                                                                          'status']
+                                                                      ? TextDecoration
+                                                                          .lineThrough
+                                                                      : null)),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                }))),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (postData['attachmentType'] == 'tracker')
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                              child: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    color: Theme.of(context).backgroundColor,
+                                    boxShadow: CustomTheme.boxShadow),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(postData['attachment']['title'],
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline4
+                                                ?.copyWith(
+                                                    color: Theme.of(context)
+                                                        .primaryColor
+                                                        .withAlpha(200))),
+                                        Row(
+                                          children: [
+                                            Text(
+                                                '${postData['attachment']['currStreak']}',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            Icon(Icons.park_rounded,
+                                                color: Color.fromARGB(
+                                                    255, 147, 182, 117))
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                    Padding(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 5)),
+                                    Divider(),
+                                    Text(postData['attachment']['note'])
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (postData['hashtags'].length > 0)
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          width: 100.w,
+                          height: 50,
+                          child: ListView.builder(
+                            physics: BouncingScrollPhysics(),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: postData['hashtags'].length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 5),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .primaryColor
+                                          .withAlpha(150),
+                                      borderRadius: BorderRadius.circular(20)),
+                                  child: Center(
+                                    child: Text(
+                                        '#${postData['hashtags'][index]}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .overline),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      Center(
+                        child: Container(
+                            padding: const EdgeInsets.all(10),
+                            width: 50.w,
+                            height: 5.h,
+                            decoration: new BoxDecoration(
+                              border:
+                                  Border.all(color: Colors.black26, width: 1),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Center(
+                                child: Text(
+                              'Add a comment',
+                              style: TextStyle(fontSize: 13.sp),
+                            ))),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: Text('5 minutes ago',
+                            style: TextStyle(
+                                color: Colors.grey[600], fontSize: 12.sp)),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('Okay.',
+                      style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold))),
+            ],
+          ),
+        ));
   }
 }

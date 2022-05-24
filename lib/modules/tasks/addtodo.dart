@@ -85,8 +85,8 @@ class AddToDoTask extends HookWidget {
               // ),
               ReminderButton(taskList: taskList, reminderValue: reminderValue),
               Padding(
-                padding: const EdgeInsets.fromLTRB(50, 20, 50, 20),
-                child: Row(
+                padding: const EdgeInsets.all(50),
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     CreateButton(

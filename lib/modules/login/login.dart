@@ -13,73 +13,69 @@ class EmailLogIn extends HookWidget {
     TextEditingController emailController = useTextEditingController();
     TextEditingController passwordController = useTextEditingController();
     ValueNotifier _isLoading = useValueNotifier(false);
-    return Container(
-      decoration: BoxDecoration(color: Color(0xffF3F7F9)),
-      child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(title: Text("Login")),
-          body: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.only(top: 30.0),
-                  child: Text(
-                    Words.loginDesc,
-                    style: CustomTheme.lightTheme.textTheme.headline2,
-                  ),
+    return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.only(top: 60.0),
+                child: Text(
+                  Words.loginDesc,
+                  style: Theme.of(context).textTheme.headline1,
                 ),
-                Container(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  width: (MediaQuery.of(context).size.width * 0.7),
-                  child: Images.login,
-                ),
-                Form(
-                    key: _formKey,
-                    child: SingleChildScrollView(
-                      child: Column(children: <Widget>[
-                        LoginField(
-                          controller: emailController,
-                          fieldText: Words.emailField,
+              ),
+              Container(
+                padding: const EdgeInsets.only(bottom: 20),
+                width: (MediaQuery.of(context).size.width * 0.7),
+                child: Images.login,
+              ),
+              Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(children: <Widget>[
+                      LoginField(
+                        controller: emailController,
+                        fieldText: Words.emailField,
+                        validator: (String? value) =>
+                            LoginField.emailValidator(value),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      LoginField(
+                          controller: passwordController,
+                          fieldText: Words.passwordField,
+                          obscureText: true,
                           validator: (String? value) =>
-                              LoginField.emailValidator(value),
-                          keyboardType: TextInputType.emailAddress,
+                              LoginField.passwordValidator(value)),
+                      Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            LogInButton(
+                              formKey: _formKey,
+                              context: context,
+                              email: emailController,
+                              password: passwordController,
+                              isLoading: _isLoading,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: cancelButton(context),
+                            ),
+                          ],
                         ),
-                        LoginField(
-                            controller: passwordController,
-                            fieldText: Words.passwordField,
-                            obscureText: true,
-                            validator: (String? value) =>
-                                LoginField.passwordValidator(value)),
-                        Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              LogInButton(
-                                formKey: _formKey,
-                                context: context,
-                                email: emailController,
-                                password: passwordController,
-                                isLoading: _isLoading,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 30),
-                                child: cancelButton(context),
-                              ),
-                            ],
-                          ),
-                        )
-                      ]),
-                    )),
-                Padding(
-                  padding: const EdgeInsets.only(top: 50),
-                  child: SignUpRedirect(context: context),
-                ),
-              ],
-            ),
-          )),
-    );
+                      )
+                    ]),
+                  )),
+              Padding(
+                padding: const EdgeInsets.only(top: 50),
+                child: SignUpRedirect(context: context),
+              ),
+            ],
+          ),
+        ));
   }
 }
 
@@ -211,9 +207,8 @@ Widget cancelButton(BuildContext context) {
     onPressed: () {
       Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => WelcomePage(),
-          ));
+          PageTransition(
+              type: PageTransitionType.leftToRight, child: WelcomePage()));
     },
     child:
         Text(Words.cancelButton, style: Theme.of(context).textTheme.bodyText1),
@@ -239,12 +234,13 @@ class SignUpRedirect extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => EmailSignUp(),
-                  ));
+                  PageTransition(
+                      type: PageTransitionType.fade, child: EmailSignUp()));
             },
             child: Text(Words.signupButton,
-                style: Theme.of(context).textTheme.bodyText2)),
+                style: Theme.of(context).textTheme.bodyText2!.copyWith(
+                    color: Color.fromARGB(255, 33, 63, 119),
+                    decoration: TextDecoration.underline))),
       ],
     );
   }

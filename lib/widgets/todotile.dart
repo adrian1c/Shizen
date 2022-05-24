@@ -159,13 +159,15 @@ class ToDoTileShare extends StatelessWidget {
                                           : null),
                               child: Row(
                                 children: [
-                                  Checkbox(
-                                    shape: CircleBorder(),
-                                    activeColor:
-                                        Theme.of(context).backgroundColor,
-                                    checkColor: Colors.lightGreen[700],
-                                    value: taskList[index]['status'],
-                                    onChanged: (value) async {},
+                                  AbsorbPointer(
+                                    child: Checkbox(
+                                      shape: CircleBorder(),
+                                      activeColor:
+                                          Theme.of(context).backgroundColor,
+                                      checkColor: Colors.lightGreen[700],
+                                      value: taskList[index]['status'],
+                                      onChanged: (value) async {},
+                                    ),
                                   ),
                                   Text(taskList[index]['task'],
                                       softWrap: false,

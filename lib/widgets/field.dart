@@ -40,10 +40,14 @@ class StyledContainerField extends StatelessWidget {
 
 class StyledInputField {
   const StyledInputField(
-      {Key? key, required this.hintText, required this.controller});
+      {Key? key,
+      required this.hintText,
+      required this.controller,
+      this.inputValue});
 
   final String hintText;
   final TextEditingController controller;
+  final inputValue;
 
   inputDecoration() {
     return InputDecoration(
@@ -65,6 +69,9 @@ class StyledInputField {
           padding: EdgeInsets.only(right: 20),
           onPressed: () {
             controller.clear();
+            if (inputValue != null) {
+              inputValue.value = '';
+            }
           },
           icon: Icon(Icons.cancel)),
       suffixIconConstraints:
@@ -189,11 +196,26 @@ class LoaderWithToast {
       if (isSuccess) {
         StyledToast(msg: msg).showSuccessToast();
       } else {
-        StyledToast(msg: msg).showDeletedToast();
+        StyledToast(msg: 'Oops, something went wrong').showDeletedToast();
       }
-    }).onError((error, stackTrace) {
+    }).catchError((error) {
       context.loaderOverlay.hide();
-      print(error);
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Error"),
+              content: Text(error.message),
+              actions: [
+                TextButton(
+                  child: Text("Ok"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
       StyledToast(msg: 'Oops, something went wrong').showDeletedToast();
     });
   }

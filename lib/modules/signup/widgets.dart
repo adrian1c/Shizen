@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shizen_app/widgets/field.dart';
 
 import '../../utils/allUtils.dart';
 import '../login/login.dart';
@@ -117,39 +119,29 @@ Future<void> registerToDb(
 ) async {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  await firebaseAuth
-      .createUserWithEmailAndPassword(
-          email: emailController.text, password: passwordController.text)
-      .then((result) {
-    firestore.collection('users').doc(result.user!.uid).set({
-      'email': emailController.text,
-      'age': ageController.text,
-      'name': nameController.text,
-      'image': '',
-    }).then((res) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => WelcomePage()),
-      );
-    });
-  }).catchError((err) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Error"),
-            content: Text(err.message),
-            actions: [
-              TextButton(
-                child: Text("Ok"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          );
-        });
-  });
+  await LoaderWithToast(
+          context: context,
+          api: firebaseAuth
+              .createUserWithEmailAndPassword(
+                  email: emailController.text,
+                  password: passwordController.text)
+              .then((result) async {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('onboarding', false);
+            await firestore.collection('users').doc(result.user!.uid).set({
+              'email': emailController.text,
+              'age': ageController.text,
+              'name': nameController.text,
+              'image': '',
+            });
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => EmailLogIn()),
+            );
+          }),
+          msg: 'Success! You can log in now',
+          isSuccess: true)
+      .show();
 }
 
 Widget signupButton(
@@ -205,9 +197,8 @@ Widget cancelButton(BuildContext context) {
     onPressed: () {
       Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => WelcomePage(),
-          ));
+          PageTransition(
+              type: PageTransitionType.leftToRight, child: WelcomePage()));
     },
     child:
         Text(Words.cancelButton, style: Theme.of(context).textTheme.bodyText1),
@@ -227,12 +218,13 @@ Widget logInRedirect(BuildContext context) {
           onPressed: () {
             Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => EmailLogIn(),
-                ));
+                PageTransition(
+                    type: PageTransitionType.fade, child: EmailLogIn()));
           },
           child: Text(Words.loginButton,
-              style: Theme.of(context).textTheme.bodyText2)),
+              style: Theme.of(context).textTheme.bodyText2!.copyWith(
+                  color: Color.fromARGB(255, 33, 63, 119),
+                  decoration: TextDecoration.underline))),
     ],
   );
 }

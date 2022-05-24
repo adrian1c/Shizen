@@ -42,9 +42,12 @@ class TrackerTask extends HookWidget {
                   );
                 })
             : Center(
+                child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30.0),
                 child: Text(
                     'You have no Daily Trackers.\n\nYou can create tasks by\nhitting the button below!',
-                    textAlign: TextAlign.center)));
+                    textAlign: TextAlign.center),
+              )));
   }
 }
 
@@ -97,6 +100,7 @@ class TrackerTile extends HookWidget {
                           var ciData = currentDayCheckIn(checkinData);
                           await Database(uid).checkInTracker(
                               task.id,
+                              task['title'],
                               DateTime.now()
                                       .difference(
                                           (task['currStreakDate'] as Timestamp)

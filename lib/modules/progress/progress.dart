@@ -367,13 +367,15 @@ class TodoTaskProgressTile extends StatelessWidget {
                                           : null),
                               child: Row(
                                 children: [
-                                  Checkbox(
-                                    shape: CircleBorder(),
-                                    activeColor:
-                                        Theme.of(context).backgroundColor,
-                                    checkColor: Colors.lightGreen[700],
-                                    value: taskList[index]['status'],
-                                    onChanged: (value) {},
+                                  AbsorbPointer(
+                                    child: Checkbox(
+                                      shape: CircleBorder(),
+                                      activeColor:
+                                          Theme.of(context).backgroundColor,
+                                      checkColor: Colors.lightGreen[700],
+                                      value: taskList[index]['status'],
+                                      onChanged: (value) {},
+                                    ),
                                   ),
                                   Text(taskList[index]['task'],
                                       softWrap: false,
@@ -444,7 +446,7 @@ class TrackerProgressList extends HookWidget {
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                   child: TrackerProgressTile(
-                    trackerId: element['trackerId'],
+                    name: element['trackerName'],
                     note: element['note'],
                     timeCompleted: element['dateCreated'],
                   ),
@@ -462,68 +464,50 @@ class TrackerProgressList extends HookWidget {
   }
 }
 
-class TrackerProgressTile extends HookWidget {
+class TrackerProgressTile extends StatelessWidget {
   const TrackerProgressTile(
       {Key? key,
-      required this.trackerId,
+      required this.name,
       required this.note,
       required this.timeCompleted})
       : super(key: key);
 
-  final String trackerId;
+  final name;
   final note;
   final timeCompleted;
 
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).user.uid;
-    final future =
-        useMemoized(() => Database(uid).getTrackerData(trackerId), []);
-    final snapshot = useFuture(future);
-    if (snapshot.hasData) {
-      final tracker = snapshot.data;
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Theme.of(context).backgroundColor,
-              boxShadow: CustomTheme.boxShadow),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(tracker['title'],
-                      style: Theme.of(context).textTheme.headline4?.copyWith(
-                          color:
-                              Theme.of(context).primaryColor.withAlpha(200))),
-                  Text(
-                      'Checked-in at \n${DateFormat("hh:mm a").format(timeCompleted)}',
-                      textAlign: TextAlign.right),
-                ],
-              ),
-              Padding(padding: EdgeInsets.symmetric(vertical: 5)),
-              Divider(),
-              Text(note)
-            ],
-          ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Theme.of(context).backgroundColor,
+            boxShadow: CustomTheme.boxShadow),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(name,
+                    style: Theme.of(context).textTheme.headline4?.copyWith(
+                        color: Theme.of(context).primaryColor.withAlpha(200))),
+                Text(
+                    'Checked-in at \n${DateFormat("hh:mm a").format(timeCompleted)}',
+                    textAlign: TextAlign.right),
+              ],
+            ),
+            Padding(padding: EdgeInsets.symmetric(vertical: 5)),
+            Divider(),
+            Text(note)
+          ],
         ),
-      );
-    }
-    return Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
-          child: Container(
-              padding: const EdgeInsets.all(5),
-              width: 100.w,
-              height: 30.h,
-              color: Colors.white),
-        ));
+      ),
+    );
   }
 }
