@@ -159,7 +159,7 @@ class StyledToast {
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.CENTER,
         timeInSecForIosWeb: 1,
-        backgroundColor: Colors.green[400],
+        backgroundColor: CustomTheme.greenToast,
         textColor: Colors.white,
         fontSize: 16.0);
   }
@@ -170,7 +170,7 @@ class StyledToast {
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.CENTER,
         timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red[400],
+        backgroundColor: CustomTheme.redToast,
         textColor: Colors.white,
         fontSize: 16.0);
   }

@@ -27,6 +27,11 @@ class AddTrackerTask extends HookWidget {
         useState(editParams != null ? editParams['startDate'] : DateTime.now());
     final ValueNotifier<List> milestones =
         useState(editParams != null ? editParams['milestones'] : []);
+    final ValueNotifier<DateTime?> reminderValue = useState(editParams != null
+        ? editParams['reminder'] != null
+            ? editParams['reminder']
+            : null
+        : null);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -197,6 +202,9 @@ class AddTrackerTask extends HookWidget {
                         ),
                       ],
                     )),
+                DailyReminderButton(
+                  reminderValue: reminderValue,
+                ),
                 Padding(
                     padding: const EdgeInsets.all(50),
                     child: Column(
@@ -218,7 +226,8 @@ class AddTrackerTask extends HookWidget {
                                                 titleController.text,
                                                 noteController.text,
                                                 milestones.value,
-                                                startDate.value);
+                                                startDate.value,
+                                                reminderValue.value);
                                             await LoaderWithToast(
                                                     context: context,
                                                     api: Database(uid)
@@ -243,7 +252,8 @@ class AddTrackerTask extends HookWidget {
                                   titleController.text,
                                   noteController.text,
                                   milestones.value,
-                                  startDate.value);
+                                  startDate.value,
+                                  reminderValue.value);
                               await LoaderWithToast(
                                       context: context,
                                       api:
@@ -558,6 +568,85 @@ class MilestoneTile extends StatelessWidget {
                 );
               });
         },
+      ),
+    );
+  }
+}
+
+class DailyReminderButton extends HookWidget {
+  const DailyReminderButton({Key? key, required this.reminderValue})
+      : super(key: key);
+
+  final ValueNotifier<DateTime?> reminderValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Flexible(
+            child: InkWell(
+              onTap: () {
+                DatePicker.showTimePicker(
+                  context,
+                  showSecondsColumn: false,
+                  currentTime: reminderValue.value?.add(Duration(minutes: 1)),
+                  onConfirm: (time) {
+                    reminderValue.value = time;
+                  },
+                );
+              },
+              child: Container(
+                width: 100.w,
+                height: 7.h,
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Theme.of(context).primaryColor.withAlpha(200)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Daily Reminder',
+                        style: TextStyle(
+                            color: Theme.of(context).backgroundColor)),
+                    Text(
+                        reminderValue.value == null
+                            ? 'No Time Selected'
+                            : 'Everyday @ ${DateFormat('hh:mm a').format(reminderValue.value!)}',
+                        style: TextStyle(
+                            color: reminderValue.value == null
+                                ? Theme.of(context)
+                                    .backgroundColor
+                                    .withAlpha(150)
+                                : Colors.lightGreenAccent[400]))
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+              width: 5.h,
+              height: 5.h,
+              child: InkWell(
+                  onTap: reminderValue.value != null
+                      ? () {
+                          StyledPopup(
+                                  context: context,
+                                  title:
+                                      'Do you want to remove this daily reminder?',
+                                  children: [],
+                                  textButton: TextButton(
+                                      onPressed: () {
+                                        reminderValue.value = null;
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text('Remove')))
+                              .showPopup();
+                        }
+                      : () {},
+                  child: Icon(Icons.cancel_outlined)))
+        ],
       ),
     );
   }

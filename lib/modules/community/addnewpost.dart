@@ -1119,20 +1119,9 @@ class PreviewPage extends StatelessWidget {
                           ),
                           if (postData['attachmentType'] != null)
                             if (postData['attachmentType'] == 'image')
-                              CachedNetworkImage(
+                              Image(
                                   width: 100.w,
-                                  imageUrl: postData['attachment'],
-                                  progressIndicatorBuilder:
-                                      (context, url, downloadProgress) =>
-                                          SizedBox(
-                                            width: 100.w,
-                                            height: 100.w,
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.black26,
-                                              ),
-                                            ),
-                                          ),
+                                  image: FileImage(postData['attachment']),
                                   fit: BoxFit.fitWidth),
                           if (postData['attachmentType'] == 'task')
                             Padding(

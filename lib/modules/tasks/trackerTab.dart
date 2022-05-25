@@ -175,7 +175,10 @@ class TrackerTile extends HookWidget {
                   'title': task['title'],
                   'note': task['note'],
                   'startDate': (task['currStreakDate'] as Timestamp).toDate(),
-                  'milestones': task['milestones']
+                  'milestones': task['milestones'],
+                  'reminder': task['reminder'] != null
+                      ? (task['reminder'] as Timestamp).toDate()
+                      : null
                 };
                 Navigator.push(
                     context,
@@ -262,10 +265,12 @@ class TrackerTile extends HookWidget {
                                         api: Database(uid)
                                             .deleteTrackerTask(task.id),
                                         msg: 'Tracker deleted',
-                                        isSuccess: false)
+                                        isSuccess: true)
                                     .show();
                                 Provider.of<TabProvider>(context, listen: false)
                                     .rebuildPage('tracker');
+                                Provider.of<TabProvider>(context, listen: false)
+                                    .rebuildPage('profileTracker');
                                 Navigator.pop(context);
                               },
                               child: Text('Delete'),
@@ -298,6 +303,16 @@ class TrackerTile extends HookWidget {
                                           .withAlpha(200))),
                           Row(
                             children: [
+                              Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: task['reminder'] != null
+                                      ? Icon(Icons.notifications_active,
+                                          color: CustomTheme.activeIcon,
+                                          size: 25)
+                                      : Icon(Icons.notifications_active,
+                                          color: CustomTheme.inactiveIcon,
+                                          size: 25)),
                               Text(
                                   '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
                                   style:

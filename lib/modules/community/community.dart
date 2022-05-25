@@ -586,14 +586,22 @@ class PostListTile extends HookWidget {
                                           onPressed: () async {
                                             if (commentController.text.length !=
                                                 0) {
-                                              await Database(uid)
-                                                  .postComment(
-                                                      postData['postId'],
-                                                      commentController.text)
-                                                  .then((value) {
-                                                commentController.clear();
-                                                commentCount.value += 1;
-                                              });
+                                              await LoaderWithToast(
+                                                      context: context,
+                                                      api: Database(uid)
+                                                          .postComment(
+                                                              postData[
+                                                                  'postId'],
+                                                              commentController
+                                                                  .text)
+                                                          .then((value) {
+                                                        commentController
+                                                            .clear();
+                                                        commentCount.value += 1;
+                                                      }),
+                                                      msg: 'Comment Posted',
+                                                      isSuccess: true)
+                                                  .show();
                                               Navigator.pop(context);
                                             }
                                           },
@@ -714,9 +722,8 @@ class CommentPage extends HookWidget {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).user.uid;
-    final future = useMemoized(() => Database(uid).getComments(pid),
-        [Provider.of<TabProvider>(context).comment]);
-    final snapshot = useFuture(future);
+    final stream = useMemoized(() => Database(uid).getComments(pid), []);
+    final snapshot = useStream(stream);
     final commentController = useTextEditingController();
     if (snapshot.hasData) {
       final commentList = snapshot.data.docs;
@@ -801,20 +808,23 @@ class CommentPage extends HookWidget {
                                     onPressed: () async {
                                       if (commentController.text.length != 0) {
                                         final comment = commentController.text;
-                                        commentController.clear();
+
                                         FocusScopeNode currentFocus =
                                             FocusScope.of(context);
                                         if (!currentFocus.hasPrimaryFocus) {
                                           currentFocus.unfocus();
                                         }
-                                        await Database(uid)
-                                            .postComment(pid, comment)
-                                            .then((value) {
-                                          commentCount.value += 1;
-                                        });
-                                        Provider.of<TabProvider>(context,
-                                                listen: false)
-                                            .rebuildPage('comment');
+                                        await LoaderWithToast(
+                                                context: context,
+                                                api: Database(uid)
+                                                    .postComment(pid, comment)
+                                                    .then((value) {
+                                                  commentCount.value += 1;
+                                                  commentController.clear();
+                                                }),
+                                                msg: 'Comment Posted',
+                                                isSuccess: true)
+                                            .show();
                                       }
                                     },
                                     icon: Icon(Icons.send),

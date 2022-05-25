@@ -32,6 +32,11 @@ class CustomTheme {
 
   static const Color greyedOutField = Color.fromARGB(255, 167, 168, 170);
 
+  static const Color greenToast = Color.fromARGB(255, 83, 119, 75);
+  static const Color redToast = Color.fromARGB(255, 184, 87, 87);
+
+  static const Color cancelText = Color.fromARGB(255, 226, 65, 65);
+
   static final boxShadow = kElevationToShadow[3];
 
   static final TextTheme _lightTextTheme = TextTheme(

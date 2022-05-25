@@ -5,8 +5,10 @@ class TrackerTaskModel {
   DateTime dateCreated = DateTime.now();
   DateTime startDate;
   List milestones = [];
+  DateTime? reminder;
 
-  TrackerTaskModel(this.title, this.note, this.milestones, this.startDate);
+  TrackerTaskModel(
+      this.title, this.note, this.milestones, this.startDate, this.reminder);
 
   toJson() {
     return {
@@ -16,7 +18,8 @@ class TrackerTaskModel {
       'title': title,
       'note': note,
       'milestones': milestones,
-      'checkin': []
+      'checkin': [],
+      'reminder': reminder
     };
   }
 }

@@ -13,16 +13,16 @@ import './mainScaffoldStack.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shizen_app/utils/notifications.dart';
-
+import 'package:timezone/data/latest.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  tz.initializeTimeZones();
   await NotificationService().initNotifications();
   var sp = await SharedPreferences.getInstance();
   var theme = sp.getInt('darkTheme');
-  print(theme);
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider<UserProvider>(
@@ -47,63 +47,41 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Firebase.initializeApp(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          //TODO: Make error display
-          return Container(
-              child: Text('Ooops', textDirection: TextDirection.ltr));
-        }
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Sizer(
+        builder: (context, orientation, deviceType) {
+          return GlobalLoaderOverlay(
+              useDefaultLoading: false,
+              overlayWidget: Loader(),
+              child: MaterialApp(
+                scrollBehavior: MyCustomScrollBehavior(),
+                debugShowCheckedModeBanner: false,
+                title: 'Shizen',
+                theme: Provider.of<AppTheme>(context).darkTheme
+                    ? CustomTheme.darkTheme
+                    : CustomTheme.lightTheme,
+                home: Provider.of<UserProvider>(context).checkLoggedIn()
+                    ? FutureBuilder(
+                        future: getOnboarding(),
+                        builder: (context, data) {
+                          if (data.hasData && data.data == true) {
+                            return MainScaffoldStack();
+                          }
 
-        if (snapshot.connectionState == ConnectionState.done) {
-          return GestureDetector(
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: Sizer(
-              builder: (context, orientation, deviceType) {
-                return GlobalLoaderOverlay(
-                    useDefaultLoading: false,
-                    overlayWidget: Loader(),
-                    child: MaterialApp(
-                      scrollBehavior: MyCustomScrollBehavior(),
-                      debugShowCheckedModeBanner: false,
-                      title: 'Shizen',
-                      theme: Provider.of<AppTheme>(context).darkTheme
-                          ? CustomTheme.darkTheme
-                          : CustomTheme.lightTheme,
-                      home: Provider.of<UserProvider>(context).checkLoggedIn()
-                          ? FutureBuilder(
-                              future: getOnboarding(),
-                              builder: (context, data) {
-                                if (data.hasData && data.data == true) {
-                                  return MainScaffoldStack();
-                                }
+                          if (data.hasData && data.data == false) {
+                            return OnboardingPage();
+                          }
 
-                                if (data.hasData && data.data == false) {
-                                  return OnboardingPage();
-                                }
-
-                                return SpinKitWanderingCubes(
-                                  color: Theme.of(context).primaryColor,
-                                  size: 75.0,
-                                );
-                              })
-                          : WelcomePage(),
-                    ));
-              },
-            ),
-          );
-        }
-
-        //TODO: Make loading screen
-        return Center(
-          child: Container(
-              child: Text(
-            'Nice to meet you!',
-            textDirection: TextDirection.ltr,
-          )),
-        );
-      },
+                          return SpinKitWanderingCubes(
+                            color: Theme.of(context).primaryColor,
+                            size: 75.0,
+                          );
+                        })
+                    : WelcomePage(),
+              ));
+        },
+      ),
     );
   }
 }

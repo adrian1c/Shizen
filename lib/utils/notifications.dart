@@ -99,4 +99,47 @@ class NotificationService {
           true, // To show notification even when the app is closed
     );
   }
+
+  Future<void> showTrackerDailyNotification(
+      int id, String title, String body, DateTime dateTime) async {
+    final now = DateTime.now();
+    if (dateTime.isBefore(now)) {
+      dateTime.add(Duration(days: 1));
+    }
+    tz.TZDateTime scheduledDate = tz.TZDateTime.now(tz.local).add(
+        Duration(seconds: DateTime.now().difference(dateTime).inSeconds.abs()));
+
+    print(now);
+    print(scheduledDate);
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        const NotificationDetails(
+          // Android details
+          android: AndroidNotificationDetails(
+            'tracker_channel',
+            'Daily Tracker',
+            channelDescription: "Notifications for Daily Tracker",
+            importance: Importance.max,
+            priority: Priority.max,
+            playSound: true,
+          ),
+          // iOS details
+          iOS: IOSNotificationDetails(
+            sound: 'default.wav',
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+
+        // Type of time interpretation
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidAllowWhileIdle:
+            true, // To show notification even when the app is closed
+        matchDateTimeComponents: DateTimeComponents.time);
+  }
 }

@@ -4,6 +4,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shizen_app/models/trackerTask.dart';
 import 'package:intl/intl.dart';
 import 'package:shizen_app/utils/notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 
 class Database {
   Database(this.uid);
@@ -99,6 +101,14 @@ class Database {
 
   Future<void> deleteTrackerTask(tid) async {
     print("Firing deleteTrackerTask");
+
+    var userData = await userDoc.get();
+    if (userData.data()!.containsKey('highlightTracker')) {
+      if (userData.data()!['highlightTracker'] == tid) {
+        await userDoc.set({'highlightTracker': null}, SetOptions(merge: true));
+      }
+    }
+
     await userDoc
         .collection('trackers')
         .doc(tid)
@@ -350,7 +360,6 @@ class Database {
         if (hashtag != '') {
           if (!loadMore) {
             QuerySnapshot<Map<String, dynamic>> query = await postCol
-                .where('uid', isNotEqualTo: uid)
                 .where('hashtags', arrayContains: hashtag)
                 .orderBy('dateCreated', descending: true)
                 .limit(5)
@@ -362,7 +371,6 @@ class Database {
             });
           } else {
             QuerySnapshot<Map<String, dynamic>> query = await postCol
-                .where('uid', isNotEqualTo: uid)
                 .where('hashtags', arrayContains: hashtag)
                 .orderBy('dateCreated', descending: true)
                 .startAfter(lastDoc)
@@ -469,14 +477,14 @@ class Database {
     return userData;
   }
 
-  Future getComments(pid) async {
+  Stream getComments(pid) {
     print("Firing getComments");
 
     return postCol
         .doc(pid)
         .collection('comments')
         .orderBy('dateCreated', descending: true)
-        .get();
+        .snapshots();
   }
 
   Future getAllTasks() async {
@@ -728,7 +736,27 @@ class Database {
   Future addTrackerTask(TrackerTaskModel tracker) async {
     print("Firing addNewTracker");
 
-    await userDoc.collection('trackers').add(tracker.toJson());
+    await userDoc
+        .collection('trackers')
+        .add(tracker.toJson())
+        .then((doc) async {
+      if (tracker.reminder != null) {
+        print(doc.id.hashCode);
+
+        DateTime reminder = tracker.reminder!;
+        await NotificationService().showTrackerDailyNotification(
+          doc.id.hashCode,
+          'DAILY REMINDER: ${tracker.title}',
+          'Keep going, you\'ll get there eventually!',
+          reminder,
+        );
+      } else {
+        await NotificationService()
+            .flutterLocalNotificationsPlugin
+            .cancel(doc.id.hashCode);
+      }
+      print('Nice');
+    });
   }
 
   Future editTrackerTask(TrackerTaskModel tracker, tid) async {
@@ -738,6 +766,23 @@ class Database {
         .collection('trackers')
         .doc(tid)
         .update(tracker.toJson())
+        .then((doc) async {
+          if (tracker.reminder != null) {
+            print(tid.hashCode);
+
+            DateTime reminder = tracker.reminder!;
+            await NotificationService().showTrackerDailyNotification(
+              tid.hashCode,
+              'DAILY REMINDER: ${tracker.title}',
+              'Keep going, you\'ll get there eventually!',
+              reminder,
+            );
+          } else {
+            await NotificationService()
+                .flutterLocalNotificationsPlugin
+                .cancel(tid.hashCode);
+          }
+        })
         .whenComplete(() => print("Done"))
         .catchError((e) => print(e));
   }

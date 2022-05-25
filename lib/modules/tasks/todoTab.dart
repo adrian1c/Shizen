@@ -246,10 +246,9 @@ class TodoTaskDisplay extends StatelessWidget {
                                       Provider.of<TabProvider>(context,
                                               listen: false)
                                           .rebuildPage('todo');
-                                      // StyledSnackbar(
-                                      //         message:
-                                      //             'Congratulations! I\'m proud of you')
-                                      //     .showSuccess();
+                                      Provider.of<TabProvider>(context,
+                                              listen: false)
+                                          .rebuildPage('progress');
                                     },
                                   ),
                                   Text(taskList[index]['task'],

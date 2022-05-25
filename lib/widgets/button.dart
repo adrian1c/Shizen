@@ -14,7 +14,7 @@ class CancelButton extends StatelessWidget {
       onPressed: () => Navigator.of(context).pop(),
       child: Text(Words.cancelButton,
           style: TextStyle(
-              color: Color.fromARGB(255, 255, 93, 93),
+              color: CustomTheme.cancelText,
               fontSize: 15.sp,
               fontWeight: FontWeight.w600)),
     );

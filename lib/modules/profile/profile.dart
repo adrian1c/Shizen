@@ -675,10 +675,13 @@ class ProfilePosts extends HookWidget {
                       itemCount: 10,
                       itemBuilder: (context, index) {
                         return Container(
-                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            margin: const EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 15),
                             width: 80.w,
-                            height: 30.h,
-                            color: Colors.white);
+                            height: 40.h,
+                            decoration: BoxDecoration(
+                                color: Theme.of(context).backgroundColor,
+                                borderRadius: BorderRadius.circular(20)));
                       }),
                 ),
         ],

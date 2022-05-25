@@ -401,78 +401,81 @@ class FriendsListTile extends StatelessWidget {
           boxShadow: CustomTheme.boxShadow,
         ),
         child: Center(
-          child: ListTile(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return Scaffold(
-                    appBar: AppBar(
-                      title: Text('${friend['name']}\'s Profile'),
-                      centerTitle: true,
-                    ),
-                    body: ProfilePage(viewId: friend.id));
-              }));
-            },
-            leading: Padding(
-              padding: const EdgeInsets.only(right: 10.0),
-              child: CircleAvatar(
-                foregroundImage: friend['image'] != ''
-                    ? CachedNetworkImageProvider(friend['image'])
-                    : Images.defaultPic.image,
-                backgroundColor: Colors.grey,
-                radius: 3.h,
-              ),
-            ),
-            title: Text(
-              "${friend["name"]}",
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  color: Theme.of(context).primaryColorDark, fontSize: 20.sp),
-            ),
-            subtitle: Text(
-              "${friend["email"]}",
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  color: Theme.of(context).primaryColorDark, fontSize: 13.sp),
-            ),
-            trailing: IconButton(
-              color: Theme.of(context).primaryColorDark,
-              onPressed: () {
-                StyledPopup(
-                  context: context,
-                  title: 'Actions',
-                  children: [
-                    Divider(),
-                    TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return Scaffold(
-                                appBar: AppBar(
-                                  title: Text('${friend['name']}\'s Profile'),
-                                  centerTitle: true,
-                                ),
-                                body: ProfilePage(viewId: friend.id));
-                          }));
-                        },
-                        child: Text("View Profile")),
-                    TextButton(
-                        onPressed: () async {
-                          await Database(uid).declineFriendReq(friend.id);
-
-                          Navigator.pop(context);
-                        },
-                        child: Text("Remove Friend")),
-                  ],
-                  cancelText: 'Done',
-                ).showPopup();
+          child: Material(
+            type: MaterialType.transparency,
+            child: ListTile(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return Scaffold(
+                      appBar: AppBar(
+                        title: Text('${friend['name']}\'s Profile'),
+                        centerTitle: true,
+                      ),
+                      body: ProfilePage(viewId: friend.id));
+                }));
               },
-              icon: Icon(Icons.more_horiz),
+              leading: Padding(
+                padding: const EdgeInsets.only(right: 10.0),
+                child: CircleAvatar(
+                  foregroundImage: friend['image'] != ''
+                      ? CachedNetworkImageProvider(friend['image'])
+                      : Images.defaultPic.image,
+                  backgroundColor: Colors.grey,
+                  radius: 3.h,
+                ),
+              ),
+              title: Text(
+                "${friend["name"]}",
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: Theme.of(context).primaryColorDark, fontSize: 20.sp),
+              ),
+              subtitle: Text(
+                "${friend["email"]}",
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: Theme.of(context).primaryColorDark, fontSize: 13.sp),
+              ),
+              trailing: IconButton(
+                color: Theme.of(context).primaryColorDark,
+                onPressed: () {
+                  StyledPopup(
+                    context: context,
+                    title: 'Actions',
+                    children: [
+                      Divider(),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) {
+                              return Scaffold(
+                                  appBar: AppBar(
+                                    title: Text('${friend['name']}\'s Profile'),
+                                    centerTitle: true,
+                                  ),
+                                  body: ProfilePage(viewId: friend.id));
+                            }));
+                          },
+                          child: Text("View Profile")),
+                      TextButton(
+                          onPressed: () async {
+                            await Database(uid).declineFriendReq(friend.id);
+
+                            Navigator.pop(context);
+                          },
+                          child: Text("Remove Friend")),
+                    ],
+                    cancelText: 'Done',
+                  ).showPopup();
+                },
+                icon: Icon(Icons.more_horiz),
+              ),
+              horizontalTitleGap: 0,
+              tileColor: Theme.of(context).backgroundColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
-            horizontalTitleGap: 0,
-            tileColor: Theme.of(context).backgroundColor,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),
