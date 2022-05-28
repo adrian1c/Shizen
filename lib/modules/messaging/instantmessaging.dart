@@ -67,8 +67,10 @@ class InstantMessagingPage extends HookWidget {
                                           const EdgeInsets.only(right: 10.0),
                                       child: CircleAvatar(
                                         foregroundImage:
-                                            CachedNetworkImageProvider(
-                                                friend['user']['image']),
+                                            friend['user']['image'] != ''
+                                                ? CachedNetworkImageProvider(
+                                                    friend['user']['image'])
+                                                : Images.defaultPic.image,
                                         backgroundColor: Colors.grey,
                                         radius: 3.h,
                                       ),
@@ -264,7 +266,7 @@ class ChatPage extends HookWidget {
           resumeCallBack: () async => await Database(uid).chattingWith(peerId));
       WidgetsBinding.instance!.addObserver(observer);
 
-      stream.listen(
+      final sub = stream.listen(
         (event) {
           if (event.docs.length > 0) {
             msgs.value.add(event.docs[0].data());
@@ -273,6 +275,7 @@ class ChatPage extends HookWidget {
       );
       return () {
         WidgetsBinding.instance!.removeObserver(observer);
+        sub.cancel();
       };
     }, []);
 

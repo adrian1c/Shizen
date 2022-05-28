@@ -43,11 +43,13 @@ class StyledInputField {
       {Key? key,
       required this.hintText,
       required this.controller,
-      this.inputValue});
+      this.inputValue,
+      this.callback});
 
   final String hintText;
   final TextEditingController controller;
   final inputValue;
+  final callback;
 
   inputDecoration() {
     return InputDecoration(
@@ -67,12 +69,13 @@ class StyledInputField {
           color: Colors.grey[400],
           iconSize: 20,
           padding: EdgeInsets.only(right: 20),
-          onPressed: () {
-            controller.clear();
-            if (inputValue != null) {
-              inputValue.value = '';
-            }
-          },
+          onPressed: callback ??
+              () {
+                controller.clear();
+                if (inputValue != null) {
+                  inputValue.value = '';
+                }
+              },
           icon: Icon(Icons.cancel)),
       suffixIconConstraints:
           BoxConstraints(minHeight: 35, maxHeight: 35, maxWidth: 25),

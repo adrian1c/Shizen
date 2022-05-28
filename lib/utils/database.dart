@@ -347,53 +347,40 @@ class Database {
     return;
   }
 
-  Future<List<Map<String, dynamic>>> getCommunityPost(filter, hashtag,
-      [loadMore = false, lastDoc]) async {
+  Future getCommunityPost(filter, hashtag, [loadMore = false, lastDoc]) async {
     // Can add parameter for lazy loading, count number of reloads then
     //postIds sublist accordingly
     print("Firing getCommunityPost");
 
     List<Map<String, dynamic>> results = [];
+    QuerySnapshot<Map<String, dynamic>> query;
 
     switch (filter) {
       case 'Everyone':
-        if (hashtag != '') {
-          if (!loadMore) {
-            QuerySnapshot<Map<String, dynamic>> query = await postCol
-                .where('hashtags', arrayContains: hashtag)
-                .orderBy('dateCreated', descending: true)
-                .limit(5)
-                .get();
-            query.docs.forEach((doc) {
-              var data = doc.data();
-              data['postId'] = doc.id;
-              results.add(data);
-            });
-          } else {
-            QuerySnapshot<Map<String, dynamic>> query = await postCol
-                .where('hashtags', arrayContains: hashtag)
-                .orderBy('dateCreated', descending: true)
-                .startAfter(lastDoc)
-                .limit(5)
-                .get();
-            query.docs.forEach((doc) {
-              var data = doc.data();
-              data['postId'] = doc.id;
-              results.add(data);
-            });
-          }
+        if (!loadMore) {
+          query = await postCol
+              .orderBy('dateCreated', descending: true)
+              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+              .limit(10)
+              .get();
         } else {
-          QuerySnapshot<Map<String, dynamic>> query =
-              await postCol.orderBy('dateCreated', descending: true).get();
-          query.docs.forEach((doc) {
-            var data = doc.data();
-            data['postId'] = doc.id;
-            if (data['uid'] != uid) {
-              results.add(data);
-            }
-          });
+          query = await postCol
+              .orderBy('dateCreated', descending: true)
+              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+              .limit(10)
+              .startAfterDocument(lastDoc!)
+              .get();
         }
-        return results;
+        if (query.docs.length > 0) {
+          lastDoc = query.docs.last;
+        }
+        query.docs.forEach((doc) {
+          var data = doc.data();
+          data['postId'] = doc.id;
+          results.add(data);
+        });
+        return [results, lastDoc];
+
       case 'Friends Only':
         var ids = await userDoc.get().then((value) => value.data());
         if (!ids!.containsKey('friendFeed')) return results;
@@ -408,60 +395,49 @@ class Database {
         }
 
         for (var element in chunks) {
-          if (hashtag != '') {
-            await postCol
-                .where(FieldPath.documentId, whereIn: element)
-                .where('hashtags', arrayContains: hashtag)
-                .get()
-                .then((value) {
-              value.docs.forEach((doc) {
-                var data = doc.data();
-                data['postId'] = doc.id;
-                results.add(data);
-              });
+          await postCol
+              .where(FieldPath.documentId, whereIn: element)
+              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+              .limit(10)
+              .get()
+              .then((value) {
+            value.docs.forEach((doc) {
+              var data = doc.data();
+              data['postId'] = doc.id;
+              results.add(data);
             });
-          } else {
-            await postCol
-                .where(FieldPath.documentId, whereIn: element)
-                .get()
-                .then((value) {
-              value.docs.forEach((doc) {
-                var data = doc.data();
-                data['postId'] = doc.id;
-                results.add(data);
-              });
-            });
-          }
+          });
         }
         results.sort((a, b) => b['dateCreated'].compareTo(a['dateCreated']));
-        return results;
+        return [results, lastDoc];
       case 'Anonymous':
-        if (hashtag != '') {
-          QuerySnapshot<Map<String, dynamic>> query = await postCol
+        if (!loadMore) {
+          query = await postCol
               .where('visibility', isEqualTo: filter)
-              .where('hashtags', arrayContains: hashtag)
+              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+              .limit(10)
               .get();
-          query.docs.forEach((doc) {
-            var data = doc.data();
-            data['postId'] = doc.id;
-            results.add(data);
-          });
         } else {
-          QuerySnapshot<Map<String, dynamic>> query = await postCol
-              .where('uid', isNotEqualTo: uid)
+          query = await postCol
               .where('visibility', isEqualTo: filter)
+              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+              .limit(10)
+              .startAfterDocument(lastDoc!)
               .get();
-          query.docs.forEach((doc) {
-            var data = doc.data();
-            data['postId'] = doc.id;
-            results.add(data);
-          });
         }
+        if (query.docs.length > 0) {
+          lastDoc = query.docs.last;
+        }
+        query.docs.forEach((doc) {
+          var data = doc.data();
+          data['postId'] = doc.id;
+          results.add(data);
+        });
         await Future.delayed(Duration(seconds: 1));
-        return results;
+        return [results, lastDoc];
     }
     await Future.delayed(Duration(seconds: 1));
-    return results;
+    return [results, lastDoc];
   }
 
   Future postComment(pid, commentText) async {

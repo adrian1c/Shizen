@@ -108,9 +108,6 @@ class NotificationService {
     }
     tz.TZDateTime scheduledDate = tz.TZDateTime.now(tz.local).add(
         Duration(seconds: DateTime.now().difference(dateTime).inSeconds.abs()));
-
-    print(now);
-    print(scheduledDate);
     await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,

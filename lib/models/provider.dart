@@ -146,6 +146,7 @@ class TabProvider extends ChangeNotifier {
   int profileTracker = 0;
   int profileTodo = 0;
   int profilePosts = 0;
+  bool communityLoad = false;
 
   void changeTabPage(index) {
     selectedIndex = index;
@@ -160,6 +161,11 @@ class TabProvider extends ChangeNotifier {
   void resetPageIndex() {
     selectedIndex = 0;
     pageController.jumpToPage(selectedIndex);
+  }
+
+  void rebuildCommunity() {
+    communityLoad = !communityLoad;
+    notifyListeners();
   }
 
   void rebuildPage(page) {

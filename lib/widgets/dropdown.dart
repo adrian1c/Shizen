@@ -95,3 +95,34 @@ class VisibilityItem extends StatelessWidget {
     );
   }
 }
+
+class Dropdown2 extends StatelessWidget {
+  const Dropdown2(
+      {Key? key,
+      required this.items,
+      required this.callback,
+      required this.visibilityValue})
+      : super(key: key);
+
+  final List<String> items;
+  final callback;
+  final ValueNotifier<String> visibilityValue;
+
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40.w,
+      height: 5.h,
+      child: DropdownButton(
+        isExpanded: true,
+        value: visibilityValue.value,
+        onChanged: callback,
+        items: items.map((location) {
+          return DropdownMenuItem(
+            child: new Text(location),
+            value: location,
+          );
+        }).toList(),
+      ),
+    );
+  }
+}

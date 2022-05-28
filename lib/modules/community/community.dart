@@ -17,133 +17,160 @@ class CommunityPage extends HookWidget {
   CommunityPage({Key? key}) : super(key: key);
 
   final List<String> items = [
-    'Friends Only',
     'Everyone',
+    'Friends Only',
     'Anonymous',
   ];
 
+  loadMorePosts(
+      uid, visibilityValue, hashtagValue, postsList, loadMore, lastDoc) async {
+    var newPosts = await Database(uid).getCommunityPost(
+        visibilityValue.value, hashtagValue.value, true, lastDoc.value);
+    if (newPosts[0].isEmpty) {
+      loadMore.value = false;
+      lastDoc.value = null;
+      return;
+    }
+
+    postsList.value.addAll(newPosts[0]);
+    lastDoc.value = newPosts[1];
+    print('Done');
+
+    return;
+  }
+
   @override
   Widget build(BuildContext context) {
+    print(items);
     String uid = Provider.of<UserProvider>(context).user.uid;
     final hashtagController = useTextEditingController();
     final visibilityValue = useState('Everyone');
     final hashtagValue = useState('');
     final isFocus = useFocusNode();
-    isFocus.addListener(() {
-      if (isFocus.hasFocus != true) {
-        hashtagValue.value = hashtagController.text;
-      }
-    });
+    final scrollController = useScrollController();
+    final loadMore = useState(true);
+    final posts = useState([]);
+    final initialLoad = useState(false);
+    final ValueNotifier<DocumentSnapshot?> lastDoc = useState(null);
 
-    return Stack(
-        fit: StackFit.expand,
-        alignment: Alignment.topCenter,
-        children: [
-          CustomScrollView(
-            physics: BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                automaticallyImplyLeading: false,
-                pinned: false,
-                snap: false,
-                floating: true,
-                flexibleSpace: Container(
-                  decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .scaffoldBackgroundColor
-                          .withAlpha(235)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Dropdown(
-                            items: items,
-                            value: visibilityValue,
-                            onItemSelected: (String value) {
-                              visibilityValue.value = value;
-                            }),
-                        HashtagFilter(
-                          hashtagController: hashtagController,
-                          hashtagValue: hashtagValue,
-                          isFocus: isFocus,
-                        ),
-                      ],
+    final future = useMemoized(
+        () => Database(uid)
+            .getCommunityPost(visibilityValue.value, hashtagValue.value),
+        [visibilityValue.value, hashtagValue.value]);
+    final snapshot = useFuture(future);
+
+    useEffect(() {
+      isFocus.addListener(() {
+        if (isFocus.hasFocus != true) {
+          hashtagValue.value = hashtagController.text;
+        }
+      });
+
+      scrollController.addListener(() {
+        if (scrollController.position.pixels ==
+            scrollController.position.maxScrollExtent) {
+          if (loadMore.value) {
+            loadMorePosts(
+                uid, visibilityValue, hashtagValue, posts, loadMore, lastDoc);
+          }
+        }
+      });
+
+      return;
+    }, []);
+
+    print(posts.value.length);
+    print(initialLoad.value);
+
+    if (snapshot.hasData && snapshot.connectionState == ConnectionState.done) {
+      if (!initialLoad.value) {
+        posts.value = snapshot.data![0];
+        lastDoc.value = snapshot.data![1];
+        initialLoad.value = true;
+      }
+      return Stack(
+          fit: StackFit.expand,
+          alignment: Alignment.topCenter,
+          children: [
+            CustomScrollView(
+              controller: scrollController,
+              slivers: [
+                SliverAppBar(
+                  automaticallyImplyLeading: false,
+                  pinned: false,
+                  snap: false,
+                  floating: true,
+                  flexibleSpace: Container(
+                    decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .scaffoldBackgroundColor
+                            .withAlpha(235)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Dropdown2(
+                              items: items,
+                              visibilityValue: visibilityValue,
+                              callback: (String? value) {
+                                if (visibilityValue.value == value) {
+                                  return;
+                                }
+                                posts.value = [];
+                                initialLoad.value = false;
+                                loadMore.value = true;
+                                visibilityValue.value = value!;
+                              }),
+                          HashtagFilter(
+                            hashtagController: hashtagController,
+                            hashtagValue: hashtagValue,
+                            isFocus: isFocus,
+                            posts: posts,
+                            initialLoad: initialLoad,
+                            loadMore: loadMore,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                return CommunityPostList(
-                  visibilityValue: visibilityValue,
-                  hashtag: hashtagValue,
-                  hashtagController: hashtagController,
-                );
-              }, childCount: 1))
-            ],
-          ),
-        ]);
-  }
-}
-
-class CommunityPostList extends HookWidget {
-  CommunityPostList({
-    Key? key,
-    required this.visibilityValue,
-    this.hashtag,
-    this.hashtagController,
-  }) : super(key: key);
-
-  final visibilityValue;
-  final hashtag;
-  final hashtagController;
-
-  @override
-  Widget build(BuildContext context) {
-    final String uid = Provider.of<UserProvider>(context).user.uid;
-    final future = useMemoized(
-        () => Database(uid)
-            .getCommunityPost(visibilityValue.value, hashtag.value),
-        [visibilityValue.value, hashtag.value]);
-    final snapshot = useFuture(future);
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Padding(
-        padding: const EdgeInsets.all(30),
-        child: SpinKitWanderingCubes(
-            color: Theme.of(context).primaryColor, size: 75),
-      );
+                SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: BouncingScrollPhysics(),
+                    itemCount: posts.value.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == posts.value.length && loadMore.value) {
+                        return Padding(
+                          padding: const EdgeInsets.all(15.0),
+                          child: SpinKitWanderingCubes(
+                              color: Theme.of(context).primaryColor, size: 75),
+                        );
+                      }
+                      if (index == posts.value.length &&
+                          loadMore.value == false) {
+                        return Center(child: Text('----- NO MORE POSTS -----'));
+                      }
+                      return PostListTile(
+                        postData: posts.value[index],
+                        hashtag: hashtagValue,
+                        hashtagController: hashtagController,
+                        posts: posts,
+                        initialLoad: initialLoad,
+                        loadMore: loadMore,
+                      );
+                    },
+                  );
+                }, childCount: 1))
+              ],
+            ),
+          ]);
     }
-    if (snapshot.hasData) {
-      return Container(
-          child: snapshot.data!.length > 0
-              ? ListView.builder(
-                  physics: BouncingScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    return PostListTile(
-                      postData: snapshot.data![index],
-                      hashtag: hashtag,
-                      hashtagController: hashtagController,
-                    );
-                  })
-              : Center(
-                  child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Text(
-                    'No posts found. \nConsider switching the visibility or using a different hashtag.',
-                    textAlign: TextAlign.center,
-                  ),
-                )));
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(30),
-      child: SpinKitWanderingCubes(
-          color: Theme.of(context).primaryColor, size: 75),
-    );
+    return SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor, size: 75);
   }
 }
 
@@ -154,12 +181,18 @@ class PostListTile extends HookWidget {
     this.hashtag,
     this.hashtagController,
     this.isProfile = false,
+    this.posts,
+    this.initialLoad,
+    this.loadMore,
   }) : super(key: key);
 
   final postData;
   final hashtag;
   final hashtagController;
   final isProfile;
+  final posts;
+  final initialLoad;
+  final loadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -536,6 +569,9 @@ class PostListTile extends HookWidget {
                         onTap: isProfile
                             ? () {}
                             : () {
+                                posts.value = [];
+                                initialLoad.value = false;
+                                loadMore.value = true;
                                 hashtag.value = postData['hashtags'][index];
                                 hashtagController.text =
                                     postData['hashtags'][index];
@@ -683,11 +719,17 @@ class HashtagFilter extends StatelessWidget {
     required this.hashtagController,
     required this.hashtagValue,
     required this.isFocus,
+    required this.posts,
+    required this.initialLoad,
+    required this.loadMore,
   }) : super(key: key);
 
   final TextEditingController hashtagController;
   final hashtagValue;
   final isFocus;
+  final posts;
+  final initialLoad;
+  final loadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -700,11 +742,20 @@ class HashtagFilter extends StatelessWidget {
           LengthLimitingTextInputFormatter(20),
         ],
         decoration: StyledInputField(
-                hintText: '# Search...',
-                controller: hashtagController,
-                inputValue: hashtagValue)
-            .inputDecoration(),
+            hintText: '# Search...',
+            controller: hashtagController,
+            inputValue: hashtagValue,
+            callback: () {
+              posts.value = [];
+              initialLoad.value = false;
+              loadMore.value = true;
+              hashtagValue.value = '';
+              hashtagController.clear();
+            }).inputDecoration(),
         onFieldSubmitted: (value) {
+          posts.value = [];
+          initialLoad.value = false;
+          loadMore.value = true;
           hashtagValue.value = value;
         },
       ),
