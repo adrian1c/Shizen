@@ -112,16 +112,26 @@ class Dropdown2 extends StatelessWidget {
     return SizedBox(
       width: 40.w,
       height: 5.h,
-      child: DropdownButton(
-        isExpanded: true,
-        value: visibilityValue.value,
-        onChanged: callback,
-        items: items.map((location) {
-          return DropdownMenuItem(
-            child: new Text(location),
-            value: location,
-          );
-        }).toList(),
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: Theme.of(context).backgroundColor,
+          border: Border.all(color: Theme.of(context).primaryColor),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: DropdownButton(
+          elevation: 0,
+          isExpanded: true,
+          value: visibilityValue.value,
+          onChanged: callback,
+          underline: Container(color: Colors.transparent),
+          items: items.map((location) {
+            return DropdownMenuItem(
+              child: new Text(location),
+              value: location,
+            );
+          }).toList(),
+        ),
       ),
     );
   }

@@ -13,6 +13,7 @@ class TaskPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('Task page b');
     var tabController = useTabController(
       initialLength: 2,
       initialIndex: 0,

@@ -37,6 +37,7 @@ class FriendsPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('Fren page b');
     String uid = Provider.of<UserProvider>(context).user.uid;
     final isExpanded = useState(false);
     final searchController = useTextEditingController();

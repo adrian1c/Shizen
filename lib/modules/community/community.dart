@@ -41,7 +41,6 @@ class CommunityPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(items);
     String uid = Provider.of<UserProvider>(context).user.uid;
     final hashtagController = useTextEditingController();
     final visibilityValue = useState('Everyone');
@@ -78,9 +77,6 @@ class CommunityPage extends HookWidget {
 
       return;
     }, []);
-
-    print(posts.value.length);
-    print(initialLoad.value);
 
     if (snapshot.hasData && snapshot.connectionState == ConnectionState.done) {
       if (!initialLoad.value) {
@@ -138,32 +134,36 @@ class CommunityPage extends HookWidget {
                 ),
                 SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: BouncingScrollPhysics(),
-                    itemCount: posts.value.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == posts.value.length && loadMore.value) {
-                        return Padding(
-                          padding: const EdgeInsets.all(15.0),
-                          child: SpinKitWanderingCubes(
-                              color: Theme.of(context).primaryColor, size: 75),
-                        );
-                      }
-                      if (index == posts.value.length &&
-                          loadMore.value == false) {
-                        return Center(child: Text('----- NO MORE POSTS -----'));
-                      }
-                      return PostListTile(
-                        postData: posts.value[index],
-                        hashtag: hashtagValue,
-                        hashtagController: hashtagController,
-                        posts: posts,
-                        initialLoad: initialLoad,
-                        loadMore: loadMore,
-                      );
-                    },
-                  );
+                  return posts.value.length > 0
+                      ? ListView.builder(
+                          shrinkWrap: true,
+                          physics: BouncingScrollPhysics(),
+                          itemCount: posts.value.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == posts.value.length && loadMore.value) {
+                              return Padding(
+                                padding: const EdgeInsets.all(15.0),
+                                child: SpinKitWanderingCubes(
+                                    color: Theme.of(context).primaryColor,
+                                    size: 75),
+                              );
+                            }
+                            if (index == posts.value.length &&
+                                loadMore.value == false) {
+                              return Center(
+                                  child: Text('----- NO MORE POSTS -----'));
+                            }
+                            return PostListTile(
+                              postData: posts.value[index],
+                              hashtag: hashtagValue,
+                              hashtagController: hashtagController,
+                              posts: posts,
+                              initialLoad: initialLoad,
+                              loadMore: loadMore,
+                            );
+                          },
+                        )
+                      : Center(child: Text('No posts found.'));
                 }, childCount: 1))
               ],
             ),
