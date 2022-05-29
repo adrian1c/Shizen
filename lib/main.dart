@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/loaderOverlay.dart';
@@ -11,10 +10,8 @@ import './modules/signup/signup.dart';
 import './modules/login/login.dart';
 import './mainScaffoldStack.dart';
 import 'package:loader_overlay/loader_overlay.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shizen_app/utils/notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

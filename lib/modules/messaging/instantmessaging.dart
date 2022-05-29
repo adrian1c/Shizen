@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:intl/intl.dart';
-import 'package:sticky_grouped_list/sticky_grouped_list.dart';
+import 'package:grouped_list/grouped_list.dart';
 
 class InstantMessagingPage extends HookWidget {
   const InstantMessagingPage({Key? key}) : super(key: key);
@@ -234,19 +234,22 @@ class ChatPage extends HookWidget {
   final peerId;
   final peerName;
 
-  Future loadMoreMsgs(uid, chatId, currentMsgList, lastMsgDoc) async {
-    var hasMoreData = true;
-    var newBatchOfMsgs = await Database(uid).loadMoreMsgs(chatId, lastMsgDoc);
-    print(newBatchOfMsgs.docs.length);
+  Future loadMoreMsgs(
+      uid, chatId, currentMsgList, lastMsgDoc, hasMoreData) async {
+    var newBatchOfMsgs =
+        await Database(uid).loadMoreMsgs(chatId, lastMsgDoc.value);
+    var tempMsgList = [];
     if (newBatchOfMsgs.docs.length != 0) {
-      currentMsgList.addAll(List<Map>.from(
-          newBatchOfMsgs.docs.map((doc) => Map.from(doc.data()))));
-      lastMsgDoc = newBatchOfMsgs.docs.last;
-      if (newBatchOfMsgs.docs.length < 15) {
-        hasMoreData = false;
-      }
+      tempMsgList = List<Map>.from(
+          newBatchOfMsgs.docs.map((doc) => Map.from(doc.data())));
+      currentMsgList.value.addAll(tempMsgList);
+      lastMsgDoc.value = newBatchOfMsgs.docs.last;
     }
-    return [currentMsgList, lastMsgDoc, hasMoreData];
+
+    if (newBatchOfMsgs.docs.length < 15) {
+      hasMoreData.value = false;
+    }
+    return;
   }
 
   @override
@@ -254,17 +257,31 @@ class ChatPage extends HookWidget {
     final ValueNotifier<List<Map<dynamic, dynamic>>> msgs = useState([]);
     final ValueNotifier<DocumentSnapshot?> lastMsg = useState(null);
     final initialLoad = useState(false);
+    final loadMore = useState(true);
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final chatId =
         (uid.hashCode <= peerId.hashCode) ? '$uid-$peerId' : '$peerId-$uid';
     final stream = useMemoized(() => Database(uid).getMessages(chatId), []);
     final messageStream = useStream(stream);
     final msgController = useTextEditingController();
+    final scrollController = useScrollController();
+    final focusNode = useFocusNode();
+    final focusValue = useState(false);
+
     useEffect(() {
       final observer = MyObserver(
           detachedCallBack: () async => await Database(uid).chattingWith(null),
           resumeCallBack: () async => await Database(uid).chattingWith(peerId));
       WidgetsBinding.instance!.addObserver(observer);
+
+      scrollController.addListener(() {
+        if (scrollController.position.pixels ==
+            scrollController.position.maxScrollExtent) {
+          if (loadMore.value) {
+            loadMoreMsgs(uid, chatId, msgs, lastMsg, loadMore);
+          }
+        }
+      });
 
       final sub = stream.listen(
         (event) {
@@ -273,6 +290,14 @@ class ChatPage extends HookWidget {
           }
         },
       );
+
+      focusNode.addListener(() {
+        if (focusNode.hasFocus) {
+          focusValue.value = true;
+        } else {
+          focusValue.value = false;
+        }
+      });
       return () {
         WidgetsBinding.instance!.removeObserver(observer);
         sub.cancel();
@@ -298,16 +323,6 @@ class ChatPage extends HookWidget {
           appBar: AppBar(
             title: Text(peerName),
             centerTitle: true,
-            actions: [
-              TextButton(
-                  onPressed: () async {
-                    var results = await loadMoreMsgs(
-                        uid, chatId, msgs.value, lastMsg.value);
-                    msgs.value = results[0];
-                    lastMsg.value = results[1];
-                  },
-                  child: Text('Test'))
-            ],
           ),
           body: WillPopScope(
             onWillPop: () {
@@ -319,15 +334,15 @@ class ChatPage extends HookWidget {
               Expanded(
                 child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: StickyGroupedListView(
-                      itemScrollController: GroupedItemScrollController(),
+                    child: GroupedListView(
                       shrinkWrap: true,
+                      controller: scrollController,
                       elements: msgs.value,
                       groupBy: (Map element) => DateTime(
                           (element['dateCreated'] as Timestamp).toDate().year,
                           (element['dateCreated'] as Timestamp).toDate().month,
                           (element['dateCreated'] as Timestamp).toDate().day),
-                      groupSeparatorBuilder: (Map element) {
+                      groupHeaderBuilder: (Map element) {
                         var formattedDate = '';
                         final elementDate =
                             (element['dateCreated'] as Timestamp).toDate();
@@ -351,7 +366,7 @@ class ChatPage extends HookWidget {
                             alignment: Alignment.center,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Color.fromARGB(99, 114, 133, 143),
+                                color: Color.fromARGB(170, 114, 133, 143),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10.0)),
                               ),
@@ -389,14 +404,13 @@ class ChatPage extends HookWidget {
                                                   as Timestamp)
                                               .toDate())
                                           .toString(),
-                                      style: TextStyle(fontSize: 12.sp)),
+                                      style: TextStyle(fontSize: 10.sp)),
                                 ),
                                 Flexible(
                                   child: Container(
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
-                                          color:
-                                              Color.fromARGB(255, 90, 134, 170),
+                                          color: CustomTheme.sentMsg,
                                           borderRadius: BorderRadius.only(
                                               topLeft: Radius.circular(15),
                                               topRight: Radius.circular(15),
@@ -420,8 +434,7 @@ class ChatPage extends HookWidget {
                                 child: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                        color:
-                                            Color.fromARGB(255, 126, 180, 109),
+                                        color: CustomTheme.receivedMsg,
                                         borderRadius: BorderRadius.only(
                                             topLeft: Radius.circular(15),
                                             topRight: Radius.circular(15),
@@ -439,47 +452,64 @@ class ChatPage extends HookWidget {
                                                 as Timestamp)
                                             .toDate())
                                         .toString(),
-                                    style: TextStyle(fontSize: 12.sp)),
+                                    style: TextStyle(fontSize: 10.sp)),
                               ),
                             ],
                           ),
                         );
                       },
                       reverse: true,
+                      useStickyGroupSeparators: true,
                       floatingHeader: true,
-                      order: StickyGroupedListOrder.DESC,
+                      order: GroupedListOrder.DESC,
                     )),
               ),
               Align(
                 alignment: Alignment.bottomCenter,
-                child: Container(
-                  height: 10.h,
-                  width: 100.w,
-                  alignment: Alignment.center,
-                  color: Theme.of(context).backgroundColor,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      controller: msgController,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        hintText: 'Message',
-                        suffixIcon: IconButton(
-                          onPressed: () async {
-                            if (msgController.text.length != 0) {
-                              final msg = msgController.text;
-                              msgController.clear();
-                              if (mustInitializeDoc) {
-                                await Database(uid)
-                                    .newChat(chatId, peerId)
-                                    .then((value) => mustInitializeDoc = false);
-                              }
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    focusNode: focusNode,
+                    controller: msgController,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: TextStyle(
+                        color:
+                            Theme.of(context).backgroundColor.withAlpha(200)),
+                    decoration: InputDecoration(
+                      fillColor: CustomTheme.msgBox,
+                      filled: true,
+                      contentPadding: const EdgeInsets.fromLTRB(15, 5, 10, 5),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50),
+                          borderSide:
+                              BorderSide(style: BorderStyle.none, width: 0)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(50),
+                        borderSide:
+                            const BorderSide(color: Colors.grey, width: 2.0),
+                      ),
+                      hintText: focusValue.value ? '' : 'Message',
+                      hintStyle: TextStyle(
+                          color:
+                              Theme.of(context).backgroundColor.withAlpha(100)),
+                      suffixIcon: IconButton(
+                        onPressed: () async {
+                          if (msgController.text.length != 0) {
+                            final msg = msgController.text;
+                            msgController.clear();
+                            if (mustInitializeDoc) {
                               await Database(uid)
-                                  .sendMessage(chatId, msg, uid, peerId);
+                                  .newChat(chatId, peerId)
+                                  .then((value) => mustInitializeDoc = false);
                             }
-                          },
-                          icon: Icon(Icons.send),
-                        ),
+                            await Database(uid)
+                                .sendMessage(chatId, msg, uid, peerId);
+                          }
+                        },
+                        icon: Icon(Icons.send,
+                            color: focusValue.value
+                                ? CustomTheme.msgIcon
+                                : CustomTheme.msgIcon.withAlpha(100)),
                       ),
                     ),
                   ),

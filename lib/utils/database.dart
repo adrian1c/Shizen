@@ -168,12 +168,26 @@ class Database {
     print("Firing sendFriendReq");
 
     Map<String, dynamic> senderData = {'status': 1};
-    await getCurrentUserData()
-        .then((value) => senderData.addAll(value.data()!));
+    await getCurrentUserData().then((value) {
+      var data = value.data()!;
+      senderData.addAll({
+        'email': data['email'],
+        'name': data['name'],
+        'age': data['age'],
+        'image': data['image']
+      });
+    });
 
     Map<String, dynamic> receiverData = {'status': 0};
-    await getUserProfileData(user)
-        .then((value) => receiverData.addAll(value.data()!));
+    await getUserProfileData(user).then((value) {
+      var data = value.data()!;
+      receiverData.addAll({
+        'email': data['email'],
+        'name': data['name'],
+        'age': data['age'],
+        'image': data['image']
+      });
+    });
 
     var batch = firestore.batch();
     batch.set(userDoc.collection('friends').doc(user), receiverData);
@@ -189,6 +203,10 @@ class Database {
     batch.set(userDoc.collection('friends').doc(user), {'status': 2},
         SetOptions(merge: true));
     batch.set(userCol.doc(user).collection('friends').doc(uid), {'status': 2},
+        SetOptions(merge: true));
+    batch.set(userDoc, {'friendCount': FieldValue.increment(1)},
+        SetOptions(merge: true));
+    batch.set(userCol.doc(user), {'friendCount': FieldValue.increment(1)},
         SetOptions(merge: true));
     await batch.commit();
     return;
@@ -208,13 +226,57 @@ class Database {
     print("Firing removeFriend");
 
     var batch = firestore.batch();
-
+    batch.delete(userCol.doc(user).collection('friends').doc(uid));
+    batch.delete(userDoc.collection('friends').doc(user));
+    batch.set(userDoc, {'friendCount': FieldValue.increment(-1)},
+        SetOptions(merge: true));
+    batch.set(userCol.doc(user), {'friendCount': FieldValue.increment(-1)},
+        SetOptions(merge: true));
     await batch.commit();
   }
 
-  Stream getFriendsList() {
+  Future getNewFriendRequestsList() {
+    return userDoc.collection('friends').where('status', isEqualTo: 1).get();
+  }
+
+  Future getFriendsList([loadMore = false, lastDoc]) async {
     print("Firing friendsPageData");
-    return userDoc.collection('friends').snapshots();
+
+    var query;
+    var results = [];
+
+    if (!loadMore) {
+      query = await userDoc
+          .collection('friends')
+          .where('status', isEqualTo: 2)
+          .orderBy('name')
+          .limit(10)
+          .get();
+    } else {
+      query = await userDoc
+          .collection('friends')
+          .where('status', isEqualTo: 2)
+          .orderBy('name')
+          .limit(10)
+          .startAfterDocument(lastDoc!)
+          .get();
+    }
+    var friendCount = 0;
+    if (!loadMore) {
+      friendCount =
+          await userDoc.get().then((value) => value.data()?['friendCount']);
+    }
+    print(friendCount);
+    if (query.docs.length > 0) {
+      lastDoc = query.docs.last;
+    }
+    query.docs.forEach((doc) {
+      var data = doc.data();
+      data['uid'] = doc.id;
+      results.add(data);
+    });
+    print([results, friendCount, lastDoc]);
+    return [results, friendCount, lastDoc];
   }
 
   Future<Map<dynamic, dynamic>> friendsPageData() async {
@@ -284,6 +346,7 @@ class Database {
     var batch = firestore.batch();
     var newPostDoc = firestore.collection('posts').doc();
 
+    // IF visibility is EVERYONE or FRIENDS ONLY
     if (visibility != 'Anonymous') {
       await getCurrentUserData().then((value) {
         var data = value.data()!;
@@ -315,39 +378,36 @@ class Database {
     }
 
     batch.set(newPostDoc, postData);
-    if (visibility == 'Anonymous') {
-      batch.set(
-          userDoc,
-          {
-            'anonPosts': FieldValue.arrayUnion([newPostDoc.id])
-          },
-          SetOptions(merge: true));
-    }
+
+    batch.set(
+        userDoc,
+        {
+          'posts': FieldValue.arrayUnion([
+            {'postId': newPostDoc.id},
+            {'dateCreated': postData['dateCreated']}
+          ])
+        },
+        SetOptions(merge: true));
 
     if (visibility != 'Anonymous') {
       batch.set(
           userDoc,
           {
-            'posts': FieldValue.arrayUnion([newPostDoc.id])
+            'friendsOnlyPosts': FieldValue.arrayUnion([
+              {'postId': newPostDoc.id, 'dateCreated': postData['dateCreated']},
+            ])
           },
           SetOptions(merge: true));
-      List<String> friendsList = await getAllFriendsID();
-      friendsList.forEach((e) {
-        batch.set(
-            userCol.doc(e),
-            {
-              'friendFeed': FieldValue.arrayUnion([newPostDoc.id])
-            },
-            SetOptions(merge: true));
-      });
     }
+
+    // TODO: Implement cloud function to check if array is >100 length
 
     await batch.commit();
 
     return;
   }
 
-  Future getCommunityPost(filter, hashtag, [loadMore = false, lastDoc]) async {
+  Future getCommunityPostEveryone(hashtag, [loadMore = false, lastDoc]) async {
     // Can add parameter for lazy loading, count number of reloads then
     //postIds sublist accordingly
     print("Firing getCommunityPost");
@@ -355,88 +415,137 @@ class Database {
     List<Map<String, dynamic>> results = [];
     QuerySnapshot<Map<String, dynamic>> query;
 
-    switch (filter) {
-      case 'Everyone':
-        if (!loadMore) {
-          query = await postCol
-              .orderBy('dateCreated', descending: true)
-              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
-              .limit(10)
-              .get();
-        } else {
-          query = await postCol
-              .orderBy('dateCreated', descending: true)
-              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
-              .limit(10)
-              .startAfterDocument(lastDoc!)
-              .get();
-        }
-        if (query.docs.length > 0) {
-          lastDoc = query.docs.last;
-        }
-        query.docs.forEach((doc) {
-          var data = doc.data();
-          data['postId'] = doc.id;
-          results.add(data);
-        });
-        return [results, lastDoc];
-
-      case 'Friends Only':
-        var ids = await userDoc.get().then((value) => value.data());
-        if (!ids!.containsKey('friendFeed')) return results;
-        var postIds = ids['friendFeed'];
-        var chunks = [];
-        for (var i = 0; i < postIds.length; i += 10) {
-          if (i + 10 > postIds.length) {
-            chunks.add(postIds.sublist(i));
-            break;
-          }
-          chunks.add(postIds.sublist(i, i + 10));
-        }
-
-        for (var element in chunks) {
-          await postCol
-              .where(FieldPath.documentId, whereIn: element)
-              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
-              .limit(10)
-              .get()
-              .then((value) {
-            value.docs.forEach((doc) {
-              var data = doc.data();
-              data['postId'] = doc.id;
-              results.add(data);
-            });
-          });
-        }
-        results.sort((a, b) => b['dateCreated'].compareTo(a['dateCreated']));
-        return [results, lastDoc];
-      case 'Anonymous':
-        if (!loadMore) {
-          query = await postCol
-              .where('visibility', isEqualTo: filter)
-              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
-              .limit(10)
-              .get();
-        } else {
-          query = await postCol
-              .where('visibility', isEqualTo: filter)
-              .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
-              .limit(10)
-              .startAfterDocument(lastDoc!)
-              .get();
-        }
-        if (query.docs.length > 0) {
-          lastDoc = query.docs.last;
-        }
-        query.docs.forEach((doc) {
-          var data = doc.data();
-          data['postId'] = doc.id;
-          results.add(data);
-        });
-        await Future.delayed(Duration(seconds: 1));
-        return [results, lastDoc];
+    if (!loadMore) {
+      query = await postCol
+          .orderBy('dateCreated', descending: true)
+          .where('visibility', isEqualTo: 'Everyone')
+          .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+          .limit(10)
+          .get();
+    } else {
+      query = await postCol
+          .orderBy('dateCreated', descending: true)
+          .where('visibility', isEqualTo: 'Everyone')
+          .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+          .limit(10)
+          .startAfterDocument(lastDoc!)
+          .get();
     }
-    await Future.delayed(Duration(seconds: 1));
+    if (query.docs.length > 0) {
+      lastDoc = query.docs.last;
+    }
+    query.docs.forEach((doc) {
+      var data = doc.data();
+      data['postId'] = doc.id;
+      results.add(data);
+    });
+    // TODO: Add friend posts inside of everyone as well (Example: max 3 days ago)
+    return [results, lastDoc];
+  }
+
+  Future getCommunityPostFriendsOnlyFirstLoad(hashtag) async {
+    List<String> friendIds = [];
+    await userDoc
+        .collection('friends')
+        .where('status', isEqualTo: 2)
+        .get()
+        .then((value) => value.docs.forEach((element) {
+              friendIds.add(element.id);
+            }));
+
+    var postIds = [];
+    // TODO: optimization
+    for (var i = 0; i < friendIds.length; i++) {
+      await userCol.doc(friendIds[i]).get().then(
+          (value) => postIds.addAll(value.data()?['friendsOnlyPosts'] ?? []));
+
+      postIds.sort((a, b) => b['dateCreated'].compareTo(a['dateCreated']));
+    }
+
+    var posts = [];
+    var lastIndex = 0;
+
+    for (var i = 0; i < postIds.length; i++) {
+      lastIndex++;
+      if (posts.length < 10) {
+        print(postIds[i]['postId']);
+        await postCol.doc(postIds[i]['postId']).get().then((value) {
+          var currDoc = value.data();
+          if (hashtag != '') {
+            if ((currDoc!['hashtags'].firstWhere((item) => item == hashtag,
+                    orElse: () => null)) !=
+                null) {
+              print('TYRESUIO YRESOUHR');
+              currDoc['postId'] = value.id;
+              posts.add(currDoc);
+            }
+          } else {
+            currDoc!['postId'] = value.id;
+            posts.add(currDoc);
+          }
+        });
+      } else {
+        return [postIds, posts, lastIndex];
+      }
+    }
+    return [postIds, posts, lastIndex];
+  }
+
+  Future getCommunityPostFriendsOnly(postIds, hashtag, [lastIndex = 0]) async {
+    var result = [];
+    for (var i = lastIndex; i < postIds.length; i++) {
+      lastIndex++;
+      if (result.length < 10) {
+        await postCol.doc(postIds[i]['postId']).get().then((value) {
+          var currDoc = value.data();
+          if (hashtag != '') {
+            if (currDoc!['hashtags'].firstWhere((item) => item == hashtag,
+                    orElse: () => null) !=
+                null) {
+              print('ESESRESR');
+              currDoc['postId'] = value.id;
+              result.add(currDoc);
+            }
+          } else {
+            currDoc!['postId'] = value.id;
+            result.add(currDoc);
+          }
+        });
+      } else {
+        return [result, lastIndex];
+      }
+    }
+    return [result, lastIndex];
+  }
+
+  Future getCommunityPostAnonymous(hashtag, [loadMore = false, lastDoc]) async {
+    List<Map<String, dynamic>> results = [];
+    QuerySnapshot<Map<String, dynamic>> query;
+
+    if (!loadMore) {
+      query = await postCol
+          .orderBy('dateCreated', descending: true)
+          .where('visibility', isEqualTo: 'Anonymous')
+          .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+          .limit(10)
+          .get();
+    } else {
+      query = await postCol
+          .orderBy('dateCreated', descending: true)
+          .where('visibility', isEqualTo: 'Anonymous')
+          .where('hashtags', arrayContains: hashtag != '' ? hashtag : null)
+          .limit(10)
+          .startAfterDocument(lastDoc!)
+          .get();
+    }
+    if (query.docs.length > 0) {
+      lastDoc = query.docs.last;
+    }
+    query.docs.forEach((doc) {
+      var data = doc.data();
+      data['postId'] = doc.id;
+      results.add(data);
+    });
     return [results, lastDoc];
   }
 

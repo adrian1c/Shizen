@@ -37,6 +37,12 @@ class CustomTheme {
 
   static const Color cancelText = Color.fromARGB(255, 226, 65, 65);
 
+  static const Color sentMsg = Color.fromARGB(255, 93, 122, 145);
+  static const Color receivedMsg = Color.fromARGB(255, 109, 150, 98);
+
+  static const Color msgBox = Color.fromARGB(255, 54, 69, 87);
+  static const Color msgIcon = Color.fromARGB(255, 153, 166, 182);
+
   static final boxShadow = kElevationToShadow[3];
 
   static final TextTheme _lightTextTheme = TextTheme(

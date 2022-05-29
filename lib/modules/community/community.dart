@@ -9,7 +9,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:shizen_app/widgets/field.dart';
 import 'package:shizen_app/utils/dateTimeAgo.dart';
 import 'package:intl/intl.dart';
-import 'package:paginate_firestore/paginate_firestore.dart';
 
 import './addnewpost.dart';
 
@@ -22,10 +21,100 @@ class CommunityPage extends HookWidget {
     'Anonymous',
   ];
 
+  @override
+  Widget build(BuildContext context) {
+    final hashtagController = useTextEditingController();
+    final visibilityValue = useState('Everyone');
+    final hashtagValue = useState('');
+    final isFocus = useFocusNode();
+
+    useEffect(() {
+      isFocus.addListener(() {
+        if (isFocus.hasFocus != true) {
+          hashtagValue.value = hashtagController.text;
+        }
+      });
+      return;
+    }, []);
+
+    return NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              automaticallyImplyLeading: false,
+              pinned: false,
+              snap: false,
+              floating: true,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .scaffoldBackgroundColor
+                        .withAlpha(235)),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Dropdown2(
+                          items: items,
+                          visibilityValue: visibilityValue,
+                          callback: (String? value) {
+                            if (visibilityValue.value == value) {
+                              return;
+                            }
+                            visibilityValue.value = value!;
+                          }),
+                      HashtagFilter(
+                        hashtagController: hashtagController,
+                        hashtagValue: hashtagValue,
+                        isFocus: isFocus,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          ];
+        },
+        body: visibilityValue.value == 'Everyone'
+            ? EveryoneList(
+                visibilityValue: visibilityValue,
+                hashtagValue: hashtagValue,
+                hashtagController: hashtagController,
+              )
+            : visibilityValue.value == 'Friends Only'
+                ? FriendsOnlyList(
+                    visibilityValue: visibilityValue,
+                    hashtagValue: hashtagValue,
+                    hashtagController: hashtagController,
+                  )
+                : visibilityValue.value == 'Anonymous'
+                    ? AnonymousList(
+                        visibilityValue: visibilityValue,
+                        hashtagValue: hashtagValue,
+                        hashtagController: hashtagController,
+                      )
+                    : Center(child: Text('No posts found')));
+  }
+}
+
+class EveryoneList extends HookWidget {
+  const EveryoneList({
+    Key? key,
+    required this.visibilityValue,
+    required this.hashtagValue,
+    required this.hashtagController,
+  }) : super(key: key);
+
+  final ValueNotifier<String> visibilityValue;
+  final ValueNotifier<String> hashtagValue;
+  final TextEditingController hashtagController;
+
   loadMorePosts(
       uid, visibilityValue, hashtagValue, postsList, loadMore, lastDoc) async {
-    var newPosts = await Database(uid).getCommunityPost(
-        visibilityValue.value, hashtagValue.value, true, lastDoc.value);
+    var newPosts = await Database(uid)
+        .getCommunityPostEveryone(hashtagValue.value, true, lastDoc.value);
     if (newPosts[0].isEmpty) {
       loadMore.value = false;
       lastDoc.value = null;
@@ -34,7 +123,6 @@ class CommunityPage extends HookWidget {
 
     postsList.value.addAll(newPosts[0]);
     lastDoc.value = newPosts[1];
-    print('Done');
 
     return;
   }
@@ -42,28 +130,19 @@ class CommunityPage extends HookWidget {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).user.uid;
-    final hashtagController = useTextEditingController();
-    final visibilityValue = useState('Everyone');
-    final hashtagValue = useState('');
-    final isFocus = useFocusNode();
-    final scrollController = useScrollController();
-    final loadMore = useState(true);
     final posts = useState([]);
     final initialLoad = useState(false);
+    final loadMore = useState(true);
     final ValueNotifier<DocumentSnapshot?> lastDoc = useState(null);
-
     final future = useMemoized(
-        () => Database(uid)
-            .getCommunityPost(visibilityValue.value, hashtagValue.value),
+        () => Database(uid).getCommunityPostEveryone(hashtagValue.value),
         [visibilityValue.value, hashtagValue.value]);
     final snapshot = useFuture(future);
+    final scrollController = useScrollController();
 
     useEffect(() {
-      isFocus.addListener(() {
-        if (isFocus.hasFocus != true) {
-          hashtagValue.value = hashtagController.text;
-        }
-      });
+      initialLoad.value = false;
+      loadMore.value = true;
 
       scrollController.addListener(() {
         if (scrollController.position.pixels ==
@@ -76,99 +155,245 @@ class CommunityPage extends HookWidget {
       });
 
       return;
-    }, []);
+    }, [visibilityValue.value, hashtagValue.value]);
 
-    if (snapshot.hasData && snapshot.connectionState == ConnectionState.done) {
+    if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+      print(initialLoad.value);
+
       if (!initialLoad.value) {
         posts.value = snapshot.data![0];
         lastDoc.value = snapshot.data![1];
         initialLoad.value = true;
       }
-      return Stack(
-          fit: StackFit.expand,
-          alignment: Alignment.topCenter,
-          children: [
-            CustomScrollView(
+      return posts.value.length > 0
+          ? ListView.builder(
+              physics: AlwaysScrollableScrollPhysics(),
               controller: scrollController,
-              slivers: [
-                SliverAppBar(
-                  automaticallyImplyLeading: false,
-                  pinned: false,
-                  snap: false,
-                  floating: true,
-                  flexibleSpace: Container(
-                    decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .scaffoldBackgroundColor
-                            .withAlpha(235)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Dropdown2(
-                              items: items,
-                              visibilityValue: visibilityValue,
-                              callback: (String? value) {
-                                if (visibilityValue.value == value) {
-                                  return;
-                                }
-                                posts.value = [];
-                                initialLoad.value = false;
-                                loadMore.value = true;
-                                visibilityValue.value = value!;
-                              }),
-                          HashtagFilter(
-                            hashtagController: hashtagController,
-                            hashtagValue: hashtagValue,
-                            isFocus: isFocus,
-                            posts: posts,
-                            initialLoad: initialLoad,
-                            loadMore: loadMore,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                  return posts.value.length > 0
-                      ? ListView.builder(
-                          shrinkWrap: true,
-                          physics: BouncingScrollPhysics(),
-                          itemCount: posts.value.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == posts.value.length && loadMore.value) {
-                              return Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: SpinKitWanderingCubes(
-                                    color: Theme.of(context).primaryColor,
-                                    size: 75),
-                              );
-                            }
-                            if (index == posts.value.length &&
-                                loadMore.value == false) {
-                              return Center(
-                                  child: Text('----- NO MORE POSTS -----'));
-                            }
-                            return PostListTile(
-                              postData: posts.value[index],
-                              hashtag: hashtagValue,
-                              hashtagController: hashtagController,
-                              posts: posts,
-                              initialLoad: initialLoad,
-                              loadMore: loadMore,
-                            );
-                          },
-                        )
-                      : Center(child: Text('No posts found.'));
-                }, childCount: 1))
-              ],
-            ),
-          ]);
+              itemCount: posts.value.length + 1,
+              itemBuilder: (context, index) {
+                if (index == posts.value.length && loadMore.value) {
+                  return Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: SpinKitWanderingCubes(
+                        color: Theme.of(context).primaryColor, size: 75),
+                  );
+                }
+                if (index == posts.value.length && loadMore.value == false) {
+                  return Center(child: Text('----- NO MORE POSTS -----'));
+                }
+                return PostListTile(
+                  postData: posts.value[index],
+                  hashtag: hashtagValue,
+                  hashtagController: hashtagController,
+                  posts: posts,
+                  initialLoad: initialLoad,
+                  loadMore: loadMore,
+                );
+              },
+            )
+          : Center(child: Text('No posts found'));
     }
+
+    return SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor, size: 75);
+  }
+}
+
+class FriendsOnlyList extends HookWidget {
+  const FriendsOnlyList({
+    Key? key,
+    required this.visibilityValue,
+    required this.hashtagValue,
+    required this.hashtagController,
+  }) : super(key: key);
+
+  final ValueNotifier<String> visibilityValue;
+  final ValueNotifier<String> hashtagValue;
+  final TextEditingController hashtagController;
+
+  loadMorePosts(
+      uid, postIds, hashtagValue, lastIndex, postsList, loadMore) async {
+    var newPosts = await Database(uid).getCommunityPostFriendsOnly(
+        postIds.value, hashtagValue.value, lastIndex.value);
+    if (newPosts[0].isEmpty) {
+      loadMore.value = false;
+      lastIndex.value = 0;
+      return;
+    }
+
+    postsList.value.addAll(newPosts[0]);
+    lastIndex.value = newPosts[1];
+
+    return;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).user.uid;
+    final postIds = useState([]);
+    final posts = useState([]);
+    final initialLoad = useState(false);
+    final loadMore = useState(true);
+    final lastIndex = useState(0);
+    final future = useMemoized(
+        () => Database(uid)
+            .getCommunityPostFriendsOnlyFirstLoad(hashtagValue.value),
+        [visibilityValue.value, hashtagValue.value]);
+    final snapshot = useFuture(future);
+    final scrollController = useScrollController();
+
+    useEffect(() {
+      initialLoad.value = false;
+      loadMore.value = true;
+
+      scrollController.addListener(() {
+        if (scrollController.position.pixels ==
+            scrollController.position.maxScrollExtent) {
+          if (loadMore.value) {
+            loadMorePosts(
+                uid, postIds, hashtagValue, lastIndex, posts, loadMore);
+          }
+        }
+      });
+      return;
+    }, [visibilityValue.value, hashtagValue.value]);
+
+    if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+      print(initialLoad.value);
+      if (!initialLoad.value) {
+        postIds.value = snapshot.data[0];
+        posts.value = snapshot.data[1];
+        lastIndex.value = snapshot.data[2];
+        initialLoad.value = true;
+      }
+      print(posts.value.length);
+      return posts.value.length > 0
+          ? ListView.builder(
+              physics: AlwaysScrollableScrollPhysics(),
+              controller: scrollController,
+              itemCount: posts.value.length + 1,
+              itemBuilder: (context, index) {
+                if (index == posts.value.length && loadMore.value) {
+                  return Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: SpinKitWanderingCubes(
+                        color: Theme.of(context).primaryColor, size: 75),
+                  );
+                }
+                if (index == posts.value.length && loadMore.value == false) {
+                  return Center(child: Text('----- NO MORE POSTS -----'));
+                }
+                return PostListTile(
+                  postData: posts.value[index],
+                  hashtag: hashtagValue,
+                  hashtagController: hashtagController,
+                  posts: posts,
+                  initialLoad: initialLoad,
+                  loadMore: loadMore,
+                );
+              },
+            )
+          : Center(child: Text('No posts found'));
+    }
+
+    return SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor, size: 75);
+  }
+}
+
+class AnonymousList extends HookWidget {
+  const AnonymousList({
+    Key? key,
+    required this.visibilityValue,
+    required this.hashtagValue,
+    required this.hashtagController,
+  }) : super(key: key);
+
+  final ValueNotifier<String> visibilityValue;
+  final ValueNotifier<String> hashtagValue;
+  final TextEditingController hashtagController;
+
+  loadMorePosts(
+      uid, visibilityValue, hashtagValue, postsList, loadMore, lastDoc) async {
+    var newPosts = await Database(uid)
+        .getCommunityPostAnonymous(hashtagValue.value, true, lastDoc.value);
+    if (newPosts[0].isEmpty) {
+      loadMore.value = false;
+      lastDoc.value = null;
+      return;
+    }
+
+    postsList.value.addAll(newPosts[0]);
+    lastDoc.value = newPosts[1];
+
+    return;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).user.uid;
+    final posts = useState([]);
+    final initialLoad = useState(false);
+    final loadMore = useState(true);
+    final ValueNotifier<DocumentSnapshot?> lastDoc = useState(null);
+    final future = useMemoized(
+        () => Database(uid).getCommunityPostAnonymous(hashtagValue.value),
+        [visibilityValue.value, hashtagValue.value]);
+    final snapshot = useFuture(future);
+    final scrollController = useScrollController();
+
+    useEffect(() {
+      initialLoad.value = false;
+      loadMore.value = true;
+
+      scrollController.addListener(() {
+        if (scrollController.position.pixels ==
+            scrollController.position.maxScrollExtent) {
+          if (loadMore.value) {
+            loadMorePosts(
+                uid, visibilityValue, hashtagValue, posts, loadMore, lastDoc);
+          }
+        }
+      });
+
+      return;
+    }, [visibilityValue.value, hashtagValue.value]);
+
+    if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+      if (!initialLoad.value) {
+        posts.value = snapshot.data![0];
+        lastDoc.value = snapshot.data![1];
+        initialLoad.value = true;
+      }
+      return posts.value.length > 0
+          ? ListView.builder(
+              physics: AlwaysScrollableScrollPhysics(),
+              controller: scrollController,
+              itemCount: posts.value.length + 1,
+              itemBuilder: (context, index) {
+                if (index == posts.value.length && loadMore.value) {
+                  return Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: SpinKitWanderingCubes(
+                        color: Theme.of(context).primaryColor, size: 75),
+                  );
+                }
+                if (index == posts.value.length && loadMore.value == false) {
+                  return Center(child: Text('----- NO MORE POSTS -----'));
+                }
+                return PostListTile(
+                  postData: posts.value[index],
+                  hashtag: hashtagValue,
+                  hashtagController: hashtagController,
+                  posts: posts,
+                  initialLoad: initialLoad,
+                  loadMore: loadMore,
+                );
+              },
+            )
+          : Center(child: Text('No posts found'));
+    }
+
     return SpinKitWanderingCubes(
         color: Theme.of(context).primaryColor, size: 75);
   }
@@ -719,17 +944,11 @@ class HashtagFilter extends StatelessWidget {
     required this.hashtagController,
     required this.hashtagValue,
     required this.isFocus,
-    required this.posts,
-    required this.initialLoad,
-    required this.loadMore,
   }) : super(key: key);
 
   final TextEditingController hashtagController;
   final hashtagValue;
   final isFocus;
-  final posts;
-  final initialLoad;
-  final loadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -746,16 +965,10 @@ class HashtagFilter extends StatelessWidget {
             controller: hashtagController,
             inputValue: hashtagValue,
             callback: () {
-              posts.value = [];
-              initialLoad.value = false;
-              loadMore.value = true;
               hashtagValue.value = '';
               hashtagController.clear();
             }).inputDecoration(),
         onFieldSubmitted: (value) {
-          posts.value = [];
-          initialLoad.value = false;
-          loadMore.value = true;
           hashtagValue.value = value;
         },
       ),

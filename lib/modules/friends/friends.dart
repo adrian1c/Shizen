@@ -37,127 +37,9 @@ class FriendsPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('Fren page b');
     String uid = Provider.of<UserProvider>(context).user.uid;
-    final isExpanded = useState(false);
     final searchController = useTextEditingController();
 
-    final stream = useMemoized(() => Database(uid).getFriendsList(), []);
-    final friendsStream = useStream(stream);
-
-    if (friendsStream.hasData) {
-      var friendsList = typeOfFriend(friendsStream.data.docs);
-      var newRequestData = friendsList["newRequests"];
-      var friendsData = friendsList["friendsList"];
-      return SafeArea(
-        minimum: EdgeInsets.fromLTRB(20, 20, 20, 0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                FriendsSearchField(
-                    uid: uid, searchController: searchController),
-                IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => InstantMessagingPage()));
-                    },
-                    icon: StreamBuilder(
-                        stream: Database(uid).getUnreadMessageCount(),
-                        builder: (context, AsyncSnapshot snapshot) {
-                          if (snapshot.hasData) {
-                            if (snapshot.data!.docs.length > 0) {
-                              return Badge(
-                                  badgeContent: Text(
-                                      snapshot.data!.docs.length.toString(),
-                                      style: TextStyle(color: Colors.white)),
-                                  child: Icon(Icons.message_outlined,
-                                      color: Theme.of(context).primaryColor));
-                            } else {
-                              return Icon(Icons.message_outlined,
-                                  color: Theme.of(context).primaryColor);
-                            }
-                          }
-
-                          return Icon(Icons.message_outlined,
-                              color: Theme.of(context).primaryColor);
-                        }))
-              ],
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(10, 10, 10, 15),
-                physics: ScrollPhysics(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    newRequestData.length > 0
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.person_add_alt_1_rounded),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 10),
-                                    child: Text("New Requests"),
-                                  )
-                                ],
-                              ),
-                              newRequestData.length > 2
-                                  ? IconButton(
-                                      icon: Icon(isExpanded.value
-                                          ? Icons.keyboard_arrow_up_rounded
-                                          : Icons.keyboard_arrow_down_rounded),
-                                      onPressed: isExpanded.value
-                                          ? () => isExpanded.value = false
-                                          : () => isExpanded.value = true)
-                                  : Container(),
-                            ],
-                          )
-                        : Container(),
-                    newRequestData.length > 0
-                        ? ListView.builder(
-                            physics: NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount:
-                                !isExpanded.value && newRequestData.length > 2
-                                    ? 2
-                                    : newRequestData.length,
-                            itemBuilder: (context, index) {
-                              return NewRequestTile(
-                                  friend: newRequestData[index], uid: uid);
-                            })
-                        : Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text("You have no new requests")),
-                    Divider(),
-                    Row(
-                      children: [
-                        Text(friendsData.length != 1
-                            ? "You have ${friendsData.length} friends"
-                            : "You have ${friendsData.length} friend"),
-                      ],
-                    ),
-                    ListView.builder(
-                        physics: NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: friendsData.length,
-                        itemBuilder: (context, index) {
-                          return FriendsListTile(
-                              friend: friendsData[index], uid: uid);
-                        }),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
     return SafeArea(
       minimum: EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Column(
@@ -173,21 +55,186 @@ class FriendsPage extends HookWidget {
                         MaterialPageRoute(
                             builder: (context) => InstantMessagingPage()));
                   },
-                  icon: Icon(Icons.message_outlined,
-                      color: Theme.of(context).primaryColor)),
+                  icon: StreamBuilder(
+                      stream: Database(uid).getUnreadMessageCount(),
+                      builder: (context, AsyncSnapshot snapshot) {
+                        if (snapshot.hasData) {
+                          if (snapshot.data!.docs.length > 0) {
+                            return Badge(
+                                badgeContent: Text(
+                                    snapshot.data!.docs.length.toString(),
+                                    style: TextStyle(color: Colors.white)),
+                                child: Icon(Icons.message_outlined,
+                                    color: Theme.of(context).primaryColor));
+                          } else {
+                            return Icon(Icons.message_outlined,
+                                color: Theme.of(context).primaryColor);
+                          }
+                        }
+
+                        return Icon(Icons.message_outlined,
+                            color: Theme.of(context).primaryColor);
+                      }))
             ],
           ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(10, 10, 10, 15),
-              physics: ScrollPhysics(),
-              child: SpinKitWanderingCubes(
-                  color: Theme.of(context).primaryColor, size: 75),
-            ),
-          ),
+          Divider(),
+          NewRequestList(),
+          Divider(),
+          Expanded(child: FriendsList()),
         ],
       ),
     );
+  }
+}
+
+class NewRequestList extends HookWidget {
+  const NewRequestList({
+    Key? key,
+    // required this.refreshValue
+  }) : super(key: key);
+
+  // final refreshValue;
+
+  @override
+  Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).user.uid;
+    final future =
+        useMemoized(() => Database(uid).getNewFriendRequestsList(), []);
+    final friendsFuture = useFuture(future);
+
+    if (friendsFuture.connectionState == ConnectionState.done &&
+        friendsFuture.hasData) {
+      var data = friendsFuture.data.docs;
+      return Column(
+        children: [
+          friendsFuture.data.docs.length > 0
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(data.length != 1
+                      ? 'You have ${data.length} new friend requests'
+                      : 'You have ${data.length} new friend request'),
+                )
+              : Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'You have no new friend requests',
+                  ),
+                ),
+          ListView.builder(
+              physics: NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: data.length > 2 ? 3 : data.length,
+              itemBuilder: (context, index) {
+                if (index == data.length) {
+                  return InkWell(
+                      child: Text('See More'),
+                      onTap: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return NewRequestsPage();
+                        }));
+                      });
+                }
+                return NewRequestTile(friend: data[index]);
+              })
+        ],
+      );
+    }
+    return Container();
+  }
+}
+
+class FriendsList extends HookWidget {
+  const FriendsList({
+    Key? key,
+    // required this.refreshValue
+  }) : super(key: key);
+
+  // final refreshValue;
+
+  loadMorePosts(uid, friendsList, loadMore, lastDoc) async {
+    var newPosts = await Database(uid).getFriendsList(true, lastDoc.value);
+    if (newPosts[0].isEmpty) {
+      loadMore.value = false;
+      lastDoc.value = null;
+      return;
+    }
+
+    friendsList.value.addAll(newPosts[0]);
+    lastDoc.value = newPosts[2];
+
+    return;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).user.uid;
+    final future = useMemoized(() => Database(uid).getFriendsList(), []);
+    final friendsFuture = useFuture(future);
+    final initialLoad = useState(false);
+    final friendsList = useState([]);
+    final ValueNotifier<int?> friendsCount = useState(null);
+    final ValueNotifier<DocumentSnapshot?> lastDoc = useState(null);
+    final scrollController = useScrollController();
+    final loadMore = useState(true);
+
+    useEffect(() {
+      initialLoad.value = false;
+      loadMore.value = true;
+
+      scrollController.addListener(() {
+        if (scrollController.position.pixels ==
+            scrollController.position.maxScrollExtent) {
+          if (loadMore.value) {
+            loadMorePosts(uid, friendsList, loadMore, lastDoc);
+          }
+        }
+      });
+
+      return;
+    }, []);
+
+    if (friendsFuture.connectionState == ConnectionState.done &&
+        friendsFuture.hasData) {
+      if (!initialLoad.value) {
+        friendsList.value = friendsFuture.data[0];
+        friendsCount.value = friendsFuture.data[1];
+        lastDoc.value = friendsFuture.data[2];
+        initialLoad.value = true;
+      }
+
+      return Column(
+        children: [
+          friendsList.value.length > 0
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(friendsList.value.length != 1
+                      ? 'You have ${friendsCount.value} friends'
+                      : 'You have ${friendsCount.value} friends'),
+                )
+              : Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'You have no new friend requests',
+                  ),
+                ),
+          Flexible(
+            child: ListView.builder(
+                physics: AlwaysScrollableScrollPhysics(),
+                controller: scrollController,
+                itemCount: friendsList.value.length,
+                itemBuilder: (context, index) {
+                  if (index == friendsList.value.length && loadMore.value) {
+                    return SpinKitWanderingCubes(
+                        color: Theme.of(context).primaryColor, size: 75);
+                  }
+                  return FriendsListTile(friend: friendsList.value[index]);
+                }),
+          )
+        ],
+      );
+    }
+    return Container();
   }
 }
 
@@ -337,14 +384,13 @@ class SearchListTile extends StatelessWidget {
 }
 
 class NewRequestTile extends StatelessWidget {
-  const NewRequestTile({Key? key, required this.friend, required this.uid})
-      : super(key: key);
+  const NewRequestTile({Key? key, required this.friend}) : super(key: key);
 
   final friend;
-  final uid;
 
   @override
   Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).user.uid;
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
       child: ListTile(
@@ -383,19 +429,18 @@ class NewRequestTile extends StatelessWidget {
 }
 
 class FriendsListTile extends StatelessWidget {
-  const FriendsListTile({Key? key, required this.friend, required this.uid})
-      : super(key: key);
+  const FriendsListTile({Key? key, required this.friend}) : super(key: key);
 
   final friend;
-  final uid;
 
   @override
   Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).user.uid;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
+      padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
       child: Container(
         width: 100.w,
-        height: 10.h,
         decoration: BoxDecoration(
           color: Theme.of(context).backgroundColor,
           borderRadius: BorderRadius.circular(10),
@@ -412,7 +457,7 @@ class FriendsListTile extends StatelessWidget {
                         title: Text('${friend['name']}\'s Profile'),
                         centerTitle: true,
                       ),
-                      body: ProfilePage(viewId: friend.id));
+                      body: ProfilePage(viewId: friend['uid']));
                 }));
               },
               leading: Padding(
@@ -480,6 +525,23 @@ class FriendsListTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class NewRequestsPage extends StatelessWidget {
+  const NewRequestsPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('New Requests'),
+        centerTitle: true,
+      ),
+      body: ListView.builder(itemBuilder: (context, index) {
+        return Text('Nice');
+      }),
     );
   }
 }
