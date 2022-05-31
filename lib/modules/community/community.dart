@@ -38,45 +38,43 @@ class CommunityPage extends HookWidget {
     }, []);
 
     return NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              automaticallyImplyLeading: false,
-              pinned: false,
-              snap: false,
-              floating: true,
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .scaffoldBackgroundColor
-                        .withAlpha(235)),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Dropdown2(
-                          items: items,
-                          visibilityValue: visibilityValue,
-                          callback: (String? value) {
-                            if (visibilityValue.value == value) {
-                              return;
-                            }
-                            visibilityValue.value = value!;
-                          }),
-                      HashtagFilter(
-                        hashtagController: hashtagController,
-                        hashtagValue: hashtagValue,
-                        isFocus: isFocus,
-                      ),
-                    ],
+        floatHeaderSlivers: true,
+        headerSliverBuilder: (context, val) => [
+              SliverAppBar(
+                automaticallyImplyLeading: false,
+                forceElevated: true,
+                snap: false,
+                floating: true,
+                flexibleSpace: Container(
+                  decoration:
+                      BoxDecoration(color: CustomTheme.dividerBackground),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Dropdown2(
+                            items: items,
+                            visibilityValue: visibilityValue,
+                            callback: (String? value) {
+                              if (visibilityValue.value == value) {
+                                return;
+                              }
+                              visibilityValue.value = value!;
+                            }),
+                        HashtagFilter(
+                          hashtagController: hashtagController,
+                          hashtagValue: hashtagValue,
+                          isFocus: isFocus,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            )
-          ];
-        },
+              //  SliverPersistentHeader(delegate: Delegate(),pinned: true,)
+            ],
         body: visibilityValue.value == 'Everyone'
             ? EveryoneList(
                 visibilityValue: visibilityValue,
@@ -121,6 +119,7 @@ class EveryoneList extends HookWidget {
       return;
     }
 
+    loadMore.value = null;
     postsList.value.addAll(newPosts[0]);
     lastDoc.value = newPosts[1];
 
@@ -132,64 +131,68 @@ class EveryoneList extends HookWidget {
     String uid = Provider.of<UserProvider>(context).user.uid;
     final posts = useState([]);
     final initialLoad = useState(false);
-    final loadMore = useState(true);
+    final ValueNotifier<bool?> loadMore = useState(null);
     final ValueNotifier<DocumentSnapshot?> lastDoc = useState(null);
     final future = useMemoized(
         () => Database(uid).getCommunityPostEveryone(hashtagValue.value),
         [visibilityValue.value, hashtagValue.value]);
     final snapshot = useFuture(future);
-    final scrollController = useScrollController();
 
     useEffect(() {
       initialLoad.value = false;
-      loadMore.value = true;
-
-      scrollController.addListener(() {
-        if (scrollController.position.pixels ==
-            scrollController.position.maxScrollExtent) {
-          if (loadMore.value) {
-            loadMorePosts(
-                uid, visibilityValue, hashtagValue, posts, loadMore, lastDoc);
-          }
-        }
-      });
+      loadMore.value = null;
 
       return;
     }, [visibilityValue.value, hashtagValue.value]);
 
     if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-      print(initialLoad.value);
-
       if (!initialLoad.value) {
         posts.value = snapshot.data![0];
         lastDoc.value = snapshot.data![1];
         initialLoad.value = true;
       }
       return posts.value.length > 0
-          ? ListView.builder(
-              physics: AlwaysScrollableScrollPhysics(),
-              controller: scrollController,
-              itemCount: posts.value.length + 1,
-              itemBuilder: (context, index) {
-                if (index == posts.value.length && loadMore.value) {
-                  return Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: SpinKitWanderingCubes(
-                        color: Theme.of(context).primaryColor, size: 75),
-                  );
+          ? NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scroll) {
+                if (scroll is ScrollEndNotification) {
+                  if (scroll.metrics.pixels == scroll.metrics.maxScrollExtent &&
+                      loadMore.value == null) {
+                    loadMore.value = true;
+                    loadMorePosts(uid, visibilityValue, hashtagValue, posts,
+                        loadMore, lastDoc);
+
+                    return true;
+                  }
                 }
-                if (index == posts.value.length && loadMore.value == false) {
-                  return Center(child: Text('----- NO MORE POSTS -----'));
-                }
-                return PostListTile(
-                  postData: posts.value[index],
-                  hashtag: hashtagValue,
-                  hashtagController: hashtagController,
-                  posts: posts,
-                  initialLoad: initialLoad,
-                  loadMore: loadMore,
-                );
+                return true;
               },
+              child: ListView.builder(
+                itemCount: posts.value.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == posts.value.length) {
+                    if (loadMore.value == null) {
+                      return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 35));
+                    }
+                    if (loadMore.value == true) {
+                      return Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: SpinKitWanderingCubes(
+                            color: Theme.of(context).primaryColor, size: 75),
+                      );
+                    }
+                    return Center(child: Text('----- NO MORE POSTS -----'));
+                  }
+                  return PostListTile(
+                    postData: posts.value[index],
+                    hashtag: hashtagValue,
+                    hashtagController: hashtagController,
+                    posts: posts,
+                    initialLoad: initialLoad,
+                    loadMore: loadMore,
+                  );
+                },
+              ),
             )
           : Center(child: Text('No posts found'));
     }
@@ -221,6 +224,7 @@ class FriendsOnlyList extends HookWidget {
       return;
     }
 
+    loadMore.value = null;
     postsList.value.addAll(newPosts[0]);
     lastIndex.value = newPosts[1];
 
@@ -233,7 +237,7 @@ class FriendsOnlyList extends HookWidget {
     final postIds = useState([]);
     final posts = useState([]);
     final initialLoad = useState(false);
-    final loadMore = useState(true);
+    final ValueNotifier<bool?> loadMore = useState(null);
     final lastIndex = useState(0);
     final future = useMemoized(
         () => Database(uid)
@@ -244,17 +248,8 @@ class FriendsOnlyList extends HookWidget {
 
     useEffect(() {
       initialLoad.value = false;
-      loadMore.value = true;
+      loadMore.value = null;
 
-      scrollController.addListener(() {
-        if (scrollController.position.pixels ==
-            scrollController.position.maxScrollExtent) {
-          if (loadMore.value) {
-            loadMorePosts(
-                uid, postIds, hashtagValue, lastIndex, posts, loadMore);
-          }
-        }
-      });
       return;
     }, [visibilityValue.value, hashtagValue.value]);
 
@@ -266,32 +261,50 @@ class FriendsOnlyList extends HookWidget {
         lastIndex.value = snapshot.data[2];
         initialLoad.value = true;
       }
-      print(posts.value.length);
       return posts.value.length > 0
-          ? ListView.builder(
-              physics: AlwaysScrollableScrollPhysics(),
-              controller: scrollController,
-              itemCount: posts.value.length + 1,
-              itemBuilder: (context, index) {
-                if (index == posts.value.length && loadMore.value) {
-                  return Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: SpinKitWanderingCubes(
-                        color: Theme.of(context).primaryColor, size: 75),
-                  );
+          ? NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scroll) {
+                if (scroll is ScrollEndNotification) {
+                  if (scroll.metrics.pixels == scroll.metrics.maxScrollExtent &&
+                      loadMore.value == null) {
+                    loadMore.value = true;
+                    loadMorePosts(
+                        uid, postIds, hashtagValue, lastIndex, posts, loadMore);
+
+                    return true;
+                  }
                 }
-                if (index == posts.value.length && loadMore.value == false) {
-                  return Center(child: Text('----- NO MORE POSTS -----'));
-                }
-                return PostListTile(
-                  postData: posts.value[index],
-                  hashtag: hashtagValue,
-                  hashtagController: hashtagController,
-                  posts: posts,
-                  initialLoad: initialLoad,
-                  loadMore: loadMore,
-                );
+                return true;
               },
+              child: ListView.builder(
+                physics: AlwaysScrollableScrollPhysics(),
+                controller: scrollController,
+                itemCount: posts.value.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == posts.value.length) {
+                    if (loadMore.value == null) {
+                      return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 35));
+                    }
+                    if (loadMore.value == true) {
+                      return Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: SpinKitWanderingCubes(
+                            color: Theme.of(context).primaryColor, size: 75),
+                      );
+                    }
+                    return Center(child: Text('----- NO MORE POSTS -----'));
+                  }
+                  return PostListTile(
+                    postData: posts.value[index],
+                    hashtag: hashtagValue,
+                    hashtagController: hashtagController,
+                    posts: posts,
+                    initialLoad: initialLoad,
+                    loadMore: loadMore,
+                  );
+                },
+              ),
             )
           : Center(child: Text('No posts found'));
     }
@@ -323,6 +336,7 @@ class AnonymousList extends HookWidget {
       return;
     }
 
+    loadMore.value = null;
     postsList.value.addAll(newPosts[0]);
     lastDoc.value = newPosts[1];
 
@@ -334,7 +348,7 @@ class AnonymousList extends HookWidget {
     String uid = Provider.of<UserProvider>(context).user.uid;
     final posts = useState([]);
     final initialLoad = useState(false);
-    final loadMore = useState(true);
+    final ValueNotifier<bool?> loadMore = useState(null);
     final ValueNotifier<DocumentSnapshot?> lastDoc = useState(null);
     final future = useMemoized(
         () => Database(uid).getCommunityPostAnonymous(hashtagValue.value),
@@ -344,17 +358,7 @@ class AnonymousList extends HookWidget {
 
     useEffect(() {
       initialLoad.value = false;
-      loadMore.value = true;
-
-      scrollController.addListener(() {
-        if (scrollController.position.pixels ==
-            scrollController.position.maxScrollExtent) {
-          if (loadMore.value) {
-            loadMorePosts(
-                uid, visibilityValue, hashtagValue, posts, loadMore, lastDoc);
-          }
-        }
-      });
+      loadMore.value = null;
 
       return;
     }, [visibilityValue.value, hashtagValue.value]);
@@ -366,30 +370,49 @@ class AnonymousList extends HookWidget {
         initialLoad.value = true;
       }
       return posts.value.length > 0
-          ? ListView.builder(
-              physics: AlwaysScrollableScrollPhysics(),
-              controller: scrollController,
-              itemCount: posts.value.length + 1,
-              itemBuilder: (context, index) {
-                if (index == posts.value.length && loadMore.value) {
-                  return Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: SpinKitWanderingCubes(
-                        color: Theme.of(context).primaryColor, size: 75),
-                  );
+          ? NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scroll) {
+                if (scroll is ScrollEndNotification) {
+                  if (scroll.metrics.pixels == scroll.metrics.maxScrollExtent &&
+                      loadMore.value == null) {
+                    loadMore.value = true;
+                    loadMorePosts(uid, visibilityValue, hashtagValue, posts,
+                        loadMore, lastDoc);
+
+                    return true;
+                  }
                 }
-                if (index == posts.value.length && loadMore.value == false) {
-                  return Center(child: Text('----- NO MORE POSTS -----'));
-                }
-                return PostListTile(
-                  postData: posts.value[index],
-                  hashtag: hashtagValue,
-                  hashtagController: hashtagController,
-                  posts: posts,
-                  initialLoad: initialLoad,
-                  loadMore: loadMore,
-                );
+                return true;
               },
+              child: ListView.builder(
+                physics: AlwaysScrollableScrollPhysics(),
+                controller: scrollController,
+                itemCount: posts.value.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == posts.value.length) {
+                    if (loadMore.value == null) {
+                      return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 35));
+                    }
+                    if (loadMore.value == true) {
+                      return Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: SpinKitWanderingCubes(
+                            color: Theme.of(context).primaryColor, size: 75),
+                      );
+                    }
+                    return Center(child: Text('----- NO MORE POSTS -----'));
+                  }
+                  return PostListTile(
+                    postData: posts.value[index],
+                    hashtag: hashtagValue,
+                    hashtagController: hashtagController,
+                    posts: posts,
+                    initialLoad: initialLoad,
+                    loadMore: loadMore,
+                  );
+                },
+              ),
             )
           : Center(child: Text('No posts found'));
     }
@@ -593,8 +616,8 @@ class PostListTile extends HookWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Container(
-                                    constraints: BoxConstraints(minWidth: 25.w),
-                                    height: 5.h,
+                                    constraints: BoxConstraints(
+                                        minWidth: 25.w, minHeight: 5.h),
                                     decoration: BoxDecoration(
                                         color: Theme.of(context)
                                             .primaryColor
@@ -614,7 +637,7 @@ class PostListTile extends HookWidget {
                                     ))),
                                 Text(postData['attachment']['timeCompleted'] !=
                                         null
-                                    ? 'Completed at ${DateFormat("hh:mm a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
+                                    ? '${DateFormat("d MMM @ h:mm a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
                                     : '')
                               ],
                             ),

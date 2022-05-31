@@ -7,9 +7,11 @@ import './addtodo.dart';
 import '../../utils/allUtils.dart';
 
 class ToDoTask extends HookWidget {
-  const ToDoTask({Key? key, required this.uid}) : super(key: key);
+  const ToDoTask({Key? key, required this.uid, required this.controller})
+      : super(key: key);
 
   final String uid;
+  final controller;
 
   static DateTime? convertTimestamp(Timestamp? _stamp) {
     if (_stamp != null) {
@@ -31,21 +33,23 @@ class ToDoTask extends HookWidget {
                 size: 75.0,
               )
             : snapshot.data.docs.length > 0
-                ? ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: (context, index) {
-                      var taskDoc = snapshot.data.docs[index];
-                      return TodoTaskDisplay(
-                        taskId: taskDoc.id,
-                        title: taskDoc['title'],
-                        taskList: taskDoc['desc'],
-                        recur: List<bool>.from(taskDoc['recur']),
-                        reminder: convertTimestamp(taskDoc['reminder']),
-                        isPublic: taskDoc['isPublic'],
-                      );
-                    })
+                ? Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: snapshot.data.docs.length,
+                        itemBuilder: (context, index) {
+                          var taskDoc = snapshot.data.docs[index];
+                          return TodoTaskDisplay(
+                            taskId: taskDoc.id,
+                            title: taskDoc['title'],
+                            taskList: taskDoc['desc'],
+                            recur: List<bool>.from(taskDoc['recur']),
+                            reminder: convertTimestamp(taskDoc['reminder']),
+                            isPublic: taskDoc['isPublic'],
+                          );
+                        }),
+                  )
                 : Center(
                     child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 30.0),
@@ -121,8 +125,7 @@ class TodoTaskDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                    constraints: BoxConstraints(minWidth: 25.w),
-                    height: 5.h,
+                    constraints: BoxConstraints(minWidth: 25.w, minHeight: 5.h),
                     decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor.withAlpha(200),
                         borderRadius: BorderRadius.only(
@@ -283,7 +286,13 @@ class ReminderIcon extends HookWidget {
           isBefore.value = false;
         }
       });
-      return null;
+      return () {
+        Timer.periodic(Duration(seconds: 1), (time) {
+          if (DateTime.now().isAfter(reminder)) {
+            isBefore.value = false;
+          }
+        });
+      };
     });
     return isBefore.value
         ? Icon(Icons.notifications_active,

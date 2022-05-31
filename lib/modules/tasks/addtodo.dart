@@ -200,8 +200,7 @@ class TodoTaskList extends HookWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                    constraints: BoxConstraints(minWidth: 25.w),
-                    height: 5.h,
+                    constraints: BoxConstraints(minWidth: 25.w, minHeight: 5.h),
                     decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor.withAlpha(200),
                         borderRadius: BorderRadius.only(

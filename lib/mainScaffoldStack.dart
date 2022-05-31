@@ -1,23 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shizen_app/models/user.dart';
 import 'package:shizen_app/modules/community/addnewpost.dart';
 import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
-import 'package:shizen_app/utils/notifications.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
-import 'package:shizen_app/widgets/onboarding.dart';
 import './modules/tasks/tasks.dart';
 import './modules/friends/friends.dart';
 import './modules/community/community.dart';
 import './modules/progress/progress.dart';
 import './modules/profile/profile.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:floating_action_bubble/floating_action_bubble.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 
 class MainScaffoldStack extends HookWidget {
@@ -54,11 +50,9 @@ class MainScaffoldStack extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ValueNotifier<bool> isSwitching = useState(true);
-
     return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: CustomTheme.dividerBackground,
           elevation: 0,
           leading: Builder(
             builder: (BuildContext context) {
@@ -103,7 +97,7 @@ class MainScaffoldStack extends HookWidget {
                 ? FABubble()
                 : null,
         bottomNavigationBar: GNav(
-            backgroundColor: Colors.transparent,
+            backgroundColor: CustomTheme.dividerBackground,
             rippleColor: Colors.grey[300]!,
             hoverColor: Colors.grey[100]!,
             gap: 5,
@@ -138,7 +132,7 @@ class MainScaffoldStack extends HookWidget {
                   .pageController,
               physics: NeverScrollableScrollPhysics(),
               children: <Widget>[
-                KeepAlivePage(child: TaskPage(isSwitching: isSwitching)),
+                KeepAlivePage(child: TaskPage()),
                 KeepAlivePage(child: FriendsPage()),
                 KeepAlivePage(child: CommunityPage()),
                 KeepAlivePage(child: ProgressPage()),

@@ -210,12 +210,12 @@ class FriendsList extends HookWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(friendsList.value.length != 1
                       ? 'You have ${friendsCount.value} friends'
-                      : 'You have ${friendsCount.value} friends'),
+                      : 'You have ${friendsCount.value} friend'),
                 )
               : Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.center,
                   child: Text(
-                    'You have no new friend requests',
+                    'You have no friends.\nYou can add friends by searching above.',
                   ),
                 ),
           Flexible(

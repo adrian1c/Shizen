@@ -204,150 +204,150 @@ class AddNewPost extends HookWidget {
                                           MainAxisAlignment.center,
                                       children: [
                                         Text('Task'),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Container(
-                                                    constraints: BoxConstraints(
-                                                        minWidth: 25.w),
-                                                    height: 5.h,
-                                                    decoration: BoxDecoration(
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Container(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                              minWidth: 25.w,
+                                                              minHeight: 5.h),
+                                                      decoration: BoxDecoration(
+                                                          color: Theme
+                                                                  .of(context)
+                                                              .primaryColor
+                                                              .withAlpha(200),
+                                                          borderRadius:
+                                                              BorderRadius.only(
+                                                                  topLeft: Radius
+                                                                      .circular(
+                                                                          15),
+                                                                  topRight: Radius
+                                                                      .circular(
+                                                                          15))),
+                                                      child: Center(
+                                                          child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .symmetric(
+                                                                horizontal:
+                                                                    15.0),
+                                                        child: Text(
+                                                            attachment
+                                                                .value['title'],
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .headline4),
+                                                      ))),
+                                                  Text(attachment.value[
+                                                              'timeCompleted'] !=
+                                                          null
+                                                      ? '${DateFormat("d MMM @ h:mm a").format(attachment.value['timeCompleted'])}'
+                                                      : ''),
+                                                ],
+                                              ),
+                                              ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                      minHeight: 5.h,
+                                                      minWidth: 100.w),
+                                                  child: Container(
+                                                      decoration: BoxDecoration(
                                                         color: Theme.of(context)
                                                             .primaryColor
                                                             .withAlpha(200),
                                                         borderRadius:
                                                             BorderRadius.only(
-                                                                topLeft: Radius
-                                                                    .circular(
-                                                                        15),
+                                                                bottomLeft:
+                                                                    Radius
+                                                                        .circular(
+                                                                            15),
+                                                                bottomRight:
+                                                                    Radius
+                                                                        .circular(
+                                                                            15),
                                                                 topRight: Radius
                                                                     .circular(
-                                                                        15))),
-                                                    child: Center(
-                                                        child: Padding(
-                                                      padding: const EdgeInsets
-                                                              .symmetric(
-                                                          horizontal: 15.0),
-                                                      child: Text(
-                                                          attachment
-                                                              .value['title'],
-                                                          style:
-                                                              Theme.of(context)
-                                                                  .textTheme
-                                                                  .headline4),
-                                                    ))),
-                                                Text(attachment.value[
-                                                            'timeCompleted'] !=
-                                                        null
-                                                    ? 'Completed at ${DateFormat("hh:mm a").format(attachment.value['timeCompleted'])}'
-                                                    : ''),
-                                              ],
-                                            ),
-                                            ConstrainedBox(
-                                                constraints: BoxConstraints(
-                                                    minHeight: 5.h,
-                                                    minWidth: 100.w),
-                                                child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Theme.of(context)
-                                                          .primaryColor
-                                                          .withAlpha(200),
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                              bottomLeft: Radius
-                                                                  .circular(15),
-                                                              bottomRight:
-                                                                  Radius
-                                                                      .circular(
-                                                                          15),
-                                                              topRight: Radius
-                                                                  .circular(
-                                                                      15)),
-                                                      boxShadow:
-                                                          CustomTheme.boxShadow,
-                                                    ),
-                                                    child: ListView.builder(
-                                                        physics:
-                                                            NeverScrollableScrollPhysics(),
-                                                        shrinkWrap: true,
-                                                        itemCount: attachment
-                                                            .value['taskList']
-                                                            .length,
-                                                        itemBuilder:
-                                                            (context, index) {
-                                                          return SizedBox(
-                                                            height: 5.h,
-                                                            child: Container(
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                      color: attachment.value['taskList'][index]
-                                                                              [
-                                                                              'status']
-                                                                          ? CustomTheme
-                                                                              .completeColor
-                                                                          : Theme.of(context)
-                                                                              .backgroundColor,
-                                                                      borderRadius: index ==
-                                                                              0
-                                                                          ? BorderRadius
-                                                                              .only(
-                                                                              topLeft: Radius.circular(15),
-                                                                              topRight: Radius.circular(15),
-                                                                              bottomLeft: attachment.value['taskList'].length == 1 ? Radius.circular(15) : Radius.zero,
-                                                                              bottomRight: attachment.value['taskList'].length == 1 ? Radius.circular(15) : Radius.zero,
-                                                                            )
-                                                                          : index == attachment.value['taskList'].length - 1
-                                                                              ? BorderRadius.only(
-                                                                                  bottomLeft: Radius.circular(15),
-                                                                                  bottomRight: Radius.circular(15),
-                                                                                )
-                                                                              : null),
-                                                              child: Row(
-                                                                children: [
-                                                                  AbsorbPointer(
-                                                                    child:
-                                                                        Checkbox(
-                                                                      shape:
-                                                                          CircleBorder(),
-                                                                      activeColor:
-                                                                          Theme.of(context)
-                                                                              .backgroundColor,
-                                                                      checkColor:
-                                                                          Colors
-                                                                              .lightGreen[700],
-                                                                      value: attachment.value['taskList']
-                                                                              [
-                                                                              index]
-                                                                          [
-                                                                          'status'],
-                                                                      onChanged:
-                                                                          (value) {},
+                                                                        15)),
+                                                        boxShadow: CustomTheme
+                                                            .boxShadow,
+                                                      ),
+                                                      child: ListView.builder(
+                                                          physics:
+                                                              NeverScrollableScrollPhysics(),
+                                                          shrinkWrap: true,
+                                                          itemCount: attachment
+                                                              .value['taskList']
+                                                              .length,
+                                                          itemBuilder:
+                                                              (context, index) {
+                                                            return SizedBox(
+                                                              height: 5.h,
+                                                              child: Container(
+                                                                decoration: BoxDecoration(
+                                                                    color: attachment.value['taskList'][index]['status'] ? CustomTheme.completeColor : Theme.of(context).backgroundColor,
+                                                                    borderRadius: index == 0
+                                                                        ? BorderRadius.only(
+                                                                            topLeft:
+                                                                                Radius.circular(15),
+                                                                            topRight:
+                                                                                Radius.circular(15),
+                                                                            bottomLeft: attachment.value['taskList'].length == 1
+                                                                                ? Radius.circular(15)
+                                                                                : Radius.zero,
+                                                                            bottomRight: attachment.value['taskList'].length == 1
+                                                                                ? Radius.circular(15)
+                                                                                : Radius.zero,
+                                                                          )
+                                                                        : index == attachment.value['taskList'].length - 1
+                                                                            ? BorderRadius.only(
+                                                                                bottomLeft: Radius.circular(15),
+                                                                                bottomRight: Radius.circular(15),
+                                                                              )
+                                                                            : null),
+                                                                child: Row(
+                                                                  children: [
+                                                                    AbsorbPointer(
+                                                                      child:
+                                                                          Checkbox(
+                                                                        shape:
+                                                                            CircleBorder(),
+                                                                        activeColor:
+                                                                            Theme.of(context).backgroundColor,
+                                                                        checkColor:
+                                                                            Colors.lightGreen[700],
+                                                                        value: attachment.value['taskList'][index]
+                                                                            [
+                                                                            'status'],
+                                                                        onChanged:
+                                                                            (value) {},
+                                                                      ),
                                                                     ),
-                                                                  ),
-                                                                  Text(
-                                                                      attachment.value['taskList']
-                                                                              [
-                                                                              index]
-                                                                          [
-                                                                          'task'],
-                                                                      softWrap:
-                                                                          false,
-                                                                      style: TextStyle(
-                                                                          decoration: attachment.value['taskList'][index]['status']
-                                                                              ? TextDecoration.lineThrough
-                                                                              : null)),
-                                                                ],
+                                                                    Text(
+                                                                        attachment.value['taskList'][index]
+                                                                            [
+                                                                            'task'],
+                                                                        softWrap:
+                                                                            false,
+                                                                        style: TextStyle(
+                                                                            decoration: attachment.value['taskList'][index]['status']
+                                                                                ? TextDecoration.lineThrough
+                                                                                : null)),
+                                                                  ],
+                                                                ),
                                                               ),
-                                                            ),
-                                                          );
-                                                        }))),
-                                          ],
+                                                            );
+                                                          }))),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -443,7 +443,7 @@ class AddNewPost extends HookWidget {
         ],
         androidUiSettings: AndroidUiSettings(
             toolbarTitle: 'Crop Image',
-            toolbarColor: Colors.deepOrange,
+            toolbarColor: CustomTheme.cropImageHeader,
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.original,
             lockAspectRatio: true),
@@ -799,8 +799,8 @@ class SelectTaskPage extends HookWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Container(
-                                    constraints: BoxConstraints(minWidth: 25.w),
-                                    height: 5.h,
+                                    constraints: BoxConstraints(
+                                        minWidth: 25.w, minHeight: 5.h),
                                     decoration: BoxDecoration(
                                         color: Theme.of(context)
                                             .primaryColor
@@ -818,7 +818,7 @@ class SelectTaskPage extends HookWidget {
                                               .headline4),
                                     ))),
                                 Text(timeCompleted != null
-                                    ? 'Completed at ${DateFormat("hh:mm a").format(timeCompleted)}'
+                                    ? '${DateFormat("d MMM @ h:mm a").format(timeCompleted)}'
                                     : '')
                               ],
                             ),
@@ -1136,9 +1136,8 @@ class PreviewPage extends StatelessWidget {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Container(
-                                            constraints:
-                                                BoxConstraints(minWidth: 25.w),
-                                            height: 5.h,
+                                            constraints: BoxConstraints(
+                                                minWidth: 25.w, minHeight: 5.h),
                                             decoration: BoxDecoration(
                                                 color: Theme.of(context)
                                                     .primaryColor
@@ -1163,7 +1162,7 @@ class PreviewPage extends StatelessWidget {
                                         Text(postData['attachment']
                                                     ['timeCompleted'] !=
                                                 null
-                                            ? 'Completed at ${DateFormat("hh:mm a").format(postData['attachment']['timeCompleted'])}'
+                                            ? '${DateFormat("d MMM @ h:mm a").format(postData['attachment']['timeCompleted'])}'
                                             : '')
                                       ],
                                     ),

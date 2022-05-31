@@ -133,6 +133,7 @@ Future<void> registerToDb(
               'age': ageController.text,
               'name': nameController.text,
               'image': '',
+              'friendCount': 0,
             });
             Navigator.pushReplacement(
               context,

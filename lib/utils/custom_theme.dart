@@ -40,8 +40,12 @@ class CustomTheme {
   static const Color sentMsg = Color.fromARGB(255, 93, 122, 145);
   static const Color receivedMsg = Color.fromARGB(255, 109, 150, 98);
 
-  static const Color msgBox = Color.fromARGB(255, 54, 69, 87);
-  static const Color msgIcon = Color.fromARGB(255, 153, 166, 182);
+  static const Color msgBox = Color.fromARGB(255, 70, 82, 97);
+  static const Color msgIcon = Color.fromARGB(255, 202, 208, 216);
+
+  static const Color dividerBackground = Color.fromARGB(255, 189, 180, 180);
+
+  static const Color cropImageHeader = Color.fromARGB(255, 73, 82, 92);
 
   static final boxShadow = kElevationToShadow[3];
 

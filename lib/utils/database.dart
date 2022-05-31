@@ -1101,12 +1101,13 @@ class Database {
     });
   }
 
-  Future sendMessage(chatId, message, idFrom, idTo) async {
+  Future sendMessage(chatId, message, idFrom, idTo, attachment) async {
     await firestore.collection('chats').doc(chatId).collection('messages').add({
       'message': message,
       'idFrom': idFrom,
       'idTo': idTo,
-      'dateCreated': DateTime.now()
+      'dateCreated': DateTime.now(),
+      'attachment': attachment
     }).then((value) {
       userDoc.collection('chats').doc(idTo).set(
           {'lastMsg': message, 'lastMsgTime': DateTime.now()},

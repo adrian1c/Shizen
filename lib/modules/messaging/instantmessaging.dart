@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shizen_app/modules/community/addnewpost.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:intl/intl.dart';
 import 'package:grouped_list/grouped_list.dart';
+import 'package:shizen_app/widgets/todotile.dart';
 
 class InstantMessagingPage extends HookWidget {
   const InstantMessagingPage({Key? key}) : super(key: key);
@@ -267,6 +269,7 @@ class ChatPage extends HookWidget {
     final scrollController = useScrollController();
     final focusNode = useFocusNode();
     final focusValue = useState(false);
+    final ValueNotifier<Map?> attachment = useState(null);
 
     useEffect(() {
       final observer = MyObserver(
@@ -408,17 +411,87 @@ class ChatPage extends HookWidget {
                                 ),
                                 Flexible(
                                   child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                          color: CustomTheme.sentMsg,
-                                          borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(15),
-                                              topRight: Radius.circular(15),
-                                              bottomLeft: Radius.circular(15)),
-                                          boxShadow: CustomTheme.boxShadow),
-                                      child: Text(element['message'],
-                                          style:
-                                              TextStyle(color: Colors.white))),
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                        color: CustomTheme.sentMsg,
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(15),
+                                            topRight: Radius.circular(15),
+                                            bottomLeft: Radius.circular(15)),
+                                        boxShadow: CustomTheme.boxShadow),
+                                    child: element.containsKey('attachment')
+                                        ? element['attachment'] != null
+                                            ? element['attachment'].containsKey(
+                                                    'attachmentType')
+                                                ? element['attachment'][
+                                                            'attachmentType'] ==
+                                                        'task'
+                                                    ? Column(
+                                                        children: [
+                                                          Align(
+                                                            alignment: Alignment
+                                                                .topLeft,
+                                                            child: Text(
+                                                                element[
+                                                                    'message'],
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white)),
+                                                          ),
+                                                          Divider(
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .backgroundColor,
+                                                          ),
+                                                          Transform.scale(
+                                                            scale: 0.85,
+                                                            child: ToDoTileDisplay(
+                                                                data: element[
+                                                                    'attachment']),
+                                                          )
+                                                        ],
+                                                      )
+                                                    : Column(
+                                                        children: [
+                                                          Align(
+                                                            alignment: Alignment
+                                                                .topLeft,
+                                                            child: Text(
+                                                                element[
+                                                                    'message'],
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white)),
+                                                          ),
+                                                          Divider(
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .backgroundColor,
+                                                          ),
+                                                          Transform.scale(
+                                                            scale: 0.85,
+                                                            child: TrackerTileDisplay(
+                                                                data: element[
+                                                                    'attachment']),
+                                                          )
+                                                        ],
+                                                      )
+                                                : Text(
+                                                    element['message'],
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  )
+                                            : Text(
+                                                element['message'],
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              )
+                                        : Text(
+                                            element['message'],
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -432,16 +505,86 @@ class ChatPage extends HookWidget {
                             children: [
                               Flexible(
                                 child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                        color: CustomTheme.receivedMsg,
-                                        borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(15),
-                                            topRight: Radius.circular(15),
-                                            bottomRight: Radius.circular(15)),
-                                        boxShadow: CustomTheme.boxShadow),
-                                    child: Text(element['message'],
-                                        style: TextStyle(color: Colors.white))),
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                      color: CustomTheme.receivedMsg,
+                                      borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(15),
+                                          topRight: Radius.circular(15),
+                                          bottomRight: Radius.circular(15)),
+                                      boxShadow: CustomTheme.boxShadow),
+                                  child: element.containsKey('attachment')
+                                      ? element['attachment'] != null
+                                          ? element['attachment']
+                                                  .containsKey('attachmentType')
+                                              ? element['attachment']
+                                                          ['attachmentType'] ==
+                                                      'task'
+                                                  ? Column(
+                                                      children: [
+                                                        Align(
+                                                          alignment:
+                                                              Alignment.topLeft,
+                                                          child: Text(
+                                                              element[
+                                                                  'message'],
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white)),
+                                                        ),
+                                                        Divider(
+                                                          color: Theme.of(
+                                                                  context)
+                                                              .backgroundColor,
+                                                        ),
+                                                        Transform.scale(
+                                                          scale: 0.85,
+                                                          child: ToDoTileDisplay(
+                                                              data: element[
+                                                                  'attachment']),
+                                                        )
+                                                      ],
+                                                    )
+                                                  : Column(
+                                                      children: [
+                                                        Align(
+                                                          alignment:
+                                                              Alignment.topLeft,
+                                                          child: Text(
+                                                              element[
+                                                                  'message'],
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white)),
+                                                        ),
+                                                        Divider(
+                                                          color: Theme.of(
+                                                                  context)
+                                                              .backgroundColor,
+                                                        ),
+                                                        Transform.scale(
+                                                          scale: 0.85,
+                                                          child: TrackerTileDisplay(
+                                                              data: element[
+                                                                  'attachment']),
+                                                        )
+                                                      ],
+                                                    )
+                                              : Text(
+                                                  element['message'],
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                )
+                                          : Text(
+                                              element['message'],
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            )
+                                      : Text(
+                                          element['message'],
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                ),
                               ),
                               Padding(
                                 padding:
@@ -466,53 +609,345 @@ class ChatPage extends HookWidget {
               ),
               Align(
                 alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    focusNode: focusNode,
-                    controller: msgController,
-                    textCapitalization: TextCapitalization.sentences,
-                    style: TextStyle(
-                        color:
-                            Theme.of(context).backgroundColor.withAlpha(200)),
-                    decoration: InputDecoration(
-                      fillColor: CustomTheme.msgBox,
-                      filled: true,
-                      contentPadding: const EdgeInsets.fromLTRB(15, 5, 10, 5),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50),
-                          borderSide:
-                              BorderSide(style: BorderStyle.none, width: 0)),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(50),
-                        borderSide:
-                            const BorderSide(color: Colors.grey, width: 2.0),
-                      ),
-                      hintText: focusValue.value ? '' : 'Message',
-                      hintStyle: TextStyle(
-                          color:
-                              Theme.of(context).backgroundColor.withAlpha(100)),
-                      suffixIcon: IconButton(
-                        onPressed: () async {
-                          if (msgController.text.length != 0) {
-                            final msg = msgController.text;
-                            msgController.clear();
-                            if (mustInitializeDoc) {
-                              await Database(uid)
-                                  .newChat(chatId, peerId)
-                                  .then((value) => mustInitializeDoc = false);
-                            }
-                            await Database(uid)
-                                .sendMessage(chatId, msg, uid, peerId);
-                          }
-                        },
-                        icon: Icon(Icons.send,
-                            color: focusValue.value
-                                ? CustomTheme.msgIcon
-                                : CustomTheme.msgIcon.withAlpha(100)),
-                      ),
-                    ),
-                  ),
+                child: Column(
+                  children: attachment.value != null
+                      ? [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                            child: Container(
+                                decoration: BoxDecoration(
+                                    color: Color.fromARGB(100, 85, 85, 85),
+                                    borderRadius: BorderRadius.circular(15)),
+                                child: Stack(children: [
+                                  Align(
+                                      alignment: Alignment.topCenter,
+                                      child: Column(
+                                        children: [
+                                          Text('Attachment'),
+                                          Padding(
+                                            padding: const EdgeInsets.all(5.0),
+                                            child: Transform.scale(
+                                              scale: 0.9,
+                                              child: attachment.value![
+                                                          'attachmentType'] ==
+                                                      'task'
+                                                  ? ToDoTileDisplay(
+                                                      data: attachment.value)
+                                                  : TrackerTileDisplay(
+                                                      data: attachment.value),
+                                            ),
+                                          ),
+                                        ],
+                                      )),
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: IconButton(
+                                        onPressed: () {
+                                          attachment.value = null;
+                                        },
+                                        icon: Icon(Icons.cancel_rounded,
+                                            color: Color.fromARGB(
+                                                170, 85, 85, 85))),
+                                  ),
+                                ])),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: TextField(
+                              enableInteractiveSelection: true,
+                              focusNode: focusNode,
+                              showCursor: true,
+                              controller: msgController,
+                              textCapitalization: TextCapitalization.sentences,
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .backgroundColor
+                                      .withAlpha(230)),
+                              decoration: InputDecoration(
+                                fillColor: CustomTheme.msgBox,
+                                filled: true,
+                                contentPadding:
+                                    const EdgeInsets.fromLTRB(15, 5, 10, 5),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.none, width: 0)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                  borderSide: const BorderSide(
+                                      color: Colors.grey, width: 2.0),
+                                ),
+                                hintText: focusValue.value ? '' : 'Message',
+                                hintStyle: TextStyle(
+                                    color: Theme.of(context)
+                                        .backgroundColor
+                                        .withAlpha(100)),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                        icon: Icon(Icons.attach_file_rounded,
+                                            color: focusValue.value
+                                                ? CustomTheme.msgIcon
+                                                : CustomTheme.msgIcon
+                                                    .withAlpha(100)),
+                                        onPressed: () {
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: Text('Attachment'),
+                                                  content: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      InkWell(
+                                                          child: Text(
+                                                              'To Do Task'),
+                                                          onTap: () async {
+                                                            Navigator.pop(
+                                                                context);
+                                                            var returnValue =
+                                                                await Navigator
+                                                                    .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              SelectTaskPage(),
+                                                                        ));
+                                                            if (returnValue !=
+                                                                null) {
+                                                              returnValue[
+                                                                      'attachmentType'] =
+                                                                  'task';
+                                                              if (returnValue[
+                                                                      'timeCompleted'] !=
+                                                                  null) {
+                                                                print(returnValue[
+                                                                    'timeCompleted']);
+                                                                var time = DateFormat(
+                                                                        "d MMM @ h:mm a")
+                                                                    .format(returnValue[
+                                                                        'timeCompleted']);
+                                                                returnValue[
+                                                                        'timeCompleted'] =
+                                                                    time;
+                                                              }
+                                                              attachment.value =
+                                                                  returnValue;
+                                                            }
+                                                          }),
+                                                      InkWell(
+                                                          child: Text(
+                                                              'Daily Tracker'),
+                                                          onTap: () async {
+                                                            Navigator.pop(
+                                                                context);
+                                                            var returnValue =
+                                                                await Navigator
+                                                                    .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              SelectTrackerPage(),
+                                                                        ));
+                                                            if (returnValue !=
+                                                                null) {
+                                                              returnValue[
+                                                                      'attachmentType'] =
+                                                                  'tracker';
+                                                              attachment.value =
+                                                                  returnValue;
+                                                            }
+                                                          })
+                                                    ],
+                                                  ),
+                                                );
+                                              });
+                                        }),
+                                    IconButton(
+                                      onPressed: () async {
+                                        if (msgController.text.length != 0 ||
+                                            attachment.value != null) {
+                                          final msg = msgController.text;
+                                          if (mustInitializeDoc) {
+                                            await Database(uid)
+                                                .newChat(chatId, peerId)
+                                                .then((value) =>
+                                                    mustInitializeDoc = false);
+                                          }
+                                          await Database(uid).sendMessage(
+                                              chatId,
+                                              msg,
+                                              uid,
+                                              peerId,
+                                              attachment.value);
+                                          attachment.value = null;
+                                          msgController.clear();
+                                        }
+                                      },
+                                      icon: Icon(Icons.send,
+                                          color: focusValue.value
+                                              ? CustomTheme.msgIcon
+                                              : CustomTheme.msgIcon
+                                                  .withAlpha(100)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]
+                      : [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: TextField(
+                              enableInteractiveSelection: true,
+                              focusNode: focusNode,
+                              showCursor: true,
+                              controller: msgController,
+                              textCapitalization: TextCapitalization.sentences,
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .backgroundColor
+                                      .withAlpha(230)),
+                              decoration: InputDecoration(
+                                fillColor: CustomTheme.msgBox,
+                                filled: true,
+                                contentPadding:
+                                    const EdgeInsets.fromLTRB(15, 5, 10, 5),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                    borderSide: BorderSide(
+                                        style: BorderStyle.none, width: 0)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                  borderSide: const BorderSide(
+                                      color: Colors.grey, width: 2.0),
+                                ),
+                                hintText: focusValue.value ? '' : 'Message',
+                                hintStyle: TextStyle(
+                                    color: Theme.of(context)
+                                        .backgroundColor
+                                        .withAlpha(100)),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                        icon: Icon(Icons.attach_file_rounded,
+                                            color: focusValue.value
+                                                ? CustomTheme.msgIcon
+                                                : CustomTheme.msgIcon
+                                                    .withAlpha(100)),
+                                        onPressed: () {
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: Text('Attachment'),
+                                                  content: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      InkWell(
+                                                          child: Text(
+                                                              'To Do Task'),
+                                                          onTap: () async {
+                                                            Navigator.pop(
+                                                                context);
+                                                            var returnValue =
+                                                                await Navigator
+                                                                    .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              SelectTaskPage(),
+                                                                        ));
+                                                            if (returnValue !=
+                                                                null) {
+                                                              returnValue[
+                                                                      'attachmentType'] =
+                                                                  'task';
+                                                              if (returnValue[
+                                                                      'timeCompleted'] !=
+                                                                  null) {
+                                                                print(returnValue[
+                                                                    'timeCompleted']);
+                                                                var time = DateFormat(
+                                                                        "d MMM @ h:mm a")
+                                                                    .format(returnValue[
+                                                                        'timeCompleted']);
+                                                                returnValue[
+                                                                        'timeCompleted'] =
+                                                                    time;
+                                                              }
+                                                              attachment.value =
+                                                                  returnValue;
+                                                            }
+                                                          }),
+                                                      InkWell(
+                                                          child: Text(
+                                                              'Daily Tracker'),
+                                                          onTap: () async {
+                                                            Navigator.pop(
+                                                                context);
+                                                            var returnValue =
+                                                                await Navigator
+                                                                    .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              SelectTrackerPage(),
+                                                                        ));
+                                                            if (returnValue !=
+                                                                null) {
+                                                              returnValue[
+                                                                      'attachmentType'] =
+                                                                  'tracker';
+                                                              attachment.value =
+                                                                  returnValue;
+                                                            }
+                                                          })
+                                                    ],
+                                                  ),
+                                                );
+                                              });
+                                        }),
+                                    IconButton(
+                                      onPressed: () async {
+                                        if (msgController.text.length != 0 ||
+                                            attachment.value != null) {
+                                          final msg = msgController.text;
+
+                                          if (mustInitializeDoc) {
+                                            await Database(uid)
+                                                .newChat(chatId, peerId)
+                                                .then((value) =>
+                                                    mustInitializeDoc = false);
+                                          }
+                                          await Database(uid).sendMessage(
+                                              chatId,
+                                              msg,
+                                              uid,
+                                              peerId,
+                                              attachment.value);
+                                          attachment.value = null;
+                                          msgController.clear();
+                                        }
+                                      },
+                                      icon: Icon(Icons.send,
+                                          color: focusValue.value
+                                              ? CustomTheme.msgIcon
+                                              : CustomTheme.msgIcon
+                                                  .withAlpha(100)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                 ),
               )
             ]),

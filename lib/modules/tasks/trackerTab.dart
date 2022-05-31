@@ -8,8 +8,10 @@ import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
 
 class TrackerTask extends HookWidget {
-  const TrackerTask({Key? key, required this.uid}) : super(key: key);
+  const TrackerTask({Key? key, required this.uid, required this.controller})
+      : super(key: key);
 
+  final controller;
   final String uid;
 
   @override
@@ -25,22 +27,25 @@ class TrackerTask extends HookWidget {
 
     return Container(
         child: snapshot.data.docs.length > 0
-            ? ListView.builder(
-                physics: BouncingScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: snapshot.data.docs.length,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return TrackerTile(
-                        uid: uid, task: snapshot.data.docs[index]);
-                  }
-                  return Column(
-                    children: [
-                      Divider(),
-                      TrackerTile(uid: uid, task: snapshot.data.docs[index]),
-                    ],
-                  );
-                })
+            ? Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: snapshot.data.docs.length,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return TrackerTile(
+                            uid: uid, task: snapshot.data.docs[index]);
+                      }
+                      return Column(
+                        children: [
+                          Divider(),
+                          TrackerTile(
+                              uid: uid, task: snapshot.data.docs[index]),
+                        ],
+                      );
+                    }),
+              )
             : Center(
                 child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 30.0),

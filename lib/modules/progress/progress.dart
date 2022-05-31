@@ -5,10 +5,12 @@ import 'package:shizen_app/utils/allUtils.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
+import 'package:shizen_app/utils/nestedFix.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
-import 'package:sticky_grouped_list/sticky_grouped_list.dart';
+import 'package:grouped_list/grouped_list.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+import 'package:sliver_tools/sliver_tools.dart';
 
 class ProgressPage extends HookWidget {
   const ProgressPage({Key? key}) : super(key: key);
@@ -21,149 +23,224 @@ class ProgressPage extends HookWidget {
       initialLength: 2,
       initialIndex: 0,
     );
-    return Column(
-      children: [
-        Container(
-          decoration:
-              BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    primary: filterValue.value == null
-                        ? CustomTheme.activeIcon
-                        : CustomTheme.activeButton,
-                    shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10))),
-                    minimumSize:
-                        Size((MediaQuery.of(context).size.width * 0.65), 45),
-                  ),
-                  onPressed: () {
-                    showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Row(
-                              children: [
-                                Text('Selct Date / Range'),
-                                TextButton(
-                                    onPressed: () {
-                                      filterValue.value = null;
-                                      Provider.of<TabProvider>(context,
-                                              listen: false)
-                                          .rebuildPage('progress');
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text('CLEAR'))
-                              ],
-                            ),
-                            content: SfDateRangePicker(
-                              initialSelectedRange: filterValue.value,
-                              selectionMode: DateRangePickerSelectionMode.range,
-                              showActionButtons: true,
-                              maxDate: DateTime.now(),
-                              onCancel: () => Navigator.pop(context),
-                              onSubmit: (value) {
-                                filterValue.value = value as PickerDateRange?;
-                                Provider.of<TabProvider>(context, listen: false)
-                                    .rebuildPage('progress');
-                                Navigator.pop(context);
-                              },
-                            ),
-                          );
-                        });
-                  },
-                  child: Row(
-                    children: [
-                      Icon(Icons.filter_alt),
-                      Text(filterValue.value != null
-                          ? filterValue.value!.endDate != null
-                              ? '${DateFormat("dd MMM yyyy").format((filterValue.value!.startDate!))} - ${DateFormat("dd MMM yyyy").format((filterValue.value!.endDate!))}'
-                              : '${DateFormat("dd MMM yyyy").format((filterValue.value!.startDate!))}'
-                          : 'Filter'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Container(
-            width: 60.w,
-            decoration: BoxDecoration(
-              color: Theme.of(context).backgroundColor,
-              borderRadius: BorderRadius.circular(
-                25.0,
-              ),
-            ),
-            child: TabBar(
-              controller: tabController,
-              // give the indicator a decoration (color and border radius)
-              indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(
-                  25.0,
-                ),
-                color: Theme.of(context).primaryColor,
-              ),
-              labelColor: Colors.white,
-              unselectedLabelColor: Theme.of(context).primaryColor,
-              tabs: [
-                // first tab [you can add an icon using the icon property]
-                Tab(
-                  child: Icon(Icons.task_alt),
-                ),
+    final scrollController = useScrollController();
+    final scrollController2 = useScrollController();
 
-                // second tab [you can add an icon using the icon property]
-                Tab(
-                  child: Icon(Icons.track_changes),
+    final tabIndex = useState(0);
+
+    useEffect(() {
+      tabController.addListener(() {
+        tabIndex.value = tabController.index == 0 ? 0 : 1;
+      });
+
+      return () {};
+    });
+
+    return NestedScrollView(
+      key: Keys.nestedScrollViewKeyProgressPage,
+      controller: scrollController2,
+      physics: ScrollPhysics(parent: PageScrollPhysics()),
+      floatHeaderSlivers: true,
+      headerSliverBuilder: ((context, innerBoxIsScrolled) {
+        return [
+          SliverOverlapAbsorber(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            sliver: MultiSliver(children: [
+              SliverAppBar(
+                backgroundColor: CustomTheme.dividerBackground,
+                shadowColor: Colors.transparent,
+                automaticallyImplyLeading: false,
+                floating: true,
+                forceElevated: false,
+                flexibleSpace: Container(
+                  decoration:
+                      BoxDecoration(color: CustomTheme.dividerBackground),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            primary: filterValue.value == null
+                                ? CustomTheme.activeIcon
+                                : CustomTheme.activeButton,
+                            shape: const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10))),
+                            minimumSize: Size((65.w), 45),
+                          ),
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Row(
+                                      children: [
+                                        Text('Selct Date / Range'),
+                                        TextButton(
+                                            onPressed: () {
+                                              filterValue.value = null;
+                                              Provider.of<TabProvider>(context,
+                                                      listen: false)
+                                                  .rebuildPage('progress');
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text('CLEAR'))
+                                      ],
+                                    ),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SfDateRangePicker(
+                                          initialSelectedRange:
+                                              filterValue.value,
+                                          selectionMode:
+                                              DateRangePickerSelectionMode
+                                                  .range,
+                                          showActionButtons: true,
+                                          maxDate: DateTime.now(),
+                                          onCancel: () =>
+                                              Navigator.pop(context),
+                                          onSubmit: (value) {
+                                            filterValue.value =
+                                                value as PickerDateRange?;
+                                            Provider.of<TabProvider>(context,
+                                                    listen: false)
+                                                .rebuildPage('progress');
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                });
+                          },
+                          child: Row(
+                            children: [
+                              Icon(Icons.filter_alt),
+                              Text(filterValue.value != null
+                                  ? filterValue.value!.endDate != null
+                                      ? '${DateFormat("dd MMM yyyy").format((filterValue.value!.startDate!))} - ${DateFormat("dd MMM yyyy").format((filterValue.value!.endDate!))}'
+                                      : '${DateFormat("dd MMM yyyy").format((filterValue.value!.startDate!))}'
+                                  : 'Filter'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
+                bottom: PreferredSize(
+                  preferredSize: Size(100.w, 7.h),
+                  child: Container(
+                    width: 60.w,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).backgroundColor,
+                      borderRadius: BorderRadius.circular(
+                        25.0,
+                      ),
+                    ),
+                    child: TabBar(
+                      controller: tabController,
+                      // give the indicator a decoration (color and border radius)
+                      indicator: BoxDecoration(
+                        borderRadius: BorderRadius.circular(
+                          25.0,
+                        ),
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      labelColor: Colors.white,
+                      unselectedLabelColor: Theme.of(context).primaryColor,
+                      tabs: [
+                        Tab(
+                          child: Icon(Icons.task_alt),
+                        ),
+                        Tab(
+                          child: Icon(Icons.track_changes),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverPinnedHeader(
+                child: PreferredSize(
+                  preferredSize: Size(100.w, 3.h),
+                  child: AnimatedTextDivider(
+                      ['TO DO TASKS', 'DAILY TRACKER'], tabIndex),
+                ),
+              ),
+            ]),
           ),
-        ),
-        Expanded(
-          child: TabBarView(
-              physics: CustomTabBarViewScrollPhysics(),
-              controller: tabController,
-              children: [
-                KeepAlivePage(
-                  child: Column(
-                    children: [
-                      TextDivider('COMPLETED TASKS'),
-                      Expanded(
-                        child: TodoTaskProgressList(
-                            filterValue: filterValue, searchValue: searchValue),
+        ];
+      }),
+      body: TabBarView(
+          physics: CustomTabBarViewScrollPhysics(),
+          controller: tabController,
+          children: [
+            KeepAlivePage(
+              child: Builder(builder: (context) {
+                return NestedFix(
+                  globalKey: Keys.nestedScrollViewKeyProgressPage,
+                  child:
+                      CustomScrollView(controller: scrollController, slivers: [
+                    SliverOverlapInjector(
+                      // This is the flip side of the SliverOverlapAbsorber
+                      // above.
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                          context),
+                    ),
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          return TodoTaskProgressList(
+                            filterValue: filterValue,
+                            searchValue: searchValue,
+                          );
+                        },
+                        childCount: 1,
                       ),
+                    ),
+                  ]),
+                );
+              }),
+            ),
+            KeepAlivePage(
+              child: Builder(builder: (context) {
+                return NestedFix(
+                  globalKey: Keys.nestedScrollViewKeyProgressPage,
+                  child: CustomScrollView(
+                    controller: scrollController,
+                    slivers: [
+                      SliverOverlapInjector(
+                          handle:
+                              NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                  context)),
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          return TrackerProgressList(
+                            filterValue: filterValue,
+                            searchValue: searchValue,
+                          );
+                        }, childCount: 1),
+                      )
                     ],
                   ),
-                ),
-                KeepAlivePage(
-                  child: Column(
-                    children: [
-                      TextDivider('CHECK-INS'),
-                      Expanded(
-                        child: TrackerProgressList(
-                            filterValue: filterValue, searchValue: searchValue),
-                      ),
-                    ],
-                  ),
-                )
-              ]),
-        ),
-      ],
+                );
+              }),
+            )
+          ]),
     );
   }
 }
 
 class TodoTaskProgressList extends HookWidget {
-  const TodoTaskProgressList(
-      {Key? key, required this.filterValue, required this.searchValue})
-      : super(key: key);
+  const TodoTaskProgressList({
+    Key? key,
+    required this.filterValue,
+    required this.searchValue,
+  }) : super(key: key);
 
   final filterValue;
   final searchValue;
@@ -178,15 +255,17 @@ class TodoTaskProgressList extends HookWidget {
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
       return snapshot.data.length > 0
-          ? StickyGroupedListView(
+          ? GroupedListView(
+              physics: NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               elements: snapshot.data,
               groupBy: (Map element) => DateTime(element['dateCompleted'].year,
                   element['dateCompleted'].month, element['dateCompleted'].day),
-              groupSeparatorBuilder: (Map element) {
+              groupHeaderBuilder: (Map element) {
                 var formattedDate =
                     DateFormat("dd MMM yyyy").format(element['dateCompleted']);
                 return Container(
+                  margin: const EdgeInsets.only(top: 10),
                   height: 5.h,
                   child: Align(
                     alignment: Alignment.center,
@@ -219,9 +298,10 @@ class TodoTaskProgressList extends HookWidget {
                 );
               },
               floatingHeader: true,
-              order: StickyGroupedListOrder.DESC,
+              useStickyGroupSeparators: true,
+              order: GroupedListOrder.DESC,
             )
-          : Text('No To Do Tasks completed');
+          : Center(child: Text('No To Do Tasks completed'));
     }
     return SpinKitWanderingCubes(
       color: Theme.of(context).primaryColor,
@@ -308,8 +388,7 @@ class TodoTaskProgressTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                    constraints: BoxConstraints(minWidth: 25.w),
-                    height: 5.h,
+                    constraints: BoxConstraints(minWidth: 25.w, minHeight: 5.h),
                     decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor.withAlpha(200),
                         borderRadius: BorderRadius.only(
@@ -321,8 +400,7 @@ class TodoTaskProgressTile extends StatelessWidget {
                       child: Text(title,
                           style: Theme.of(context).textTheme.headline4),
                     ))),
-                Text(
-                    'Completed at ${DateFormat("hh:mm a").format(timeCompleted)}')
+                Text('${DateFormat("d MMM @ h:mm a").format(timeCompleted)}')
               ],
             ),
             ConstrainedBox(
@@ -413,15 +491,17 @@ class TrackerProgressList extends HookWidget {
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
       return snapshot.data.length > 0
-          ? StickyGroupedListView(
+          ? GroupedListView(
+              physics: BouncingScrollPhysics(),
               shrinkWrap: true,
               elements: snapshot.data,
               groupBy: (Map element) => DateTime(element['dateCreated'].year,
                   element['dateCreated'].month, element['dateCreated'].day),
-              groupSeparatorBuilder: (Map element) {
+              groupHeaderBuilder: (Map element) {
                 var formattedDate =
                     DateFormat("dd MMM yyyy").format(element['dateCreated']);
                 return Container(
+                  margin: const EdgeInsets.only(top: 10),
                   height: 5.h,
                   child: Align(
                     alignment: Alignment.center,
@@ -453,9 +533,10 @@ class TrackerProgressList extends HookWidget {
                 );
               },
               floatingHeader: true,
-              order: StickyGroupedListOrder.DESC,
+              useStickyGroupSeparators: true,
+              order: GroupedListOrder.DESC,
             )
-          : Text('No Check-ins yet');
+          : Center(child: Text('No Check-ins yet'));
     }
     return SpinKitWanderingCubes(
       color: Theme.of(context).primaryColor,
