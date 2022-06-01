@@ -197,8 +197,13 @@ class EveryoneList extends HookWidget {
           : Center(child: Text('No posts found'));
     }
 
-    return SpinKitWanderingCubes(
-        color: Theme.of(context).primaryColor, size: 75);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 50.0),
+      child: SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor,
+        size: 75.0,
+      ),
+    );
   }
 }
 
@@ -254,7 +259,6 @@ class FriendsOnlyList extends HookWidget {
     }, [visibilityValue.value, hashtagValue.value]);
 
     if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-      print(initialLoad.value);
       if (!initialLoad.value) {
         postIds.value = snapshot.data[0];
         posts.value = snapshot.data[1];
@@ -309,8 +313,13 @@ class FriendsOnlyList extends HookWidget {
           : Center(child: Text('No posts found'));
     }
 
-    return SpinKitWanderingCubes(
-        color: Theme.of(context).primaryColor, size: 75);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 50.0),
+      child: SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor,
+        size: 75.0,
+      ),
+    );
   }
 }
 
@@ -417,8 +426,13 @@ class AnonymousList extends HookWidget {
           : Center(child: Text('No posts found'));
     }
 
-    return SpinKitWanderingCubes(
-        color: Theme.of(context).primaryColor, size: 75);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 50.0),
+      child: SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor,
+        size: 75.0,
+      ),
+    );
   }
 }
 
@@ -840,6 +854,7 @@ class PostListTile extends HookWidget {
                   },
                 ),
               ),
+            Divider(thickness: 2),
             CommentList(pid: postData['postId'], commentCount: commentCount),
             Center(
               child: InkWell(
@@ -1135,7 +1150,12 @@ class CommentPage extends HookWidget {
           title: const Text("ALL COMMENTS"),
           centerTitle: true,
         ),
-        body: SpinKitWanderingCubes(
-            color: Theme.of(context).primaryColor, size: 75));
+        body: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 50.0),
+          child: SpinKitWanderingCubes(
+            color: Theme.of(context).primaryColor,
+            size: 75.0,
+          ),
+        ));
   }
 }

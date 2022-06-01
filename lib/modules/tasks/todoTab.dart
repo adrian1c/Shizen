@@ -26,37 +26,44 @@ class ToDoTask extends HookWidget {
     final future = useMemoized(() => Database(uid).getToDoTasks(),
         [Provider.of<TabProvider>(context).todo]);
     final snapshot = useFuture(future);
-    return Container(
-        child: !snapshot.hasData
-            ? SpinKitWanderingCubes(
-                color: Theme.of(context).primaryColor,
-                size: 75.0,
-              )
-            : snapshot.data.docs.length > 0
-                ? Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: snapshot.data.docs.length,
-                        itemBuilder: (context, index) {
-                          var taskDoc = snapshot.data.docs[index];
-                          return TodoTaskDisplay(
-                            taskId: taskDoc.id,
-                            title: taskDoc['title'],
-                            taskList: taskDoc['desc'],
-                            recur: List<bool>.from(taskDoc['recur']),
-                            reminder: convertTimestamp(taskDoc['reminder']),
-                            isPublic: taskDoc['isPublic'],
-                          );
-                        }),
-                  )
-                : Center(
-                    child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 30.0),
-                    child: Text(
-                        'You have no To Do tasks.\n\nYou can create tasks by\nhitting the button below!',
-                        textAlign: TextAlign.center),
-                  )));
+
+    if (snapshot.hasData) {
+      var docsLength = snapshot.data.docs.length;
+
+      return docsLength > 0
+          ? SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              var taskDoc = snapshot.data.docs[index];
+              return TodoTaskDisplay(
+                taskId: taskDoc.id,
+                title: taskDoc['title'],
+                taskList: taskDoc['desc'],
+                recur: List<bool>.from(taskDoc['recur']),
+                reminder: convertTimestamp(taskDoc['reminder']),
+                isPublic: taskDoc['isPublic'],
+              );
+            }, childCount: snapshot.data.docs.length))
+          : SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
+                  child: Text(
+                    'You have no to do tasks.\n You can create tasks by clicking on the button below!',
+                    textAlign: TextAlign.center,
+                  ));
+            }, childCount: 1));
+    }
+
+    return SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 50.0),
+        child: SpinKitWanderingCubes(
+          color: Theme.of(context).primaryColor,
+          size: 75.0,
+        ),
+      );
+    }, childCount: 1));
   }
 }
 

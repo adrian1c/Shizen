@@ -154,7 +154,6 @@ class FriendMessageListPage extends HookWidget {
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
       final friendsList = snapshot.data!['friendsList'];
-      print(friendsList);
       return Scaffold(
           appBar: AppBar(
             title: Text('New Chat'),
@@ -170,8 +169,6 @@ class FriendMessageListPage extends HookWidget {
                           padding: const EdgeInsets.all(15),
                           child: ListTile(
                             onTap: () {
-                              print(friendsList[index].id);
-                              print(friendsList[index]['name']);
                               Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
@@ -724,8 +721,6 @@ class ChatPage extends HookWidget {
                                                               if (returnValue[
                                                                       'timeCompleted'] !=
                                                                   null) {
-                                                                print(returnValue[
-                                                                    'timeCompleted']);
                                                                 var time = DateFormat(
                                                                         "d MMM @ h:mm a")
                                                                     .format(returnValue[
@@ -872,8 +867,6 @@ class ChatPage extends HookWidget {
                                                               if (returnValue[
                                                                       'timeCompleted'] !=
                                                                   null) {
-                                                                print(returnValue[
-                                                                    'timeCompleted']);
                                                                 var time = DateFormat(
                                                                         "d MMM @ h:mm a")
                                                                     .format(returnValue[
@@ -955,8 +948,13 @@ class ChatPage extends HookWidget {
     }
     return Scaffold(
         appBar: AppBar(),
-        body: SpinKitWanderingCubes(
-            color: Theme.of(context).primaryColor, size: 75));
+        body: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 50.0),
+          child: SpinKitWanderingCubes(
+            color: Theme.of(context).primaryColor,
+            size: 75.0,
+          ),
+        ));
   }
 }
 

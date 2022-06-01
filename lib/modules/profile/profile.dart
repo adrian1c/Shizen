@@ -6,16 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:shizen_app/modules/community/community.dart';
-import 'package:shizen_app/modules/tasks/addtodo.dart';
-import 'package:shizen_app/modules/tasks/todoTab.dart';
+import 'package:shizen_app/modules/tasks/tasks.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shizen_app/utils/dateTimeAgo.dart';
+import 'package:shizen_app/utils/nestedFix.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:shizen_app/widgets/todotile.dart';
+import 'package:sliver_tools/sliver_tools.dart';
 
 class ProfilePage extends HookWidget {
   const ProfilePage({Key? key, this.viewId}) : super(key: key);
@@ -43,117 +43,174 @@ class ProfilePage extends HookWidget {
       initialIndex: 0,
     );
 
-    return Column(
-      children: [
-        Container(
-            padding: const EdgeInsets.all(20),
-            color: Color.fromARGB(255, 186, 195, 201),
-            child: snapshotUserProfileData.hasData &&
-                    snapshotTasksCompletedData.hasData
-                ? UserProfileData(
-                    data: snapshotUserProfileData.data,
-                    uid: uid,
-                    nameController: nameController,
-                    viewId: viewId,
-                    tasksCompleted: snapshotTasksCompletedData.data,
-                    checkinData: snapshotCheckinData.data)
-                : Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 10.h,
-                          height: 10.h,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(width: 1),
-                            color: Colors.white,
-                          ),
+    final scrollController = useScrollController();
+    final scrollController2 = useScrollController();
+    final scrollController3 = useScrollController();
+    final scrollController4 = useScrollController();
+
+    final tabIndex = useState(0);
+
+    useEffect(() {
+      tabController.addListener(() {
+        tabIndex.value = tabController.index;
+      });
+
+      return () {};
+    });
+
+    if (snapshotUserProfileData.hasData) {
+      return NestedScrollView(
+        key: viewId != null
+            ? Keys.nestedScrollViewKeyProfileOtherPage
+            : Keys.nestedScrollViewKeyProfilePage,
+        controller: scrollController,
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return [
+            SliverOverlapAbsorber(
+                handle:
+                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                sliver: MultiSliver(children: [
+                  SliverAppBar(
+                    backgroundColor: CustomTheme.dividerBackground,
+                    shadowColor: Colors.transparent,
+                    automaticallyImplyLeading: false,
+                    floating: true,
+                    forceElevated: false,
+                    snap: true,
+                    centerTitle: true,
+                    bottom: PreferredSize(
+                      preferredSize: Size(90.w, 10.h),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: UserProfileData(
+                              data: snapshotUserProfileData.data,
+                              uid: uid,
+                              nameController: nameController,
+                              viewId: viewId,
+                              tasksCompleted: snapshotTasksCompletedData.data,
+                              checkinData: snapshotCheckinData.data),
                         ),
-                        Flexible(
-                          child: Padding(
-                              padding: const EdgeInsets.only(left: 20),
-                              child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      height: 14.sp,
-                                      color: Colors.white,
-                                    ),
-                                    Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6)),
-                                    Container(
-                                      height: 14.sp,
-                                      color: Colors.white,
-                                    ),
-                                    Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6)),
-                                    Container(
-                                      height: 14.sp,
-                                      color: Colors.white,
-                                    ),
-                                  ])),
-                        ),
-                      ],
+                      ),
                     ),
-                  )),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
-        ),
-        Container(
-          width: 80.w,
-          decoration: BoxDecoration(
-            color: Theme.of(context).backgroundColor,
-            borderRadius: BorderRadius.circular(
-              25.0,
+                  ),
+                  SliverAppBar(
+                    backgroundColor: CustomTheme.dividerBackground,
+                    shadowColor: Colors.transparent,
+                    automaticallyImplyLeading: false,
+                    floating: false,
+                    forceElevated: false,
+                    centerTitle: true,
+                    title: Container(
+                      width: 80.w,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).backgroundColor,
+                        borderRadius: BorderRadius.circular(
+                          25.0,
+                        ),
+                      ),
+                      child: TabBar(
+                        controller: tabController,
+                        // give the indicator a decoration (color and border radius)
+                        indicator: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            25.0,
+                          ),
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Theme.of(context).primaryColor,
+                        tabs: [
+                          Tab(
+                            child: Icon(Icons.task_alt),
+                          ),
+                          Tab(
+                            child: Icon(Icons.track_changes),
+                          ),
+                          Tab(
+                            child: Icon(Icons.dynamic_feed),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverPinnedHeader(
+                    child: PreferredSize(
+                      preferredSize: Size(100.w, 3.h),
+                      child: AnimatedTextDivider(
+                          ['TO DO TASKS', 'HIGHLIGHTED DAILY TRACKER', 'POSTS'],
+                          tabIndex),
+                    ),
+                  ),
+                ]))
+          ];
+        },
+        body: TabBarView(
+          physics: CustomTabBarViewScrollPhysics(),
+          controller: tabController,
+          children: [
+            KeepAlivePage(
+              child: Builder(builder: (context) {
+                return NestedFix(
+                  globalKey: viewId != null
+                      ? Keys.nestedScrollViewKeyProfileOtherPage
+                      : Keys.nestedScrollViewKeyProfilePage,
+                  child:
+                      CustomScrollView(controller: scrollController2, slivers: [
+                    SliverOverlapInjector(
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                          context),
+                    ),
+                    ProfileToDo(
+                        uid: uid, ownProfile: viewId != null ? false : true)
+                  ]),
+                );
+              }),
             ),
-          ),
-          child: TabBar(
-            controller: tabController,
-            // give the indicator a decoration (color and border radius)
-            indicator: BoxDecoration(
-              borderRadius: BorderRadius.circular(
-                25.0,
-              ),
-              color: Theme.of(context).primaryColor,
+            KeepAlivePage(
+              child: Builder(builder: (context) {
+                return NestedFix(
+                  globalKey: viewId != null
+                      ? Keys.nestedScrollViewKeyProfileOtherPage
+                      : Keys.nestedScrollViewKeyProfilePage,
+                  child:
+                      CustomScrollView(controller: scrollController3, slivers: [
+                    SliverOverlapInjector(
+                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                            context)),
+                    ProfileTracker(
+                        uid: uid, ownProfile: viewId != null ? false : true)
+                  ]),
+                );
+              }),
             ),
-            labelColor: Colors.white,
-            unselectedLabelColor: Theme.of(context).primaryColor,
-            tabs: [
-              Tab(
-                child: Icon(Icons.task_alt),
-              ),
-              Tab(
-                child: Icon(Icons.track_changes),
-              ),
-              Tab(
-                child: Icon(Icons.dynamic_feed),
-              )
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
-        ),
-        Expanded(
-          child: TabBarView(controller: tabController, children: <Widget>[
             KeepAlivePage(
-                child: ProfileToDo(
-                    uid: uid, ownProfile: viewId != null ? false : true)),
-            KeepAlivePage(
-                child: ProfileTracker(
-                    uid: uid, ownProfile: viewId != null ? false : true)),
-            KeepAlivePage(
-              child: ProfilePosts(
-                  uid: uid, ownProfile: viewId != null ? false : true),
-            )
-          ]),
+              child: Builder(builder: (context) {
+                return NestedFix(
+                  globalKey: Keys.nestedScrollViewKeyProfilePage,
+                  child:
+                      CustomScrollView(controller: scrollController4, slivers: [
+                    SliverOverlapInjector(
+                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                            context)),
+                    ProfilePosts(
+                        uid: uid, ownProfile: viewId != null ? false : true)
+                  ]),
+                );
+              }),
+            ),
+          ],
         ),
-      ],
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 50.0),
+      child: SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor,
+        size: 75.0,
+      ),
     );
   }
 }
@@ -172,37 +229,42 @@ class ProfileToDo extends HookWidget {
   Widget build(BuildContext context) {
     final stream = useMemoized(() => Database(uid).getPublicToDo(uid), []);
     final snapshot = useStream(stream);
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          TextDivider('TO DO TASKS'),
-          Container(
-              child: !snapshot.hasData
-                  ? SpinKitWanderingCubes(
-                      color: Theme.of(context).primaryColor,
-                      size: 75.0,
-                    )
-                  : snapshot.data.docs.length > 0
-                      ? ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: snapshot.data.docs.length,
-                          itemBuilder: ((context, index) {
-                            var taskDoc = snapshot.data.docs[index];
-                            var title = taskDoc['title'];
-                            var taskList = taskDoc['desc'];
 
-                            return ToDoTileShare(
-                                ownProfile: ownProfile,
-                                taskDoc: taskDoc,
-                                taskList: taskList,
-                                title: title);
-                          }))
-                      : Center(
-                          child: Text('No To Do tasks to show',
-                              textAlign: TextAlign.center))),
-        ],
-      ),
-    );
+    if (snapshot.hasData) {
+      var docsLength = snapshot.data.docs.length;
+      return docsLength > 0
+          ? SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              var taskDoc = snapshot.data.docs[index];
+              var title = taskDoc['title'];
+              var taskList = taskDoc['desc'];
+              return ToDoTileShare(
+                  ownProfile: ownProfile,
+                  taskDoc: taskDoc,
+                  taskList: taskList,
+                  title: title);
+            }, childCount: 1))
+          : SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
+                  child: Text(
+                    'No To Do Tasks on display',
+                    textAlign: TextAlign.center,
+                  ));
+            }, childCount: 1));
+    }
+
+    return SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 50.0),
+        child: SpinKitWanderingCubes(
+          color: Theme.of(context).primaryColor,
+          size: 75.0,
+        ),
+      );
+    }, childCount: 1));
   }
 }
 
@@ -232,113 +294,125 @@ class ProfileTracker extends HookWidget {
         task = snapshot.data[0];
         taskId = snapshot.data[1];
       }
-      return SingleChildScrollView(
-        child: Column(
-          children: [
-            TextDivider('DAILY TRACKER'),
-            ownProfile
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProfileSelectTracker(),
-                                ));
-                          },
-                          child: Row(
-                            children: [Icon(Icons.edit), Text('Edit')],
-                          ),
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
-                                CustomTheme.activeButton),
-                            shape: MaterialStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                            ),
+      if (ownProfile) {
+        return SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+          return Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProfileSelectTracker(),
+                            ));
+                      },
+                      child: Row(
+                        children: [Icon(Icons.edit), Text('Edit')],
+                      ),
+                      style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all(CustomTheme.activeButton),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
                           ),
                         ),
                       ),
-                      task != null
-                          ? Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                            content: Text(
-                                                'Do you want to stop displaying this tracker in your profile?'),
-                                            actions: [
-                                              TextButton(
-                                                  onPressed: () async {
-                                                    await Database(uid)
-                                                        .setHighlightTracker(
-                                                            null);
-                                                    Provider.of<TabProvider>(
-                                                            context,
-                                                            listen: false)
-                                                        .rebuildPage(
-                                                            'profileTracker');
-                                                    Navigator.pop(context);
-                                                  },
-                                                  child: Text('Remove')),
-                                              TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(context),
-                                                  child: Text('Cancel')),
-                                            ],
-                                          ));
-                                },
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.remove_circle),
-                                    Text('Remove')
-                                  ],
-                                ),
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all(
-                                      CustomTheme.redButton),
-                                  shape: MaterialStateProperty.all(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(40),
-                                    ),
-                                  ),
+                    ),
+                  ),
+                  task != null
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                        content: Text(
+                                            'Do you want to stop displaying this tracker in your profile?'),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () async {
+                                                await Database(uid)
+                                                    .setHighlightTracker(null);
+                                                Provider.of<TabProvider>(
+                                                        context,
+                                                        listen: false)
+                                                    .rebuildPage(
+                                                        'profileTracker');
+                                                Navigator.pop(context);
+                                              },
+                                              child: Text('Remove')),
+                                          TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: Text('Cancel')),
+                                        ],
+                                      ));
+                            },
+                            child: Row(
+                              children: [
+                                Icon(Icons.remove_circle),
+                                Text('Remove')
+                              ],
+                            ),
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(
+                                  CustomTheme.redButton),
+                              shape: MaterialStateProperty.all(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(40),
                                 ),
                               ),
-                            )
-                          : Container()
-                    ],
-                  )
-                : Container(),
-            task != null
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
-                    child: ProfileSelectTrackerTile(task: task, taskId: taskId),
-                  )
-                : Center(child: Text('No highlighted tracker'))
-          ],
-        ),
-      );
+                            ),
+                          ),
+                        )
+                      : Container()
+                ],
+              ),
+              task != null
+                  ? ProfileSelectTrackerTile(task: task, taskId: taskId)
+                  : Text('No Highlighted Daily Tracker')
+            ],
+          );
+        }, childCount: 1));
+      }
+
+      return task != null
+          ? SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              return ProfileSelectTrackerTile(task: task, taskId: taskId);
+            }, childCount: 1))
+          : SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
+                  child: Text(
+                    'No Highlighted Daily Tracker',
+                    textAlign: TextAlign.center,
+                  ));
+            }, childCount: 1));
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          TextDivider('DAILY TRACKER'),
-          SpinKitWanderingCubes(
-            color: Theme.of(context).primaryColor,
-            size: 75.0,
-          ),
-        ],
-      ),
-    );
+    // SliverList(
+    //           delegate: SliverChildBuilderDelegate((context, index) {}, childCount: 1))
+
+    return SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 50.0),
+        child: SpinKitWanderingCubes(
+          color: Theme.of(context).primaryColor,
+          size: 75.0,
+        ),
+      );
+    }, childCount: 1));
   }
 }
 
@@ -405,8 +479,13 @@ class ProfileSelectTracker extends HookWidget {
                                   task: task, taskId: task.id))));
                 },
               )
-            : SpinKitWanderingCubes(
-                color: Theme.of(context).primaryColor, size: 75));
+            : Padding(
+                padding: const EdgeInsets.symmetric(vertical: 50.0),
+                child: SpinKitWanderingCubes(
+                  color: Theme.of(context).primaryColor,
+                  size: 75.0,
+                ),
+              ));
   }
 }
 
@@ -644,49 +723,42 @@ class ProfilePosts extends HookWidget {
     postScrollController.addListener(() {
       if (postScrollController.offset >=
               postScrollController.position.maxScrollExtent &&
-          !postScrollController.position.outOfRange) {
-        print("at the end of list");
-      }
+          !postScrollController.position.outOfRange) {}
     });
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          TextDivider('POSTS'),
-          snapshotUserPosts.hasData
-              ? snapshotUserPosts.data!.length > 0
-                  ? ListView.builder(
-                      physics: BouncingScrollPhysics(),
-                      controller: postScrollController,
-                      shrinkWrap: true,
-                      itemCount: snapshotUserPosts.data!.length,
-                      itemBuilder: (context, index) {
-                        return PostListTile(
-                          postData: snapshotUserPosts.data![index],
-                          isProfile: true,
-                        );
-                      })
-                  : Text('No Posts :(')
-              : Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: ListView.builder(
-                      physics: BouncingScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: 10,
-                      itemBuilder: (context, index) {
-                        return Container(
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 15),
-                            width: 80.w,
-                            height: 40.h,
-                            decoration: BoxDecoration(
-                                color: Theme.of(context).backgroundColor,
-                                borderRadius: BorderRadius.circular(20)));
-                      }),
-                ),
-        ],
-      ),
-    );
+
+    if (snapshotUserPosts.hasData) {
+      var docsLength = snapshotUserPosts.data.length;
+
+      return docsLength > 0
+          ? SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              return PostListTile(
+                postData: snapshotUserPosts.data![index],
+                isProfile: true,
+              );
+            }, childCount: docsLength))
+          : SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
+                  child: Text(
+                    'No Posts :(',
+                    textAlign: TextAlign.center,
+                  ));
+            }, childCount: 1));
+      ;
+    }
+
+    return SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 50.0),
+        child: SpinKitWanderingCubes(
+          color: Theme.of(context).primaryColor,
+          size: 75.0,
+        ),
+      );
+    }, childCount: 1));
   }
 }
 

@@ -198,7 +198,7 @@ class TabProvider extends ChangeNotifier {
         profilePosts++;
         break;
       default:
-        print('Not a valid page');
+        break;
     }
     notifyListeners();
   }

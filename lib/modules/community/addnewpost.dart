@@ -919,8 +919,13 @@ class SelectTaskPage extends HookWidget {
                     ),
                   );
                 })
-            : SpinKitWanderingCubes(
-                color: Theme.of(context).primaryColor, size: 75));
+            : Padding(
+                padding: const EdgeInsets.symmetric(vertical: 50.0),
+                child: SpinKitWanderingCubes(
+                  color: Theme.of(context).primaryColor,
+                  size: 75.0,
+                ),
+              ));
   }
 }
 
@@ -1037,8 +1042,13 @@ class SelectTrackerPage extends HookWidget {
                         ),
                       ));
                 })
-            : SpinKitWanderingCubes(
-                color: Theme.of(context).primaryColor, size: 75));
+            : Padding(
+                padding: const EdgeInsets.symmetric(vertical: 50.0),
+                child: SpinKitWanderingCubes(
+                  color: Theme.of(context).primaryColor,
+                  size: 75.0,
+                ),
+              ));
   }
 }
 

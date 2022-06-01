@@ -225,8 +225,13 @@ class FriendsList extends HookWidget {
                 itemCount: friendsList.value.length,
                 itemBuilder: (context, index) {
                   if (index == friendsList.value.length && loadMore.value) {
-                    return SpinKitWanderingCubes(
-                        color: Theme.of(context).primaryColor, size: 75);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 50.0),
+                      child: SpinKitWanderingCubes(
+                        color: Theme.of(context).primaryColor,
+                        size: 75.0,
+                      ),
+                    );
                   }
                   return FriendsListTile(friend: friendsList.value[index]);
                 }),
@@ -234,7 +239,13 @@ class FriendsList extends HookWidget {
         ],
       );
     }
-    return Container();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 50.0),
+      child: SpinKitWanderingCubes(
+        color: Theme.of(context).primaryColor,
+        size: 75.0,
+      ),
+    );
   }
 }
 

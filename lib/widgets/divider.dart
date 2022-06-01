@@ -83,7 +83,6 @@ class AnimatedTextDivider extends HookWidget {
                 ),
               ]),
             ));
-
     return Align(
       alignment: Alignment.topCenter,
       child: Container(
@@ -95,10 +94,6 @@ class AnimatedTextDivider extends HookWidget {
           child: Column(
             children: [
               Stack(alignment: Alignment.center, children: nameList),
-              // Icon(
-              //   Icons.drag_,
-              //   color: Theme.of(context).primaryColor.withAlpha(150),
-              // )
             ],
           ),
         ),

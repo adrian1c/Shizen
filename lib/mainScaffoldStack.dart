@@ -52,14 +52,14 @@ class MainScaffoldStack extends HookWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          backgroundColor: CustomTheme.dividerBackground,
-          elevation: 0,
+          // backgroundColor: CustomTheme.dividerBackground,
+          // elevation: 0,
           leading: Builder(
             builder: (BuildContext context) {
               return IconButton(
                 icon: Icon(
                   Icons.menu_rounded,
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).backgroundColor,
                 ),
                 onPressed: () {
                   Scaffold.of(context).openDrawer();
@@ -73,7 +73,7 @@ class MainScaffoldStack extends HookWidget {
               title[Provider.of<TabProvider>(context, listen: false)
                   .selectedIndex],
               style: TextStyle(
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).backgroundColor,
                   fontWeight: FontWeight.bold)),
           actions:
               Provider.of<TabProvider>(context, listen: false).selectedIndex ==

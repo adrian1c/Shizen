@@ -19,40 +19,44 @@ class TrackerTask extends HookWidget {
     final future = useMemoized(() => Database(uid).getTrackerTasks(),
         [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
-    if (!snapshot.hasData) {
-      return Container(
-          child: SpinKitWanderingCubes(
-              color: Theme.of(context).primaryColor, size: 75));
+    if (snapshot.hasData) {
+      var docsLength = snapshot.data.docs.length;
+
+      return docsLength > 0
+          ? SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              var taskDoc = snapshot.data.docs[index];
+              if (index == 0) {
+                return TrackerTile(uid: uid, task: taskDoc);
+              }
+              return Column(
+                children: [
+                  Divider(),
+                  TrackerTile(uid: uid, task: taskDoc),
+                ],
+              );
+            }, childCount: snapshot.data.docs.length))
+          : SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
+                  child: Text(
+                    'You have no trackers.\n You can create trackers by clicking on the button below!',
+                    textAlign: TextAlign.center,
+                  ));
+            }, childCount: 1));
     }
 
-    return Container(
-        child: snapshot.data.docs.length > 0
-            ? Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return TrackerTile(
-                            uid: uid, task: snapshot.data.docs[index]);
-                      }
-                      return Column(
-                        children: [
-                          Divider(),
-                          TrackerTile(
-                              uid: uid, task: snapshot.data.docs[index]),
-                        ],
-                      );
-                    }),
-              )
-            : Center(
-                child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30.0),
-                child: Text(
-                    'You have no Daily Trackers.\n\nYou can create tasks by\nhitting the button below!',
-                    textAlign: TextAlign.center),
-              )));
+    return SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 50.0),
+        child: SpinKitWanderingCubes(
+          color: Theme.of(context).primaryColor,
+          size: 75.0,
+        ),
+      );
+    }, childCount: 1));
   }
 }
 
@@ -167,7 +171,7 @@ class TrackerTile extends HookWidget {
         [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [

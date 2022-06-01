@@ -20,6 +20,7 @@ class TaskPage extends HookWidget {
 
     final scrollController = useScrollController();
     final scrollController2 = useScrollController();
+    final scrollController3 = useScrollController();
 
     final tabIndex = useState(0);
 
@@ -34,10 +35,8 @@ class TaskPage extends HookWidget {
 
     return NestedScrollView(
       key: Keys.nestedScrollViewKeyTaskPage,
-      controller: scrollController2,
-      physics: ScrollPhysics(parent: PageScrollPhysics()),
-      floatHeaderSlivers: true,
-      headerSliverBuilder: ((context, innerBoxIsScrolled) {
+      controller: scrollController,
+      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
         return [
           SliverOverlapAbsorber(
             handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
@@ -47,6 +46,7 @@ class TaskPage extends HookWidget {
                 shadowColor: Colors.transparent,
                 automaticallyImplyLeading: false,
                 floating: true,
+                snap: true,
                 forceElevated: false,
                 centerTitle: true,
                 title: Container(
@@ -87,64 +87,55 @@ class TaskPage extends HookWidget {
                 ),
               ),
             ]),
-          ),
+          )
         ];
-      }),
+      },
       body: TabBarView(
-          physics: CustomTabBarViewScrollPhysics(),
-          controller: tabController,
-          children: <Widget>[
-            KeepAlivePage(child: Builder(
-              builder: (context) {
-                return NestedFix(
-                  globalKey: Keys.nestedScrollViewKeyTaskPage,
-                  child:
-                      CustomScrollView(controller: scrollController, slivers: [
-                    SliverOverlapInjector(
-                      // This is the flip side of the SliverOverlapAbsorber
-                      // above.
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                          context),
-                    ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          return ToDoTask(
-                              uid: uid, controller: scrollController);
-                        },
-                        childCount: 1,
+        controller: tabController,
+        physics: CustomTabBarViewScrollPhysics(),
+        children: [
+          KeepAlivePage(
+            child: Builder(builder: (BuildContext context) {
+              return NestedFix(
+                globalKey: Keys.nestedScrollViewKeyTaskPage,
+                child: CustomScrollView(
+                    physics: ClampingScrollPhysics(),
+                    controller: scrollController2,
+                    slivers: [
+                      SliverOverlapInjector(
+                          handle:
+                              NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                  context)),
+                      ToDoTask(
+                        controller: scrollController,
+                        uid: uid,
                       ),
-                    ),
-                  ]),
-                );
-              },
-            )),
-            KeepAlivePage(child: Builder(
-              builder: (context) {
-                return NestedFix(
-                  globalKey: Keys.nestedScrollViewKeyTaskPage,
-                  child:
-                      CustomScrollView(controller: scrollController, slivers: [
-                    SliverOverlapInjector(
-                      // This is the flip side of the SliverOverlapAbsorber
-                      // above.
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                          context),
-                    ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          return TrackerTask(
-                              uid: uid, controller: scrollController);
-                        },
-                        childCount: 1,
-                      ),
-                    ),
-                  ]),
-                );
-              },
-            )),
-          ]),
+                    ]),
+              );
+            }),
+          ),
+          KeepAlivePage(
+            child: Builder(builder: (BuildContext context) {
+              return NestedFix(
+                globalKey: Keys.nestedScrollViewKeyTaskPage,
+                child: CustomScrollView(
+                    physics: ClampingScrollPhysics(),
+                    controller: scrollController3,
+                    slivers: [
+                      SliverOverlapInjector(
+                          handle:
+                              NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                  context)),
+                      TrackerTask(
+                        controller: scrollController,
+                        uid: uid,
+                      )
+                    ]),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 }

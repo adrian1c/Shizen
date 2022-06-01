@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class Keys {
   static final nestedScrollViewKeyProgressPage = GlobalKey();
   static final nestedScrollViewKeyTaskPage = GlobalKey();
+  static final nestedScrollViewKeyProfilePage = GlobalKey();
+  static final nestedScrollViewKeyProfileOtherPage = GlobalKey();
 }
 
 class NestedFix extends StatelessWidget {
