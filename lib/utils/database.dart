@@ -235,8 +235,13 @@ class Database {
     await batch.commit();
   }
 
-  Future getNewFriendRequestsList() {
-    return userDoc.collection('friends').where('status', isEqualTo: 1).get();
+  Stream getNewFriendRequestsList() {
+    print('Frinfeisnfoiesjf');
+    return userDoc
+        .collection('friends')
+        .where('status', isEqualTo: 1)
+        .snapshots()
+        .map((query) => query.docs);
   }
 
   Future getFriendsList([loadMore = false, lastDoc]) async {
@@ -266,7 +271,6 @@ class Database {
       friendCount =
           await userDoc.get().then((value) => value.data()?['friendCount']);
     }
-    print(friendCount);
     if (query.docs.length > 0) {
       lastDoc = query.docs.last;
     }
@@ -275,7 +279,6 @@ class Database {
       data['uid'] = doc.id;
       results.add(data);
     });
-    print([results, friendCount, lastDoc]);
     return [results, friendCount, lastDoc];
   }
 
@@ -382,10 +385,7 @@ class Database {
     batch.set(
         userDoc,
         {
-          'posts': FieldValue.arrayUnion([
-            {'postId': newPostDoc.id},
-            {'dateCreated': postData['dateCreated']}
-          ])
+          'posts': FieldValue.arrayUnion([newPostDoc.id])
         },
         SetOptions(merge: true));
 
@@ -549,17 +549,27 @@ class Database {
     return [results, lastDoc];
   }
 
-  Future postComment(pid, commentText) async {
+  Future postComment(pid, puid, commentText) async {
     print("Firing postComment");
 
     var userData = await Database(uid).getCurrentUserData().then((value) {
       var data = value.data()!;
       return {'userId': value.id, 'name': data['name'], 'image': data['image']};
     });
-    userData.addAll({'comment': commentText, 'dateCreated': DateTime.now()});
+    userData.addAll({
+      'comment': commentText,
+      'dateCreated': DateTime.now(),
+      'posterUid': puid
+    });
     postCol.doc(pid).update({'commentCount': FieldValue.increment(1)});
     await postCol.doc(pid).collection('comments').add(userData);
     return userData;
+  }
+
+  Future removeComment(pid, cid) async {
+    print("Firing removeComment");
+
+    await postCol.doc(pid).collection('comments').doc(cid).delete();
   }
 
   Stream getComments(pid) {

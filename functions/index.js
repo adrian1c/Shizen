@@ -1,23 +1,8 @@
-// const functions = require("firebase-functions");
-
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
-
-// const admin = require("firebase-admin");
-// const { firestore } = require("firebase-admin");
-// admin.initializeApp();
-
-
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
-exports.sendNotification = functions.firestore
+exports.sendChatNotification = functions.firestore
     .document("chats/{chatId}/messages/{message}")
     .onCreate((snap, context) => {
       const doc = snap.data();
@@ -72,6 +57,100 @@ exports.sendNotification = functions.firestore
                               console.log("Error sending message:", error);
                             });
                       });
+                    });
+              } else {
+                console.log("Can not find pushToken target user");
+              }
+            });
+          }).catch((error) => {
+            console.log("Error: ", error);
+          });
+      return null;
+    });
+
+exports.sendFriendRequestNotification = functions.firestore
+    .document("users/{userId}/friends/{friendId}")
+    .onCreate((snap, context) => {
+      const doc = snap.data();
+      const idTo = context.params.userId;
+      const senderName = doc.name;
+      const senderEmail = doc.email;
+
+      if (doc.status != 0) {
+        return null;
+      }
+
+      admin
+          .firestore()
+          .collection("users")
+          .where(admin.firestore.FieldPath.documentId(), "==", idTo)
+          .get()
+          .then((querySnapshot) => {
+            querySnapshot.forEach((userTo) => {
+              if (userTo.data().pushToken) {
+                const payload = {
+                  notification: {
+                    title:
+                    "You have a new friend request",
+                    body: `${senderName} (${senderEmail}})`,
+                    badge: "1",
+                    sound: "default",
+                  },
+                };
+                admin
+                    .messaging()
+                    .sendToDevice(userTo.data().pushToken, payload)
+                    .then((response) => {
+                      console.log("Successfully sent notification:", response);
+                    }).catch((error) => {
+                      console.log("Error sending message:", error);
+                    });
+              } else {
+                console.log("Can not find pushToken target user");
+              }
+            });
+          }).catch((error) => {
+            console.log("Error: ", error);
+          });
+      return null;
+    });
+
+exports.sendCommentNotification = functions.firestore
+    .document("posts/{postId}/comments/{commentId}")
+    .onCreate((snap, context) => {
+      const doc = snap.data();
+      const idTo = doc.posterUid;
+      const senderName = doc.name;
+      const commentMessage = doc.comment;
+
+      if (idTo == doc.idFrom) {
+        return null;
+      }
+
+      admin
+          .firestore()
+          .collection("users")
+          .where(admin.firestore.FieldPath.documentId(), "==", idTo)
+          .get()
+          .then((querySnapshot) => {
+            querySnapshot.forEach((userTo) => {
+              if (userTo.data().pushToken) {
+                const payload = {
+                  notification: {
+                    title:
+                    `${senderName} commented on your post`,
+                    body: commentMessage,
+                    badge: "1",
+                    sound: "default",
+                  },
+                };
+                admin
+                    .messaging()
+                    .sendToDevice(userTo.data().pushToken, payload)
+                    .then((response) => {
+                      console.log("Successfully sent notification:", response);
+                    }).catch((error) => {
+                      console.log("Error sending message:", error);
                     });
               } else {
                 console.log("Can not find pushToken target user");

@@ -477,7 +477,7 @@ class PostListTile extends HookWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 15),
                   child: InkWell(
                     onTap: isProfile
                         ? () {}
@@ -502,18 +502,14 @@ class PostListTile extends HookWidget {
                         Container(
                             width: 5.h,
                             height: 5.h,
-                            child: postData['image'] != ''
-                                ? CircleAvatar(
-                                    foregroundImage: CachedNetworkImageProvider(
-                                        postData!['image']),
-                                    backgroundColor: Colors.grey,
-                                    radius: 3.h,
-                                  )
-                                : CircleAvatar(
-                                    foregroundImage: Images.defaultPic.image,
-                                    backgroundColor: Colors.grey,
-                                    radius: 3.h,
-                                  )),
+                            child: CircleAvatar(
+                              foregroundImage: postData['image'] != ''
+                                  ? CachedNetworkImageProvider(
+                                      postData!['image'])
+                                  : Images.defaultPic.image,
+                              backgroundColor: Colors.grey,
+                              radius: 3.h,
+                            )),
                         Padding(
                           padding: const EdgeInsets.only(left: 10),
                           child: Column(
@@ -533,6 +529,7 @@ class PostListTile extends HookWidget {
                 ),
                 Divider(
                   thickness: 2,
+                  height: 0,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(10),
@@ -556,8 +553,9 @@ class PostListTile extends HookWidget {
                                 ),
                         fit: BoxFit.fitWidth),
                 if (postData['attachmentType'] == 'task')
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  Container(
+                    color: CustomTheme.attachmentBackground,
+                    padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
                     child: Transform.scale(
                       scale: 0.9,
                       child: InkWell(
@@ -676,62 +674,66 @@ class PostListTile extends HookWidget {
                                                 ['taskList']
                                             .length,
                                         itemBuilder: (context, index) {
-                                          return SizedBox(
-                                            height: 5.h,
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  color: postData['attachment']
-                                                              ['taskList']
-                                                          [index]['status']
-                                                      ? CustomTheme
-                                                          .completeColor
-                                                      : Theme.of(context)
-                                                          .backgroundColor,
-                                                  borderRadius: index == 0
-                                                      ? BorderRadius.only(
-                                                          topLeft:
-                                                              Radius.circular(
-                                                                  15),
-                                                          topRight:
-                                                              Radius.circular(
-                                                                  15),
-                                                          bottomLeft: postData[
-                                                                              'attachment']
-                                                                          [
-                                                                          'taskList']
-                                                                      .length ==
-                                                                  1
-                                                              ? Radius.circular(
-                                                                  15)
-                                                              : Radius.zero,
-                                                          bottomRight: postData[
-                                                                              'attachment']
-                                                                          [
-                                                                          'taskList']
-                                                                      .length ==
-                                                                  1
-                                                              ? Radius.circular(
-                                                                  15)
-                                                              : Radius.zero,
-                                                        )
-                                                      : index ==
-                                                              postData['attachment']
-                                                                          [
-                                                                          'taskList']
-                                                                      .length -
-                                                                  1
-                                                          ? BorderRadius.only(
-                                                              bottomLeft: Radius
-                                                                  .circular(15),
-                                                              bottomRight:
-                                                                  Radius
-                                                                      .circular(
-                                                                          15),
-                                                            )
-                                                          : null),
-                                              child: Row(
-                                                children: [
-                                                  AbsorbPointer(
+                                          return Container(
+                                            constraints:
+                                                BoxConstraints(minHeight: 5.h),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 15, vertical: 10),
+                                            decoration: BoxDecoration(
+                                                color: postData['attachment']
+                                                            ['taskList'][index]
+                                                        ['status']
+                                                    ? CustomTheme.completeColor
+                                                    : Theme.of(context)
+                                                        .backgroundColor,
+                                                borderRadius: index == 0
+                                                    ? BorderRadius.only(
+                                                        topLeft:
+                                                            Radius.circular(15),
+                                                        topRight:
+                                                            Radius.circular(15),
+                                                        bottomLeft:
+                                                            postData['attachment']
+                                                                            [
+                                                                            'taskList']
+                                                                        .length ==
+                                                                    1
+                                                                ? Radius
+                                                                    .circular(
+                                                                        15)
+                                                                : Radius.zero,
+                                                        bottomRight:
+                                                            postData['attachment']
+                                                                            [
+                                                                            'taskList']
+                                                                        .length ==
+                                                                    1
+                                                                ? Radius
+                                                                    .circular(
+                                                                        15)
+                                                                : Radius.zero,
+                                                      )
+                                                    : index ==
+                                                            postData['attachment']
+                                                                        [
+                                                                        'taskList']
+                                                                    .length -
+                                                                1
+                                                        ? BorderRadius.only(
+                                                            bottomLeft:
+                                                                Radius.circular(
+                                                                    15),
+                                                            bottomRight:
+                                                                Radius.circular(
+                                                                    15),
+                                                          )
+                                                        : null),
+                                            child: Row(
+                                              children: [
+                                                AbsorbPointer(
+                                                  child: SizedBox(
+                                                    width: 20,
+                                                    height: 20,
                                                     child: Checkbox(
                                                       shape: CircleBorder(),
                                                       activeColor:
@@ -746,22 +748,30 @@ class PostListTile extends HookWidget {
                                                       onChanged: (value) {},
                                                     ),
                                                   ),
-                                                  Text(
-                                                      postData['attachment']
-                                                              ['taskList']
-                                                          [index]['task'],
-                                                      softWrap: false,
-                                                      style: TextStyle(
-                                                          decoration: postData[
-                                                                          'attachment']
-                                                                      [
-                                                                      'taskList'][index]
-                                                                  ['status']
-                                                              ? TextDecoration
-                                                                  .lineThrough
-                                                              : null)),
-                                                ],
-                                              ),
+                                                ),
+                                                Flexible(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 10.0),
+                                                    child: Text(
+                                                        postData['attachment']
+                                                                ['taskList']
+                                                            [index]['task'],
+                                                        textAlign:
+                                                            TextAlign.justify,
+                                                        style: TextStyle(
+                                                            decoration: postData[
+                                                                            'attachment']
+                                                                        [
+                                                                        'taskList'][index]
+                                                                    ['status']
+                                                                ? TextDecoration
+                                                                    .lineThrough
+                                                                : null)),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           );
                                         }))),
@@ -771,8 +781,9 @@ class PostListTile extends HookWidget {
                     ),
                   ),
                 if (postData['attachmentType'] == 'tracker')
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
+                  Container(
+                    color: CustomTheme.attachmentBackground,
+                    padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -854,8 +865,11 @@ class PostListTile extends HookWidget {
                   },
                 ),
               ),
-            Divider(thickness: 2),
-            CommentList(pid: postData['postId'], commentCount: commentCount),
+            Divider(thickness: 2, height: 0),
+            CommentList(
+                pid: postData['postId'],
+                puid: postData['uid'],
+                commentCount: commentCount),
             Center(
               child: InkWell(
                   onTap: () {
@@ -891,6 +905,7 @@ class PostListTile extends HookWidget {
                                                           .postComment(
                                                               postData[
                                                                   'postId'],
+                                                              postData['uid'],
                                                               commentController
                                                                   .text)
                                                           .then((value) {
@@ -932,7 +947,7 @@ class PostListTile extends HookWidget {
                       )))),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              padding: const EdgeInsets.fromLTRB(15.0, 15, 15, 0),
               child: Text(
                   (postData['dateCreated'] as Timestamp).toDate().timeAgo(),
                   style: TextStyle(color: Colors.grey[600], fontSize: 12.sp)),
@@ -945,10 +960,15 @@ class PostListTile extends HookWidget {
 }
 
 class CommentList extends HookWidget {
-  const CommentList({Key? key, required this.pid, required this.commentCount})
+  const CommentList(
+      {Key? key,
+      required this.pid,
+      required this.puid,
+      required this.commentCount})
       : super(key: key);
 
   final pid;
+  final puid;
   final commentCount;
 
   @override
@@ -959,8 +979,8 @@ class CommentList extends HookWidget {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        CommentPage(pid: pid, commentCount: commentCount),
+                    builder: (context) => CommentPage(
+                        pid: pid, puid: puid, commentCount: commentCount),
                   ));
             }
           : () {},
@@ -1015,10 +1035,15 @@ class HashtagFilter extends StatelessWidget {
 }
 
 class CommentPage extends HookWidget {
-  const CommentPage({Key? key, required this.pid, required this.commentCount})
+  const CommentPage(
+      {Key? key,
+      required this.pid,
+      required this.puid,
+      required this.commentCount})
       : super(key: key);
 
   final pid;
+  final puid;
   final commentCount;
 
   @override
@@ -1042,47 +1067,89 @@ class CommentPage extends HookWidget {
                         itemCount: commentList.length,
                         itemBuilder: (context, index) {
                           var comment = commentList[index];
-                          return Container(
-                            padding: const EdgeInsets.all(10),
-                            child: ListTile(
-                                title: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(comment['name']),
-                                    Text(
-                                        (comment['dateCreated'] as Timestamp)
-                                            .toDate()
-                                            .timeAgo(),
-                                        style: TextStyle(fontSize: 10.sp)),
-                                  ],
-                                ),
-                                subtitle: Text(comment['comment'],
-                                    maxLines: 10,
-                                    overflow: TextOverflow.ellipsis),
-                                leading: InkWell(
-                                  child: CircleAvatar(
-                                    foregroundImage: comment['image'] != ''
-                                        ? CachedNetworkImageProvider(
-                                            comment['image'])
-                                        : Images.defaultPic.image,
-                                    backgroundColor: Colors.grey,
-                                    radius: 3.h,
+                          return Column(
+                            children: [
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                child: ListTile(
+                                  onLongPress: comment['userId'] == uid
+                                      ? () {
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                    title: Text('Options'),
+                                                    content: TextButton(
+                                                      child: Text(
+                                                          'Delete comment'),
+                                                      onPressed: () async {
+                                                        await LoaderWithToast(
+                                                                context:
+                                                                    context,
+                                                                api: Database(
+                                                                        uid)
+                                                                    .removeComment(
+                                                                        pid,
+                                                                        commentList[index]
+                                                                            .id)
+                                                                    .then(
+                                                                        (value) {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  commentCount
+                                                                      .value--;
+                                                                }),
+                                                                msg:
+                                                                    'Comment Deleted',
+                                                                isSuccess: true)
+                                                            .show();
+                                                      },
+                                                    ),
+                                                  ));
+                                        }
+                                      : null,
+                                  title: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(comment['name']),
+                                      Text(
+                                          (comment['dateCreated'] as Timestamp)
+                                              .toDate()
+                                              .timeAgo(),
+                                          style: TextStyle(fontSize: 10.sp)),
+                                    ],
                                   ),
-                                  onTap: () {
-                                    Navigator.push(context,
-                                        MaterialPageRoute(builder: (context) {
-                                      return Scaffold(
-                                          appBar: AppBar(
-                                            title: Text(
-                                                '${comment['name']}\'s Profile'),
-                                            centerTitle: true,
-                                          ),
-                                          body: ProfilePage(
-                                              viewId: comment['userId']));
-                                    }));
-                                  },
-                                )),
+                                  subtitle: Text(comment['comment'],
+                                      maxLines: 10,
+                                      overflow: TextOverflow.ellipsis),
+                                  leading: InkWell(
+                                    child: CircleAvatar(
+                                      foregroundImage: comment['image'] != ''
+                                          ? CachedNetworkImageProvider(
+                                              comment['image'])
+                                          : Images.defaultPic.image,
+                                      backgroundColor: Colors.grey,
+                                      radius: 3.h,
+                                    ),
+                                    onTap: () {
+                                      Navigator.push(context,
+                                          MaterialPageRoute(builder: (context) {
+                                        return Scaffold(
+                                            appBar: AppBar(
+                                              title: Text(
+                                                  '${comment['name']}\'s Profile'),
+                                              centerTitle: true,
+                                            ),
+                                            body: ProfilePage(
+                                                viewId: comment['userId']));
+                                      }));
+                                    },
+                                  ),
+                                ),
+                              ),
+                              Divider(),
+                            ],
                           );
                         })),
                 Positioned(
@@ -1119,7 +1186,8 @@ class CommentPage extends HookWidget {
                                         await LoaderWithToast(
                                                 context: context,
                                                 api: Database(uid)
-                                                    .postComment(pid, comment)
+                                                    .postComment(
+                                                        pid, puid, comment)
                                                     .then((value) {
                                                   commentCount.value += 1;
                                                   commentController.clear();

@@ -358,7 +358,7 @@ class MilestoneList extends HookWidget {
                                 }
                               },
                             ),
-                            Text('Text'),
+                            Text('Milestone Note'),
                             TextFormField(
                               controller: rewardController,
                               textCapitalization: TextCapitalization.sentences,

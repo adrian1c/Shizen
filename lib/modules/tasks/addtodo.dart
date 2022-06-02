@@ -238,96 +238,105 @@ class TodoTaskList extends HookWidget {
                           child: Text('Add a task',
                               style: TextStyle(
                                   color: Theme.of(context).backgroundColor)))
-                      : ListView.builder(
+                      : ReorderableListView.builder(
                           physics: NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
+                          onReorder: (int oldIndex, int newIndex) {
+                            if (oldIndex < newIndex) {
+                              newIndex -= 1;
+                            }
+
+                            final item = taskList.value.removeAt(oldIndex);
+                            taskList.value.insert(newIndex, item);
+                          },
                           itemCount: taskList.value.length,
                           itemBuilder: (context, index) {
-                            return SizedBox(
-                              height: 5.h,
-                              child: InkWell(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                  decoration: BoxDecoration(
-                                      color: taskList.value[index]['status']
-                                          ? CustomTheme.completeColor
-                                          : Theme.of(context).backgroundColor,
-                                      borderRadius: index == 0
-                                          ? BorderRadius.only(
-                                              topLeft: Radius.circular(15),
-                                              topRight: Radius.circular(15),
-                                              bottomLeft:
-                                                  taskList.value.length == 1
-                                                      ? Radius.circular(15)
-                                                      : Radius.zero,
-                                              bottomRight:
-                                                  taskList.value.length == 1
-                                                      ? Radius.circular(15)
-                                                      : Radius.zero,
-                                            )
-                                          : index == taskList.value.length - 1
-                                              ? BorderRadius.only(
-                                                  bottomLeft:
-                                                      Radius.circular(15),
-                                                  bottomRight:
-                                                      Radius.circular(15),
-                                                )
-                                              : null),
-                                  child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(taskList.value[index]['task'],
-                                            softWrap: false,
+                            return InkWell(
+                              key: Key('$index'),
+                              child: Container(
+                                constraints: BoxConstraints(minHeight: 5.h),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 10),
+                                decoration: BoxDecoration(
+                                    color: taskList.value[index]['status']
+                                        ? CustomTheme.completeColor
+                                        : Theme.of(context).backgroundColor,
+                                    borderRadius: index == 0
+                                        ? BorderRadius.only(
+                                            topLeft: Radius.circular(15),
+                                            topRight: Radius.circular(15),
+                                            bottomLeft:
+                                                taskList.value.length == 1
+                                                    ? Radius.circular(15)
+                                                    : Radius.zero,
+                                            bottomRight:
+                                                taskList.value.length == 1
+                                                    ? Radius.circular(15)
+                                                    : Radius.zero,
+                                          )
+                                        : index == taskList.value.length - 1
+                                            ? BorderRadius.only(
+                                                bottomLeft: Radius.circular(15),
+                                                bottomRight:
+                                                    Radius.circular(15),
+                                              )
+                                            : null),
+                                child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                            taskList.value[index]['task'],
+                                            textAlign: TextAlign.justify,
                                             style: TextStyle(
                                                 decoration: taskList
                                                         .value[index]['status']
                                                     ? TextDecoration.lineThrough
                                                     : null)),
-                                        IconButton(
-                                          color: Colors.red[400],
-                                          constraints:
-                                              BoxConstraints(maxHeight: 20),
-                                          padding: EdgeInsets.zero,
-                                          onPressed: () {
-                                            StyledPopup(
-                                                    context: context,
-                                                    title: 'Remove this task?',
-                                                    children: [],
-                                                    textButton: TextButton(
-                                                        onPressed: () {
-                                                          taskList.value = List
-                                                              .from(taskList
-                                                                  .value)
-                                                            ..removeAt(index);
-                                                          AddToDoTask
-                                                              .checkTaskValid(
-                                                                  taskList,
-                                                                  isValid);
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        child: Text('Remove')))
-                                                .showPopup();
-                                          },
-                                          icon: Icon(Icons.delete),
+                                      ),
+                                      InkWell(
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 10.0),
+                                          child: Icon(Icons.cancel_rounded,
+                                              color: CustomTheme.inactiveIcon),
                                         ),
-                                      ]),
-                                ),
-                                onTap: () {
-                                  taskController.text =
-                                      taskList.value[index]['task'];
-                                  TaskDescPopup(
-                                    context: context,
-                                    taskController: taskController,
-                                    taskList: taskList,
-                                    isValid: isValid,
-                                    isEdit: true,
-                                    index: index,
-                                  ).showTaskDescPopup();
-                                },
+                                        onTap: () {
+                                          StyledPopup(
+                                                  context: context,
+                                                  title: 'Remove this task?',
+                                                  children: [],
+                                                  textButton: TextButton(
+                                                      onPressed: () {
+                                                        taskList.value =
+                                                            List.from(
+                                                                taskList.value)
+                                                              ..removeAt(index);
+                                                        AddToDoTask
+                                                            .checkTaskValid(
+                                                                taskList,
+                                                                isValid);
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: Text('Remove')))
+                                              .showPopup();
+                                        },
+                                      ),
+                                    ]),
                               ),
+                              onTap: () {
+                                taskController.text =
+                                    taskList.value[index]['task'];
+                                TaskDescPopup(
+                                  context: context,
+                                  taskController: taskController,
+                                  taskList: taskList,
+                                  isValid: isValid,
+                                  isEdit: true,
+                                  index: index,
+                                ).showTaskDescPopup();
+                              },
                             );
                           }))),
           if (taskList.value.length < 10)
@@ -381,7 +390,7 @@ class TaskDescPopup {
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: Color(0xff58865C)),
               maxLines: 1,
-              maxLength: 30,
+              maxLength: 100,
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.only(top: 0.0, left: 5.0),
                 labelText: "Task Description",

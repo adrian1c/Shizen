@@ -187,33 +187,37 @@ class TodoTaskDisplay extends StatelessWidget {
                         shrinkWrap: true,
                         itemCount: taskList.length,
                         itemBuilder: (context, index) {
-                          return SizedBox(
-                            height: 5.h,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: taskList[index]['status']
-                                      ? CustomTheme.completeColor
-                                      : Theme.of(context).backgroundColor,
-                                  borderRadius: index == 0
-                                      ? BorderRadius.only(
-                                          topLeft: Radius.circular(15),
-                                          topRight: Radius.circular(15),
-                                          bottomLeft: taskList.length == 1
-                                              ? Radius.circular(15)
-                                              : Radius.zero,
-                                          bottomRight: taskList.length == 1
-                                              ? Radius.circular(15)
-                                              : Radius.zero,
-                                        )
-                                      : index == taskList.length - 1
-                                          ? BorderRadius.only(
-                                              bottomLeft: Radius.circular(15),
-                                              bottomRight: Radius.circular(15),
-                                            )
-                                          : null),
-                              child: Row(
-                                children: [
-                                  Checkbox(
+                          return Container(
+                            constraints: BoxConstraints(minHeight: 5.h),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10),
+                            decoration: BoxDecoration(
+                                color: taskList[index]['status']
+                                    ? CustomTheme.completeColor
+                                    : Theme.of(context).backgroundColor,
+                                borderRadius: index == 0
+                                    ? BorderRadius.only(
+                                        topLeft: Radius.circular(15),
+                                        topRight: Radius.circular(15),
+                                        bottomLeft: taskList.length == 1
+                                            ? Radius.circular(15)
+                                            : Radius.zero,
+                                        bottomRight: taskList.length == 1
+                                            ? Radius.circular(15)
+                                            : Radius.zero,
+                                      )
+                                    : index == taskList.length - 1
+                                        ? BorderRadius.only(
+                                            bottomLeft: Radius.circular(15),
+                                            bottomRight: Radius.circular(15),
+                                          )
+                                        : null),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
                                     shape: CircleBorder(),
                                     activeColor:
                                         Theme.of(context).backgroundColor,
@@ -261,14 +265,20 @@ class TodoTaskDisplay extends StatelessWidget {
                                           .rebuildPage('progress');
                                     },
                                   ),
-                                  Text(taskList[index]['task'],
-                                      softWrap: false,
-                                      style: TextStyle(
-                                          decoration: taskList[index]['status']
-                                              ? TextDecoration.lineThrough
-                                              : null)),
-                                ],
-                              ),
+                                ),
+                                Flexible(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 10.0),
+                                    child: Text(taskList[index]['task'],
+                                        textAlign: TextAlign.justify,
+                                        style: TextStyle(
+                                            decoration: taskList[index]
+                                                    ['status']
+                                                ? TextDecoration.lineThrough
+                                                : null)),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         }))),

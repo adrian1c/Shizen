@@ -38,7 +38,7 @@ class CustomTheme {
   static const Color cancelText = Color.fromARGB(255, 226, 65, 65);
 
   static const Color sentMsg = Color.fromARGB(255, 93, 122, 145);
-  static const Color receivedMsg = Color.fromARGB(255, 109, 150, 98);
+  static const Color receivedMsg = Color.fromARGB(255, 117, 160, 106);
 
   static const Color msgBox = Color.fromARGB(255, 70, 82, 97);
   static const Color msgIcon = Color.fromARGB(255, 202, 208, 216);
@@ -46,6 +46,8 @@ class CustomTheme {
   static const Color dividerBackground = Color.fromARGB(255, 189, 180, 180);
 
   static const Color cropImageHeader = Color.fromARGB(255, 73, 82, 92);
+
+  static const Color attachmentBackground = Color.fromARGB(155, 112, 118, 119);
 
   static final boxShadow = kElevationToShadow[3];
 
@@ -98,7 +100,11 @@ class CustomTheme {
       primaryColor: _primaryColor,
       primaryColorDark: _black,
       backgroundColor: _white,
-      appBarTheme: AppBarTheme(backgroundColor: _primaryColor),
+      appBarTheme: AppBarTheme(
+          backgroundColor: _primaryColor,
+          titleTextStyle: TextStyle(
+              color: _white, fontSize: 16.sp, fontWeight: FontWeight.bold),
+          actionsIconTheme: IconThemeData(color: _white)),
       scaffoldBackgroundColor: _scaffoldBackground,
       floatingActionButtonTheme: FloatingActionButtonThemeData(
           backgroundColor: _primaryColor, foregroundColor: _white),

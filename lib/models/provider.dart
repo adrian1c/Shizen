@@ -139,6 +139,7 @@ class TabProvider extends ChangeNotifier {
   PageController pageController = PageController();
   int todo = 0;
   int tracker = 0;
+  int friendPage = 0;
   int community = 0;
   int comment = 0;
   int progress = 0;
@@ -175,6 +176,9 @@ class TabProvider extends ChangeNotifier {
         break;
       case 'tracker':
         tracker++;
+        break;
+      case 'friendPage':
+        friendPage++;
         break;
       case 'community':
         community++;

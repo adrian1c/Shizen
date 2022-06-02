@@ -52,8 +52,6 @@ class MainScaffoldStack extends HookWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          // backgroundColor: CustomTheme.dividerBackground,
-          // elevation: 0,
           leading: Builder(
             builder: (BuildContext context) {
               return IconButton(
@@ -86,7 +84,7 @@ class MainScaffoldStack extends HookWidget {
                                   builder: (context) => AddNewPost())),
                           child: Text('POST',
                               style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
+                                  color: Theme.of(context).backgroundColor,
                                   fontWeight: FontWeight.bold)))
                     ]
                   : null,

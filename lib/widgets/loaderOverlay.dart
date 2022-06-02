@@ -7,13 +7,16 @@ class Loader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SpinKitWave(color: Colors.blue, size: 50.0),
-        Text('Please wait politely... I\'m working hard',
-            style: CustomTheme.lightTheme.textTheme.bodyText1),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(30.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SpinKitWave(color: Colors.blue, size: 50.0),
+          Text('Please wait politely... I\'m working hard',
+              style: CustomTheme.lightTheme.textTheme.bodyText1),
+        ],
+      ),
     );
   }
 }

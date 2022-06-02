@@ -27,8 +27,9 @@ class InstantMessagingPage extends HookWidget {
               onPressed: () {
                 Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => FriendMessageListPage()));
+                    PageTransition(
+                        type: PageTransitionType.rightToLeftWithFade,
+                        child: FriendMessageListPage()));
               },
             ),
           ],
@@ -58,8 +59,10 @@ class InstantMessagingPage extends HookWidget {
                                       }
                                       Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                              builder: (context) => ChatPage(
+                                          PageTransition(
+                                              type: PageTransitionType
+                                                  .rightToLeftWithFade,
+                                              child: ChatPage(
                                                   peerId: friend['peerId'],
                                                   peerName: friend['user']
                                                       ['name'])));
@@ -81,12 +84,14 @@ class InstantMessagingPage extends HookWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          "${friend['user']['name']}",
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 20.sp),
+                                        Flexible(
+                                          child: Text(
+                                            "${friend['user']['name']}",
+                                            overflow: TextOverflow.visible,
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 20.sp),
+                                          ),
                                         ),
                                         Text(
                                           DateFormat("hh:mm a")
@@ -159,57 +164,57 @@ class FriendMessageListPage extends HookWidget {
             title: Text('New Chat'),
             centerTitle: true,
           ),
-          body: SingleChildScrollView(
-              child: friendsList.length > 0
-                  ? ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: friendsList.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: ListTile(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => ChatPage(
-                                          peerId: friendsList[index].id,
-                                          peerName: friendsList[index]
-                                              ['name'])));
-                            },
-                            leading: Padding(
-                              padding: const EdgeInsets.only(right: 10.0),
-                              child: CircleAvatar(
-                                foregroundImage: CachedNetworkImageProvider(
-                                    friendsList[index]['image']),
-                                backgroundColor: Colors.grey,
-                                radius: 3.h,
-                              ),
-                            ),
-                            title: Text(
-                              "${friendsList[index]["name"]}",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 20.sp),
-                            ),
-                            subtitle: Text(
-                              "${friendsList[index]["email"]}",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 13.sp),
-                            ),
-                            horizontalTitleGap: 0,
-                            tileColor: Theme.of(context).primaryColor,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+          body: friendsList.length > 0
+              ? ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: friendsList.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.all(15),
+                      child: ListTile(
+                        onTap: () {
+                          Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => ChatPage(
+                                      peerId: friendsList[index].id,
+                                      peerName: friendsList[index]['name'])));
+                        },
+                        leading: Padding(
+                          padding: const EdgeInsets.only(right: 10.0),
+                          child: CircleAvatar(
+                            foregroundImage: friendsList[index]['image'] != ''
+                                ? CachedNetworkImageProvider(
+                                    friendsList[index]['image'])
+                                : Images.defaultPic.image,
+                            backgroundColor: Colors.grey,
+                            radius: 3.h,
                           ),
-                        );
-                      })
-                  : Center(
-                      child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 30.0),
-                      child: Text('Please add some friends first.'),
-                    ))));
+                        ),
+                        title: Text(
+                          "${friendsList[index]["name"]}",
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 20.sp),
+                        ),
+                        subtitle: Text(
+                          "${friendsList[index]["email"]}",
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 13.sp),
+                        ),
+                        horizontalTitleGap: 0,
+                        tileColor: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  })
+              : Center(
+                  child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 30.0),
+                  child: Text('Please add some friends first.'),
+                )));
     }
     return Scaffold(
         appBar: AppBar(
@@ -408,7 +413,6 @@ class ChatPage extends HookWidget {
                                 ),
                                 Flexible(
                                   child: Container(
-                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
                                         color: CustomTheme.sentMsg,
                                         borderRadius: BorderRadius.only(
@@ -428,23 +432,47 @@ class ChatPage extends HookWidget {
                                                           Align(
                                                             alignment: Alignment
                                                                 .topLeft,
-                                                            child: Text(
-                                                                element[
-                                                                    'message'],
-                                                                style: TextStyle(
-                                                                    color: Colors
-                                                                        .white)),
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                          .all(
+                                                                      10.0),
+                                                              child: Text(
+                                                                  element[
+                                                                      'message'],
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .white)),
+                                                            ),
                                                           ),
                                                           Divider(
                                                             color: Theme.of(
                                                                     context)
                                                                 .backgroundColor,
+                                                            height: 0,
                                                           ),
-                                                          Transform.scale(
-                                                            scale: 0.85,
-                                                            child: ToDoTileDisplay(
-                                                                data: element[
-                                                                    'attachment']),
+                                                          Container(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .only(
+                                                                bottomLeft: Radius
+                                                                    .circular(
+                                                                        15),
+                                                              ),
+                                                              color: CustomTheme
+                                                                  .attachmentBackground,
+                                                            ),
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                          .all(
+                                                                      10.0),
+                                                              child: ToDoTileDisplay(
+                                                                  data: element[
+                                                                      'attachment']),
+                                                            ),
                                                           )
                                                         ],
                                                       )
@@ -453,40 +481,76 @@ class ChatPage extends HookWidget {
                                                           Align(
                                                             alignment: Alignment
                                                                 .topLeft,
-                                                            child: Text(
-                                                                element[
-                                                                    'message'],
-                                                                style: TextStyle(
-                                                                    color: Colors
-                                                                        .white)),
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                          .all(
+                                                                      10.0),
+                                                              child: Text(
+                                                                  element[
+                                                                      'message'],
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .white)),
+                                                            ),
                                                           ),
                                                           Divider(
                                                             color: Theme.of(
                                                                     context)
                                                                 .backgroundColor,
+                                                            height: 0,
                                                           ),
-                                                          Transform.scale(
-                                                            scale: 0.85,
-                                                            child: TrackerTileDisplay(
-                                                                data: element[
-                                                                    'attachment']),
+                                                          Container(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .only(
+                                                                bottomLeft: Radius
+                                                                    .circular(
+                                                                        15),
+                                                              ),
+                                                              color: CustomTheme
+                                                                  .attachmentBackground,
+                                                            ),
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                          .all(
+                                                                      10.0),
+                                                              child: TrackerTileDisplay(
+                                                                  data: element[
+                                                                      'attachment']),
+                                                            ),
                                                           )
                                                         ],
                                                       )
-                                                : Text(
-                                                    element['message'],
-                                                    style: TextStyle(
-                                                        color: Colors.white),
+                                                : Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10.0),
+                                                    child: Text(
+                                                      element['message'],
+                                                      style: TextStyle(
+                                                          color: Colors.white),
+                                                    ),
                                                   )
-                                            : Text(
-                                                element['message'],
-                                                style: TextStyle(
-                                                    color: Colors.white),
+                                            : Padding(
+                                                padding:
+                                                    const EdgeInsets.all(10.0),
+                                                child: Text(
+                                                  element['message'],
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
                                               )
-                                        : Text(
-                                            element['message'],
-                                            style:
-                                                TextStyle(color: Colors.white),
+                                        : Padding(
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Text(
+                                              element['message'],
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
                                           ),
                                   ),
                                 ),
@@ -502,7 +566,6 @@ class ChatPage extends HookWidget {
                             children: [
                               Flexible(
                                 child: Container(
-                                  padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                       color: CustomTheme.receivedMsg,
                                       borderRadius: BorderRadius.only(
@@ -522,23 +585,46 @@ class ChatPage extends HookWidget {
                                                         Align(
                                                           alignment:
                                                               Alignment.topLeft,
-                                                          child: Text(
-                                                              element[
-                                                                  'message'],
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .white)),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(10.0),
+                                                            child: Text(
+                                                                element[
+                                                                    'message'],
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white)),
+                                                          ),
                                                         ),
                                                         Divider(
                                                           color: Theme.of(
                                                                   context)
                                                               .backgroundColor,
+                                                          height: 0,
                                                         ),
-                                                        Transform.scale(
-                                                          scale: 0.85,
-                                                          child: ToDoTileDisplay(
-                                                              data: element[
-                                                                  'attachment']),
+                                                        Container(
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .only(
+                                                              bottomRight:
+                                                                  Radius
+                                                                      .circular(
+                                                                          15),
+                                                            ),
+                                                            color: CustomTheme
+                                                                .attachmentBackground,
+                                                          ),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(10.0),
+                                                            child: ToDoTileDisplay(
+                                                                data: element[
+                                                                    'attachment']),
+                                                          ),
                                                         )
                                                       ],
                                                     )
@@ -547,39 +633,74 @@ class ChatPage extends HookWidget {
                                                         Align(
                                                           alignment:
                                                               Alignment.topLeft,
-                                                          child: Text(
-                                                              element[
-                                                                  'message'],
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .white)),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(10.0),
+                                                            child: Text(
+                                                                element[
+                                                                    'message'],
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white)),
+                                                          ),
                                                         ),
                                                         Divider(
                                                           color: Theme.of(
                                                                   context)
                                                               .backgroundColor,
+                                                          height: 0,
                                                         ),
-                                                        Transform.scale(
-                                                          scale: 0.85,
-                                                          child: TrackerTileDisplay(
-                                                              data: element[
-                                                                  'attachment']),
+                                                        Container(
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .only(
+                                                              bottomRight:
+                                                                  Radius
+                                                                      .circular(
+                                                                          15),
+                                                            ),
+                                                            color: CustomTheme
+                                                                .attachmentBackground,
+                                                          ),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(10.0),
+                                                            child: TrackerTileDisplay(
+                                                                data: element[
+                                                                    'attachment']),
+                                                          ),
                                                         )
                                                       ],
                                                     )
-                                              : Text(
-                                                  element['message'],
-                                                  style: TextStyle(
-                                                      color: Colors.white),
+                                              : Padding(
+                                                  padding: const EdgeInsets.all(
+                                                      10.0),
+                                                  child: Text(
+                                                    element['message'],
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
                                                 )
-                                          : Text(
-                                              element['message'],
-                                              style: TextStyle(
-                                                  color: Colors.white),
+                                          : Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Text(
+                                                element['message'],
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              ),
                                             )
-                                      : Text(
-                                          element['message'],
-                                          style: TextStyle(color: Colors.white),
+                                      : Padding(
+                                          padding: const EdgeInsets.all(10.0),
+                                          child: Text(
+                                            element['message'],
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ),
                                 ),
                               ),
@@ -700,8 +821,23 @@ class ChatPage extends HookWidget {
                                                         MainAxisSize.min,
                                                     children: [
                                                       InkWell(
-                                                          child: Text(
-                                                              'To Do Task'),
+                                                          child: Container(
+                                                            alignment: Alignment
+                                                                .center,
+                                                            width: 50.w,
+                                                            height: 7.h,
+                                                            decoration: BoxDecoration(
+                                                                border:
+                                                                    Border.all(
+                                                                        width:
+                                                                            1),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            10)),
+                                                            child: Text(
+                                                                'To Do Task'),
+                                                          ),
                                                           onTap: () async {
                                                             Navigator.pop(
                                                                 context);
@@ -733,9 +869,25 @@ class ChatPage extends HookWidget {
                                                                   returnValue;
                                                             }
                                                           }),
+                                                      Divider(),
                                                       InkWell(
-                                                          child: Text(
-                                                              'Daily Tracker'),
+                                                          child: Container(
+                                                            alignment: Alignment
+                                                                .center,
+                                                            width: 50.w,
+                                                            height: 7.h,
+                                                            decoration: BoxDecoration(
+                                                                border:
+                                                                    Border.all(
+                                                                        width:
+                                                                            1),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            10)),
+                                                            child: Text(
+                                                                'Daily Tracker'),
+                                                          ),
                                                           onTap: () async {
                                                             Navigator.pop(
                                                                 context);
@@ -846,8 +998,23 @@ class ChatPage extends HookWidget {
                                                         MainAxisSize.min,
                                                     children: [
                                                       InkWell(
-                                                          child: Text(
-                                                              'To Do Task'),
+                                                          child: Container(
+                                                            alignment: Alignment
+                                                                .center,
+                                                            width: 50.w,
+                                                            height: 7.h,
+                                                            decoration: BoxDecoration(
+                                                                border:
+                                                                    Border.all(
+                                                                        width:
+                                                                            1),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            10)),
+                                                            child: Text(
+                                                                'To Do Task'),
+                                                          ),
                                                           onTap: () async {
                                                             Navigator.pop(
                                                                 context);
@@ -879,9 +1046,25 @@ class ChatPage extends HookWidget {
                                                                   returnValue;
                                                             }
                                                           }),
+                                                      Divider(),
                                                       InkWell(
-                                                          child: Text(
-                                                              'Daily Tracker'),
+                                                          child: Container(
+                                                            alignment: Alignment
+                                                                .center,
+                                                            width: 50.w,
+                                                            height: 7.h,
+                                                            decoration: BoxDecoration(
+                                                                border:
+                                                                    Border.all(
+                                                                        width:
+                                                                            1),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            10)),
+                                                            child: Text(
+                                                                'Daily Tracker'),
+                                                          ),
                                                           onTap: () async {
                                                             Navigator.pop(
                                                                 context);

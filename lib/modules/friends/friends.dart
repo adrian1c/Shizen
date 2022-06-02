@@ -90,24 +90,21 @@ class FriendsPage extends HookWidget {
 class NewRequestList extends HookWidget {
   const NewRequestList({
     Key? key,
-    // required this.refreshValue
   }) : super(key: key);
-
-  // final refreshValue;
 
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).user.uid;
-    final future =
-        useMemoized(() => Database(uid).getNewFriendRequestsList(), []);
-    final friendsFuture = useFuture(future);
+    final stream = useMemoized(() => Database(uid).getNewFriendRequestsList(),
+        [Provider.of<TabProvider>(context).friendPage]);
+    final friendsRequestStream = useStream(stream);
 
-    if (friendsFuture.connectionState == ConnectionState.done &&
-        friendsFuture.hasData) {
-      var data = friendsFuture.data.docs;
+    if (friendsRequestStream.connectionState == ConnectionState.active &&
+        friendsRequestStream.hasData) {
+      var data = friendsRequestStream.data;
       return Column(
         children: [
-          friendsFuture.data.docs.length > 0
+          friendsRequestStream.data.length > 0
               ? Align(
                   alignment: Alignment.centerLeft,
                   child: Text(data.length != 1
@@ -140,7 +137,12 @@ class NewRequestList extends HookWidget {
         ],
       );
     }
-    return Container();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'You have no new friend requests',
+      ),
+    );
   }
 }
 
@@ -169,7 +171,8 @@ class FriendsList extends HookWidget {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).user.uid;
-    final future = useMemoized(() => Database(uid).getFriendsList(), []);
+    final future = useMemoized(() => Database(uid).getFriendsList(),
+        [Provider.of<TabProvider>(context).friendPage]);
     final friendsFuture = useFuture(future);
     final initialLoad = useState(false);
     final friendsList = useState([]);
@@ -192,7 +195,7 @@ class FriendsList extends HookWidget {
       });
 
       return;
-    }, []);
+    }, [Provider.of<TabProvider>(context).friendPage]);
 
     if (friendsFuture.connectionState == ConnectionState.done &&
         friendsFuture.hasData) {
@@ -341,14 +344,18 @@ class SearchListTile extends StatelessWidget {
       child: Material(
         child: ListTile(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) {
-              return Scaffold(
-                  appBar: AppBar(
-                    title: Text('${user['name']}\'s Profile'),
-                    centerTitle: true,
-                  ),
-                  body: ProfilePage(viewId: user.id));
-            }));
+            Navigator.push(
+                context,
+                PageTransition(
+                    type: PageTransitionType.bottomToTop,
+                    child: Scaffold(
+                        appBar: AppBar(
+                          title: Text(user['name'].length > 12
+                              ? '${user['name']}\'s Profile'
+                              : 'Profile'),
+                          centerTitle: true,
+                        ),
+                        body: ProfilePage(viewId: user.id))));
           },
           contentPadding: const EdgeInsets.all(10),
           leading: Padding(
@@ -378,9 +385,17 @@ class SearchListTile extends StatelessWidget {
                       : status == 1
                           ? null
                           : IconButton(
-                              onPressed: () {
-                                Database(uid).sendFriendReq(user.id);
-                                Navigator.of(context).pop();
+                              onPressed: () async {
+                                await LoaderWithToast(
+                                        context: context,
+                                        api: Database(uid)
+                                            .sendFriendReq(user.id)
+                                            .then((value) {
+                                          Navigator.pop(context);
+                                        }),
+                                        msg: 'Sent',
+                                        isSuccess: true)
+                                    .show();
                               },
                               icon: Icon(Icons.person_add),
                             ),
@@ -418,12 +433,16 @@ class NewRequestTile extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () async {
+                  Provider.of<TabProvider>(context, listen: false)
+                      .rebuildPage('friendPage');
                   await Database(uid).declineFriendReq(friend.id);
                 },
                 icon: Icon(Icons.cancel_outlined),
               ),
               IconButton(
                 onPressed: () async {
+                  Provider.of<TabProvider>(context, listen: false)
+                      .rebuildPage('friendPage');
                   await Database(uid).acceptFriendReq(friend.id);
                 },
                 icon: Icon(Icons.check),
@@ -504,22 +523,35 @@ class FriendsListTile extends StatelessWidget {
                       TextButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            Navigator.push(context,
-                                MaterialPageRoute(builder: (context) {
-                              return Scaffold(
-                                  appBar: AppBar(
-                                    title: Text('${friend['name']}\'s Profile'),
-                                    centerTitle: true,
-                                  ),
-                                  body: ProfilePage(viewId: friend.id));
-                            }));
+                            Navigator.push(
+                                context,
+                                PageTransition(
+                                    type: PageTransitionType.bottomToTop,
+                                    child: Scaffold(
+                                        appBar: AppBar(
+                                          title: Text(
+                                              '${friend['name']}\'s Profile'),
+                                          centerTitle: true,
+                                        ),
+                                        body: ProfilePage(
+                                            viewId: friend['uid']))));
                           },
                           child: Text("View Profile")),
                       TextButton(
                           onPressed: () async {
-                            await Database(uid).declineFriendReq(friend.id);
-
-                            Navigator.pop(context);
+                            await LoaderWithToast(
+                                    context: context,
+                                    api: Database(uid)
+                                        .removeFriend(friend['uid'])
+                                        .then((value) {
+                                      Navigator.pop(context);
+                                      Provider.of<TabProvider>(context,
+                                              listen: false)
+                                          .rebuildPage('friendPage');
+                                    }),
+                                    msg: 'Unfriended',
+                                    isSuccess: true)
+                                .show();
                           },
                           child: Text("Remove Friend")),
                     ],

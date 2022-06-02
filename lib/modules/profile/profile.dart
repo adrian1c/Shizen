@@ -70,28 +70,18 @@ class ProfilePage extends HookWidget {
                 handle:
                     NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: MultiSliver(children: [
-                  SliverAppBar(
-                    backgroundColor: CustomTheme.dividerBackground,
-                    shadowColor: Colors.transparent,
-                    automaticallyImplyLeading: false,
-                    floating: true,
-                    forceElevated: false,
-                    snap: true,
-                    centerTitle: true,
-                    bottom: PreferredSize(
-                      preferredSize: Size(90.w, 10.h),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: UserProfileData(
-                              data: snapshotUserProfileData.data,
-                              uid: uid,
-                              nameController: nameController,
-                              viewId: viewId,
-                              tasksCompleted: snapshotTasksCompletedData.data,
-                              checkinData: snapshotCheckinData.data),
-                        ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: UserProfileData(
+                            data: snapshotUserProfileData.data,
+                            uid: uid,
+                            nameController: nameController,
+                            viewId: viewId,
+                            tasksCompleted: snapshotTasksCompletedData.data,
+                            checkinData: snapshotCheckinData.data),
                       ),
                     ),
                   ),
@@ -400,9 +390,6 @@ class ProfileTracker extends HookWidget {
             }, childCount: 1));
     }
 
-    // SliverList(
-    //           delegate: SliverChildBuilderDelegate((context, index) {}, childCount: 1))
-
     return SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
       return Padding(
@@ -505,92 +492,127 @@ class ProfileSelectTrackerTile extends HookWidget {
     final future = useMemoized(() => Database(uid).getLatestCheckInData(taskId),
         [Provider.of<TabProvider>(context).profileTracker]);
     final snapshot = useFuture(future);
-    return Container(
-        padding: const EdgeInsets.all(10.0),
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Theme.of(context).backgroundColor,
-            boxShadow: CustomTheme.boxShadow),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(task['title'],
-                    style: Theme.of(context).textTheme.headline4?.copyWith(
-                        color: Theme.of(context).primaryColor.withAlpha(200))),
-                Row(
-                  children: [
-                    Text(
-                        '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Icon(Icons.park_rounded,
-                        color: Color.fromARGB(255, 147, 182, 117))
-                  ],
-                )
-              ],
-            ),
-            Divider(),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 20, 15, 20),
+      child: Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Theme.of(context).backgroundColor,
+              boxShadow: CustomTheme.boxShadow),
+          child: Column(
+            children: [
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Text(task['title'],
+                      style: Theme.of(context).textTheme.headline4?.copyWith(
+                          color:
+                              Theme.of(context).primaryColor.withAlpha(200))),
+                  Row(
                     children: [
-                      Text('Next Milestone',
+                      Text(
+                          '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
                           style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text(task['milestones'].isEmpty
-                          ? '-'
-                          : 'Day ${task['milestones'][0]['day']} - ${task['milestones'][0]['reward']}'),
+                      Icon(Icons.park_rounded,
+                          color: Color.fromARGB(255, 147, 182, 117))
                     ],
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      StyledPopup(
-                              context: context,
-                              title: 'Milestones',
-                              children: [
-                                StatefulBuilder(builder: (context, _setState) {
-                                  return Column(
-                                    children: [
-                                      task['milestones'].length > 0
-                                          ? ListView.builder(
-                                              physics:
-                                                  NeverScrollableScrollPhysics(),
-                                              shrinkWrap: true,
-                                              itemCount:
-                                                  task['milestones'].length,
-                                              itemBuilder: (context, index) {
-                                                var milestone =
-                                                    task['milestones'][index];
-                                                var minDay = DateTime.now()
-                                                        .difference((task[
-                                                                    'startDate']
-                                                                as Timestamp)
-                                                            .toDate())
-                                                        .inDays +
-                                                    1;
-                                                return Padding(
-                                                  padding:
-                                                      const EdgeInsets.fromLTRB(
-                                                          0, 20, 0, 20),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Container(
-                                                              width: 30.w,
-                                                              height: 5.h,
-                                                              decoration: BoxDecoration(
+                  )
+                ],
+              ),
+              Divider(),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Next Milestone',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(task['milestones'].isEmpty
+                            ? '-'
+                            : 'Day ${task['milestones'][0]['day']} - ${task['milestones'][0]['reward']}'),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        StyledPopup(
+                                context: context,
+                                title: 'Milestones',
+                                children: [
+                                  StatefulBuilder(
+                                      builder: (context, _setState) {
+                                    return Column(
+                                      children: [
+                                        task['milestones'].length > 0
+                                            ? ListView.builder(
+                                                physics:
+                                                    NeverScrollableScrollPhysics(),
+                                                shrinkWrap: true,
+                                                itemCount:
+                                                    task['milestones'].length,
+                                                itemBuilder: (context, index) {
+                                                  var milestone =
+                                                      task['milestones'][index];
+                                                  var minDay = DateTime.now()
+                                                          .difference((task[
+                                                                      'startDate']
+                                                                  as Timestamp)
+                                                              .toDate())
+                                                          .inDays +
+                                                      1;
+                                                  return Padding(
+                                                    padding: const EdgeInsets
+                                                        .fromLTRB(0, 20, 0, 20),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Container(
+                                                                width: 30.w,
+                                                                height: 5.h,
+                                                                decoration: BoxDecoration(
+                                                                    color: minDay <
+                                                                            milestone[
+                                                                                'day']
+                                                                        ? Colors
+                                                                            .amber
+                                                                        : Colors
+                                                                            .lightGreen,
+                                                                    borderRadius: BorderRadius.only(
+                                                                        topLeft:
+                                                                            Radius.circular(
+                                                                                15),
+                                                                        topRight:
+                                                                            Radius.circular(
+                                                                                15))),
+                                                                child: Center(
+                                                                    child: Text(
+                                                                        'Day ${milestone['day']}'))),
+                                                          ],
+                                                        ),
+                                                        Container(
+                                                            width: 100.w,
+                                                            height: 7.h,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: minDay <
+                                                                      milestone[
+                                                                          'day']
+                                                                  ? Colors.amber[
+                                                                      200]
+                                                                  : Colors.lightGreen[
+                                                                      200],
+                                                              border: Border.all(
                                                                   color: minDay <
                                                                           milestone[
                                                                               'day']
@@ -598,109 +620,78 @@ class ProfileSelectTrackerTile extends HookWidget {
                                                                           .amber
                                                                       : Colors
                                                                           .lightGreen,
-                                                                  borderRadius: BorderRadius.only(
-                                                                      topLeft: Radius
-                                                                          .circular(
-                                                                              15),
-                                                                      topRight:
-                                                                          Radius.circular(
-                                                                              15))),
-                                                              child: Center(
+                                                                  width: 5),
+                                                              borderRadius: BorderRadius.only(
+                                                                  bottomLeft: Radius
+                                                                      .circular(
+                                                                          5),
+                                                                  bottomRight: Radius
+                                                                      .circular(
+                                                                          5),
+                                                                  topRight: Radius
+                                                                      .circular(
+                                                                          5)),
+                                                            ),
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                          .fromLTRB(
+                                                                      20,
+                                                                      0,
+                                                                      20,
+                                                                      0),
+                                                              child: Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .centerLeft,
                                                                   child: Text(
-                                                                      'Day ${milestone['day']}'))),
-                                                        ],
-                                                      ),
-                                                      Container(
-                                                          width: 100.w,
-                                                          height: 7.h,
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color: minDay <
-                                                                    milestone[
-                                                                        'day']
-                                                                ? Colors
-                                                                    .amber[200]
-                                                                : Colors.lightGreen[
-                                                                    200],
-                                                            border: Border.all(
-                                                                color: minDay <
-                                                                        milestone[
-                                                                            'day']
-                                                                    ? Colors
-                                                                        .amber
-                                                                    : Colors
-                                                                        .lightGreen,
-                                                                width: 5),
-                                                            borderRadius: BorderRadius.only(
-                                                                bottomLeft: Radius
-                                                                    .circular(
-                                                                        5),
-                                                                bottomRight:
-                                                                    Radius
-                                                                        .circular(
-                                                                            5),
-                                                                topRight: Radius
-                                                                    .circular(
-                                                                        5)),
-                                                          ),
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                        .fromLTRB(
-                                                                    20,
-                                                                    0,
-                                                                    20,
-                                                                    0),
-                                                            child: Align(
-                                                                alignment: Alignment
-                                                                    .centerLeft,
-                                                                child: Text(
-                                                                    milestone[
-                                                                        'reward'])),
-                                                          )),
-                                                    ],
-                                                  ),
-                                                );
-                                              })
-                                          : Text('-'),
-                                    ],
-                                  );
-                                }),
-                              ],
-                              cancelText: 'Done')
-                          .showPopup();
-                    },
-                    child: Icon(Icons.flag_rounded),
-                    style: ElevatedButton.styleFrom(
-                        shape: CircleBorder(),
-                        primary: Color.fromARGB(255, 252, 212, 93)),
-                  ),
-                ],
+                                                                      milestone[
+                                                                          'reward'])),
+                                                            )),
+                                                      ],
+                                                    ),
+                                                  );
+                                                })
+                                            : Text('-'),
+                                      ],
+                                    );
+                                  }),
+                                ],
+                                cancelText: 'Done')
+                            .showPopup();
+                      },
+                      child: Icon(Icons.flag_rounded),
+                      style: ElevatedButton.styleFrom(
+                          shape: CircleBorder(),
+                          primary: Color.fromARGB(255, 252, 212, 93)),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Divider(),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Last checked-in',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  snapshot.hasData
-                      ? snapshot.data.docs.length != 0
-                          ? Text((snapshot.data.docs[0]['dateCreated']
-                                  as Timestamp)
-                              .toDate()
-                              .timeAgo())
-                          : Text('-')
-                      : Text('-')
-                ],
+              Divider(),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Last checked-in',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    snapshot.hasData
+                        ? snapshot.data.docs.length != 0
+                            ? Text((snapshot.data.docs[0]['dateCreated']
+                                    as Timestamp)
+                                .toDate()
+                                .timeAgo())
+                            : Text('-')
+                        : Text('-')
+                  ],
+                ),
               ),
-            ),
-          ],
-        ));
+            ],
+          )),
+    );
   }
 }
 
