@@ -51,6 +51,7 @@ class MyApp extends StatelessWidget {
           return GlobalLoaderOverlay(
               useDefaultLoading: false,
               overlayWidget: Loader(),
+              overlayOpacity: 0.85,
               child: MaterialApp(
                 scrollBehavior: MyCustomScrollBehavior(),
                 debugShowCheckedModeBanner: false,

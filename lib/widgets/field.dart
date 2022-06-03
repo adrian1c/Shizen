@@ -97,7 +97,8 @@ class StyledPopup {
       required this.children,
       this.cancelText = 'Cancel',
       this.cancelFunction,
-      this.textButton});
+      this.textButton,
+      this.isRed = false});
 
   final context;
   final String title;
@@ -105,6 +106,7 @@ class StyledPopup {
   final String cancelText;
   final Function()? cancelFunction;
   final TextButton? textButton;
+  final bool isRed;
 
   showPopup() {
     showDialog(
@@ -128,9 +130,8 @@ class StyledPopup {
                               Navigator.pop(context);
                             },
                       child: Text(cancelText,
-                          style: cancelText != 'Cancel'
-                              ? null
-                              : TextStyle(color: Colors.red)),
+                          style:
+                              isRed ? TextStyle(color: Colors.red[400]) : null),
                     ),
                   ]
                 : [
@@ -140,10 +141,9 @@ class StyledPopup {
                           : () {
                               Navigator.pop(context);
                             },
-                      child: Text(cancelText,
-                          style: cancelText != 'Cancel'
-                              ? null
-                              : TextStyle(color: Colors.red)),
+                      child: Text(
+                        cancelText,
+                      ),
                     ),
                   ],
           );

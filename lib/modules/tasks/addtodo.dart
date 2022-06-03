@@ -57,86 +57,93 @@ class AddToDoTask extends HookWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-          minimum: EdgeInsets.all(20),
+          minimum: EdgeInsets.only(left: 20, right: 20),
           child: SingleChildScrollView(
-              child: Column(
-            children: [
-              TodoTaskList(
-                titleController: titleController,
-                taskController: taskController,
-                title: title,
-                taskList: taskList,
-                isValid: isValid,
-              ),
-              Row(
-                children: [
-                  Text('Share with Friends'),
-                  Switch(
-                    value: isPublic.value,
-                    onChanged: (value) =>
-                        isPublic.value = isPublic.value ? false : true,
-                  )
-                ],
-              ),
-              // RecurButton(
-              //   taskList: taskList,
-              //   recurValue: recurValue,
-              //   isValid: isValid,
-              // ),
-              ReminderButton(taskList: taskList, reminderValue: reminderValue),
-              Padding(
-                padding: const EdgeInsets.all(50),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            child: Column(
+              children: [
+                TodoTaskList(
+                  titleController: titleController,
+                  taskController: taskController,
+                  title: title,
+                  taskList: taskList,
+                  isValid: isValid,
+                ),
+                Row(
                   children: [
-                    CreateButton(
-                      onPressed: () async {
-                        if (isValid.value) {
-                          if (isEdit) {
-                            var newTask = ToDoTaskModel(
-                                title.value,
-                                taskList.value,
-                                recurValue.value,
-                                reminderValue.value,
-                                isPublic.value,
-                                true);
-                            await LoaderWithToast(
-                                    context: context,
-                                    api: Database(uid).editToDoTask(
-                                        editParams['id'],
-                                        newTask,
-                                        reminderValue.value),
-                                    msg: 'Success',
-                                    isSuccess: true)
-                                .show();
-                          } else {
-                            var newTask = ToDoTaskModel(
-                                title.value,
-                                taskList.value,
-                                recurValue.value,
-                                reminderValue.value,
-                                isPublic.value);
-                            await LoaderWithToast(
-                                    context: context,
-                                    api: Database(uid).addToDoTask(
-                                        newTask, reminderValue.value),
-                                    msg: 'Success',
-                                    isSuccess: true)
-                                .show();
-                          }
-                          Provider.of<TabProvider>(context, listen: false)
-                              .rebuildPage('todo');
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      isValid: isValid,
-                      buttonLabel: isEdit ? 'Save' : 'Create',
-                    ),
-                    const CancelButton(),
+                    Text('Share with Friends'),
+                    Switch(
+                      value: isPublic.value,
+                      onChanged: (value) =>
+                          isPublic.value = isPublic.value ? false : true,
+                    )
                   ],
                 ),
-              ),
-            ],
+                // RecurButton(
+                //   taskList: taskList,
+                //   recurValue: recurValue,
+                //   isValid: isValid,
+                // ),
+                ReminderButton(
+                    taskList: taskList, reminderValue: reminderValue),
+                Padding(
+                  padding: const EdgeInsets.all(50),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CreateButton(
+                        onPressed: () async {
+                          if (isValid.value) {
+                            if (isEdit) {
+                              var newTask = ToDoTaskModel(
+                                  title.value,
+                                  taskList.value,
+                                  recurValue.value,
+                                  reminderValue.value,
+                                  isPublic.value,
+                                  true);
+                              await LoaderWithToast(
+                                      context: context,
+                                      api: Database(uid).editToDoTask(
+                                          editParams['id'],
+                                          newTask,
+                                          reminderValue.value),
+                                      msg: 'Success',
+                                      isSuccess: true)
+                                  .show();
+                            } else {
+                              var newTask = ToDoTaskModel(
+                                  title.value,
+                                  taskList.value,
+                                  recurValue.value,
+                                  reminderValue.value,
+                                  isPublic.value);
+                              await LoaderWithToast(
+                                      context: context,
+                                      api: Database(uid).addToDoTask(
+                                          newTask, reminderValue.value),
+                                      msg: 'Success',
+                                      isSuccess: true)
+                                  .show();
+                            }
+                            Provider.of<TabProvider>(context, listen: false)
+                                .rebuildPage('todo');
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        isValid: isValid,
+                        buttonLabel: isEdit ? 'Save' : 'Create',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: const CancelButton(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ))),
     );
   }

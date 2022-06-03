@@ -238,7 +238,9 @@ class TrackerTile extends HookWidget {
                                     Navigator.pop(context);
                                     Navigator.pop(context);
                                   },
-                                  child: Text('Reset')))
+                                  child: Text('Reset',
+                                      style:
+                                          TextStyle(color: Colors.red[400]))))
                           .showPopup();
                     },
                     child: Row(
@@ -282,7 +284,8 @@ class TrackerTile extends HookWidget {
                                     .rebuildPage('profileTracker');
                                 Navigator.pop(context);
                               },
-                              child: Text('Delete'),
+                              child: Text('Delete',
+                                  style: TextStyle(color: Colors.red[400])),
                             )).showPopup();
                       },
                       child: Row(

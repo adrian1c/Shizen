@@ -553,7 +553,8 @@ class FriendsListTile extends StatelessWidget {
                                     isSuccess: true)
                                 .show();
                           },
-                          child: Text("Remove Friend")),
+                          child: Text("Remove Friend",
+                              style: TextStyle(color: Colors.red[400]))),
                     ],
                     cancelText: 'Done',
                   ).showPopup();

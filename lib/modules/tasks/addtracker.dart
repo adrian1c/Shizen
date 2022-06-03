@@ -39,240 +39,249 @@ class AddTrackerTask extends HookWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-          minimum: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          minimum: const EdgeInsets.only(left: 20, right: 20),
           child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: titleController,
-                          textCapitalization: TextCapitalization.words,
-                          maxLength: 30,
-                          decoration: InputDecoration(
-                            contentPadding:
-                                EdgeInsets.only(top: 0.0, left: 5.0),
-                            labelText: "Title",
-                            labelStyle:
-                                CustomTheme.lightTheme.textTheme.bodyText2,
-                            enabledBorder: UnderlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xff35566D))),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Column(
+                children: [
+                  Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: titleController,
+                            textCapitalization: TextCapitalization.words,
+                            maxLength: 30,
+                            decoration: InputDecoration(
+                              contentPadding:
+                                  EdgeInsets.only(top: 0.0, left: 5.0),
+                              labelText: "Title",
+                              labelStyle:
+                                  CustomTheme.lightTheme.textTheme.bodyText2,
+                              enabledBorder: UnderlineInputBorder(
+                                  borderSide: const BorderSide(
+                                      color: Color(0xff35566D))),
+                            ),
+                            onChanged: (value) =>
+                                isValid.value = value.isNotEmpty ? true : false,
                           ),
-                          onChanged: (value) =>
-                              isValid.value = value.isNotEmpty ? true : false,
-                        ),
-                        Divider(),
-                        TextFormField(
-                          controller: noteController,
-                          textCapitalization: TextCapitalization.sentences,
-                          maxLines: 5,
-                          maxLength: 300,
-                          decoration: InputDecoration(
-                            hintText: "Personal Note",
-                            contentPadding: EdgeInsets.all(10.0),
-                            labelStyle:
-                                CustomTheme.lightTheme.textTheme.bodyText2,
-                            border: OutlineInputBorder(
-                              borderRadius: new BorderRadius.circular(10.0),
-                              borderSide: new BorderSide(),
+                          Divider(),
+                          TextFormField(
+                            controller: noteController,
+                            textCapitalization: TextCapitalization.sentences,
+                            maxLines: 5,
+                            maxLength: 300,
+                            decoration: InputDecoration(
+                              hintText: "Personal Note",
+                              contentPadding: EdgeInsets.all(10.0),
+                              labelStyle:
+                                  CustomTheme.lightTheme.textTheme.bodyText2,
+                              border: OutlineInputBorder(
+                                borderRadius: new BorderRadius.circular(10.0),
+                                borderSide: new BorderSide(),
+                              ),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(
-                                children: [
-                                  Text('Starting Date'),
-                                  Ink(
-                                    child: InkWell(
-                                      child: StyledContainerField(
-                                          child: Center(
-                                              child: Text(
-                                                  DateFormat('dd MMM yy')
-                                                              .format(startDate
-                                                                  .value) ==
-                                                          DateFormat(
-                                                                  'dd MMM yy')
-                                                              .format(DateTime
-                                                                  .now())
-                                                      ? 'Today'
-                                                      : '${DateFormat('dd MMM yy').format(startDate.value)}',
-                                                  style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .primaryColor)))),
-                                      onTap: () {
-                                        DatePicker.showDatePicker(context,
-                                            currentTime: startDate.value,
-                                            minTime: DateTime(
-                                                DateTime.now().year - 1),
-                                            maxTime: DateTime.now(),
-                                            onConfirm: (value) {
-                                          bool hasOverlapMilestone = false;
-                                          for (var i = 0;
-                                              i < milestones.value.length;
-                                              i++) {
-                                            if (milestones.value[i]['day'] <=
-                                                DateTime.now()
-                                                    .difference(value)
-                                                    .inDays) {
-                                              hasOverlapMilestone = true;
-                                              break;
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Column(
+                                  children: [
+                                    Text('Starting Date'),
+                                    Ink(
+                                      child: InkWell(
+                                        child: StyledContainerField(
+                                            child: Center(
+                                                child: Text(
+                                                    DateFormat('dd MMM yy')
+                                                                .format(startDate
+                                                                    .value) ==
+                                                            DateFormat(
+                                                                    'dd MMM yy')
+                                                                .format(DateTime
+                                                                    .now())
+                                                        ? 'Today'
+                                                        : '${DateFormat('dd MMM yy').format(startDate.value)}',
+                                                    style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .primaryColor)))),
+                                        onTap: () {
+                                          DatePicker.showDatePicker(context,
+                                              currentTime: startDate.value,
+                                              minTime: DateTime(
+                                                  DateTime.now().year - 1),
+                                              maxTime: DateTime.now(),
+                                              onConfirm: (value) {
+                                            bool hasOverlapMilestone = false;
+                                            for (var i = 0;
+                                                i < milestones.value.length;
+                                                i++) {
+                                              if (milestones.value[i]['day'] <=
+                                                  DateTime.now()
+                                                      .difference(value)
+                                                      .inDays) {
+                                                hasOverlapMilestone = true;
+                                                break;
+                                              }
                                             }
-                                          }
-                                          if (hasOverlapMilestone) {
-                                            StyledPopup(
-                                                    context: context,
-                                                    children: [
-                                                      Text(
-                                                          'If you change the starting date, some milestones will be invalid. Do you want to automatically remove the invalid milestones?')
-                                                    ],
-                                                    title:
-                                                        'Remove Invalid Milestones?',
-                                                    textButton: TextButton(
-                                                        onPressed: () {
-                                                          for (var i = 0;
-                                                              i <
-                                                                  milestones
-                                                                      .value
-                                                                      .length;
-                                                              i++) {
-                                                            if (milestones
-                                                                        .value[
-                                                                    i]['day'] <=
-                                                                DateTime.now()
-                                                                    .difference(
-                                                                        value)
-                                                                    .inDays) {
-                                                              milestones.value
-                                                                  .removeAt(i);
-                                                              i--;
+                                            if (hasOverlapMilestone) {
+                                              StyledPopup(
+                                                      context: context,
+                                                      children: [
+                                                        Text(
+                                                            'If you change the starting date, some milestones will be invalid. Do you want to automatically remove the invalid milestones?')
+                                                      ],
+                                                      title:
+                                                          'Remove Invalid Milestones?',
+                                                      textButton: TextButton(
+                                                          onPressed: () {
+                                                            for (var i = 0;
+                                                                i <
+                                                                    milestones
+                                                                        .value
+                                                                        .length;
+                                                                i++) {
+                                                              if (milestones
+                                                                          .value[i]
+                                                                      ['day'] <=
+                                                                  DateTime.now()
+                                                                      .difference(
+                                                                          value)
+                                                                      .inDays) {
+                                                                milestones.value
+                                                                    .removeAt(
+                                                                        i);
+                                                                i--;
+                                                              }
                                                             }
-                                                          }
-                                                          startDate.value =
-                                                              value;
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        child: Text('Yes')))
-                                                .showPopup();
-                                          } else {
-                                            startDate.value = value;
-                                          }
-                                        });
-                                      },
+                                                            startDate.value =
+                                                                value;
+                                                            Navigator.pop(
+                                                                context);
+                                                          },
+                                                          child: Text('Yes')))
+                                                  .showPopup();
+                                            } else {
+                                              startDate.value = value;
+                                            }
+                                          });
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                children: [
-                                  Text('Starting Streak'),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                            '${DateTime.now().difference(startDate.value).inDays + 1}'),
-                                        Icon(
-                                          Icons.park_rounded,
-                                          color: CustomTheme.completeColor,
-                                        )
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Text('Starting Streak'),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                              '${DateTime.now().difference(startDate.value).inDays + 1}'),
+                                          Icon(
+                                            Icons.park_rounded,
+                                            color: CustomTheme.completeColor,
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        MilestoneList(
-                          minDay:
-                              DateTime.now().difference(startDate.value).inDays,
-                          milestones: milestones,
-                          dayController: dayController,
-                          rewardController: rewardController,
-                          startDate: startDate,
-                        ),
-                      ],
-                    )),
-                DailyReminderButton(
-                  reminderValue: reminderValue,
-                ),
-                Padding(
-                    padding: const EdgeInsets.all(50),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        CreateButton(
-                          onPressed: () async {
-                            if (editParams != null) {
-                              await StyledPopup(
-                                      context: context,
-                                      title: 'Check-in Data',
-                                      children: [
-                                        Text(
-                                            'If you have changed your starting date, all of your check-in data will be reset.')
-                                      ],
-                                      textButton: TextButton(
-                                          onPressed: () async {
-                                            var tracker = new TrackerTaskModel(
-                                                titleController.text,
-                                                noteController.text,
-                                                milestones.value,
-                                                startDate.value,
-                                                reminderValue.value);
-                                            await LoaderWithToast(
-                                                    context: context,
-                                                    api: Database(uid)
-                                                        .editTrackerTask(
-                                                            tracker,
-                                                            editParams[
-                                                                'taskId']),
-                                                    msg:
-                                                        'The changes have been saved!',
-                                                    isSuccess: true)
-                                                .show();
-                                            Provider.of<TabProvider>(context,
-                                                    listen: false)
-                                                .rebuildPage('tracker');
-                                            Navigator.pop(context);
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text('Got it')))
-                                  .showPopup();
-                            } else {
-                              var tracker = new TrackerTaskModel(
-                                  titleController.text,
-                                  noteController.text,
-                                  milestones.value,
-                                  startDate.value,
-                                  reminderValue.value);
-                              await LoaderWithToast(
-                                      context: context,
-                                      api:
-                                          Database(uid).addTrackerTask(tracker),
-                                      msg: 'Tracker Created Successfully',
-                                      isSuccess: true)
-                                  .show();
-                              Provider.of<TabProvider>(context, listen: false)
-                                  .rebuildPage('tracker');
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          isValid: isValid,
-                          buttonLabel: editParams != null ? 'Save' : null,
-                        ),
-                        const CancelButton()
-                      ],
-                    ))
-              ],
+                          MilestoneList(
+                            minDay: DateTime.now()
+                                .difference(startDate.value)
+                                .inDays,
+                            milestones: milestones,
+                            dayController: dayController,
+                            rewardController: rewardController,
+                            startDate: startDate,
+                          ),
+                        ],
+                      )),
+                  DailyReminderButton(
+                    reminderValue: reminderValue,
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.all(50),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CreateButton(
+                            onPressed: () async {
+                              if (editParams != null) {
+                                await StyledPopup(
+                                        context: context,
+                                        title: 'Check-in Data',
+                                        children: [
+                                          Text(
+                                              'If you have changed your starting date, all of your check-in data will be reset.')
+                                        ],
+                                        textButton: TextButton(
+                                            onPressed: () async {
+                                              var tracker =
+                                                  new TrackerTaskModel(
+                                                      titleController.text,
+                                                      noteController.text,
+                                                      milestones.value,
+                                                      startDate.value,
+                                                      reminderValue.value);
+                                              await LoaderWithToast(
+                                                      context: context,
+                                                      api: Database(uid)
+                                                          .editTrackerTask(
+                                                              tracker,
+                                                              editParams[
+                                                                  'taskId']),
+                                                      msg:
+                                                          'The changes have been saved!',
+                                                      isSuccess: true)
+                                                  .show();
+                                              Provider.of<TabProvider>(context,
+                                                      listen: false)
+                                                  .rebuildPage('tracker');
+                                              Navigator.pop(context);
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text('Got it')))
+                                    .showPopup();
+                              } else {
+                                var tracker = new TrackerTaskModel(
+                                    titleController.text,
+                                    noteController.text,
+                                    milestones.value,
+                                    startDate.value,
+                                    reminderValue.value);
+                                await LoaderWithToast(
+                                        context: context,
+                                        api: Database(uid)
+                                            .addTrackerTask(tracker),
+                                        msg: 'Tracker Created Successfully',
+                                        isSuccess: true)
+                                    .show();
+                                Provider.of<TabProvider>(context, listen: false)
+                                    .rebuildPage('tracker');
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            isValid: isValid,
+                            buttonLabel: editParams != null ? 'Save' : null,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: const CancelButton(),
+                          )
+                        ],
+                      ))
+                ],
+              ),
             ),
           )),
     );
@@ -460,7 +469,8 @@ class MilestoneTile extends StatelessWidget {
                       title: 'Delete Milestone?',
                       children: [],
                       textButton: TextButton(
-                          child: Text('Delete'),
+                          child: Text('Delete',
+                              style: TextStyle(color: Colors.red[400])),
                           onPressed: () {
                             milestonesList.value.removeAt(index);
                             milestonesList.value =
@@ -641,7 +651,9 @@ class DailyReminderButton extends HookWidget {
                                         reminderValue.value = null;
                                         Navigator.pop(context);
                                       },
-                                      child: Text('Remove')))
+                                      child: Text('Remove',
+                                          style: TextStyle(
+                                              color: Colors.red[400]))))
                               .showPopup();
                         }
                       : () {},

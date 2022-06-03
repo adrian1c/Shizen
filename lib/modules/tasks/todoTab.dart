@@ -107,7 +107,8 @@ class TodoTaskDisplay extends StatelessWidget {
                           .rebuildPage('todo');
                       Navigator.pop(context);
                     },
-                    child: Text('Delete')))
+                    child: Text('Delete',
+                        style: TextStyle(color: Colors.red[400]))))
             .showPopup(),
         onTap: () {
           Navigator.push(

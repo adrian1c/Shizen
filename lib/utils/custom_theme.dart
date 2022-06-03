@@ -36,6 +36,7 @@ class CustomTheme {
   static const Color redToast = Color.fromARGB(255, 184, 87, 87);
 
   static const Color cancelText = Color.fromARGB(255, 226, 65, 65);
+  // static const Color cancelPopupText = Color.fromARGB(255, 226, 65, 65);
 
   static const Color sentMsg = Color.fromARGB(255, 93, 122, 145);
   static const Color receivedMsg = Color.fromARGB(255, 117, 160, 106);
@@ -87,6 +88,11 @@ class CustomTheme {
       fontWeight: FontWeight.bold,
       fontSize: 50.sp,
       letterSpacing: 10.sp);
+
+  static final TextStyle loaderOverlayTextStyle = TextStyle(
+      color: Color.fromARGB(255, 70, 79, 92),
+      fontSize: 12.sp,
+      fontWeight: FontWeight.w600);
 
   static final TextStyle _hashtagText = TextStyle(
       color: _white,

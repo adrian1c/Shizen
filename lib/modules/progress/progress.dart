@@ -308,7 +308,7 @@ class TodoTaskProgressList extends HookWidget {
               return Padding(
                   padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
                   child: Text(
-                    'You have no completed tasks.',
+                    'You have no completed tasks yet',
                     textAlign: TextAlign.center,
                   ));
             }, childCount: 1));
@@ -566,7 +566,7 @@ class TrackerProgressList extends HookWidget {
               return Padding(
                   padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
                   child: Text(
-                    'You have no completed tasks.',
+                    'You have no check-ins yet',
                     textAlign: TextAlign.center,
                   ));
             }, childCount: 1));

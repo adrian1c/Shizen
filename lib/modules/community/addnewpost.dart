@@ -435,7 +435,10 @@ class AddNewPost extends HookWidget {
                         isValid: isValid,
                         buttonLabel: 'Post',
                       ),
-                      const CancelButton(),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: const CancelButton(),
+                      ),
                     ],
                   ),
                 ),
