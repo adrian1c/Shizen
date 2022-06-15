@@ -306,7 +306,9 @@ class _FriendsPageState extends State<FriendsPage> {
               Navigator.push(context, MaterialPageRoute(builder: (context) {
                 return Scaffold(
                     appBar: AppBar(
-                      title: Text('${itemList[index]['name']}\'s Profile'),
+                      title: Text(itemList[index]['name'].length > 12
+                          ? '${itemList[index]['name']}\'s Profile'
+                          : 'Profile'),
                       centerTitle: true,
                     ),
                     body: ProfilePage(viewId: itemList[index].id));
@@ -348,8 +350,10 @@ class _FriendsPageState extends State<FriendsPage> {
                               MaterialPageRoute(builder: (context) {
                             return Scaffold(
                                 appBar: AppBar(
-                                  title: Text(
-                                      '${itemList[index]['name']}\'s Profile'),
+                                  title: Text(itemList[index]['name'].length >
+                                          12
+                                      ? '${itemList[index]['name']}\'s Profile'
+                                      : 'Profile'),
                                   centerTitle: true,
                                 ),
                                 body: ProfilePage(viewId: itemList[index].id));

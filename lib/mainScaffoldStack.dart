@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shizen_app/models/user.dart';
 import 'package:shizen_app/modules/community/addnewpost.dart';
 import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
+import 'package:shizen_app/utils/notifications.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
@@ -447,6 +449,28 @@ class NavDrawer extends HookWidget {
             },
           ),
           ListTile(
+            leading: new Icon(Icons.notifications_active_rounded,
+                color: Colors.black),
+            title: Text(
+              'Notifications',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                letterSpacing: 2.0,
+              ),
+            ),
+            onTap: () async {
+              var notifications =
+                  await NotificationService().getPendingNotifications();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => NotificationsPage(notifications)),
+              );
+            },
+          ),
+          ListTile(
             leading: new Icon(Icons.info_outline_rounded, color: Colors.black),
             title: Text(
               'About Shizen',
@@ -519,19 +543,103 @@ class SettingsPage extends StatelessWidget {
           title: Text('SETTINGS'),
           centerTitle: true,
         ),
-        body: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Dark Theme'),
-            Switch(
-              onChanged: (value) async {
-                await Provider.of<AppTheme>(context, listen: false)
-                    .toggleTheme();
-              },
-              value: Provider.of<AppTheme>(context, listen: false).darkTheme,
-            )
-          ],
+        body: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Dark Theme'),
+              Switch(
+                onChanged: (value) async {
+                  await Provider.of<AppTheme>(context, listen: false)
+                      .toggleTheme();
+                },
+                value: Provider.of<AppTheme>(context, listen: false).darkTheme,
+              )
+            ],
+          ),
         ));
+  }
+}
+
+class NotificationsPage extends HookWidget {
+  const NotificationsPage(this.notifications, {Key? key}) : super(key: key);
+
+  final List<PendingNotificationRequest> notifications;
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).user.uid;
+    final notificationList = useState(notifications);
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Active Notifications'),
+          centerTitle: true,
+        ),
+        body: notificationList.value.length > 0
+            ? Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ListView.builder(
+                    itemCount: notificationList.value.length,
+                    itemBuilder: (context, index) {
+                      var notif = notificationList.value[index];
+                      var info = notif.payload?.split(',');
+                      return ListTile(
+                        leading: Icon(info![0] == 'todo'
+                            ? Icons.task_alt
+                            : Icons.track_changes),
+                        title: Text(notif.title ?? 'No title'),
+                        subtitle: Text(notif.body ?? 'No body'),
+                        trailing: IconButton(
+                          icon: Icon(Icons.cancel_rounded),
+                          onPressed: () async {
+                            StyledPopup(
+                              context: context,
+                              children: [
+                                Text(
+                                    'Do you want to delete this notification?'),
+                              ],
+                              title: 'Confirm Delete',
+                              textButton: TextButton(
+                                  child: Text('Delete',
+                                      style: TextStyle(color: Colors.red[400])),
+                                  onPressed: () async {
+                                    Navigator.pop(context);
+                                    await LoaderWithToast(
+                                            api: Database(uid)
+                                                .cancelActiveNotification(
+                                                    info[0], info[1])
+                                                .then((value) =>
+                                                    NotificationService()
+                                                        .cancelNotification(
+                                                            notif.id)
+                                                        .then((value) {
+                                                      notificationList.value =
+                                                          List.from(
+                                                              notificationList
+                                                                  .value)
+                                                            ..removeAt(index);
+                                                      Provider.of<TabProvider>(
+                                                              context,
+                                                              listen: false)
+                                                          .rebuildPage(
+                                                              info[0] == 'todo'
+                                                                  ? 'todo'
+                                                                  : 'tracker');
+                                                    })),
+                                            context: context,
+                                            isSuccess: true,
+                                            msg: 'Notification cancelled')
+                                        .show();
+                                  }),
+                            ).showPopup();
+                          },
+                        ),
+                        horizontalTitleGap: 0,
+                      );
+                    }),
+              )
+            : Center(child: Text('There are no active notifications')));
   }
 }
 

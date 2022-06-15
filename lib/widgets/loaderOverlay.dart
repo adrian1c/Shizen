@@ -7,11 +7,13 @@ class Loader extends StatelessWidget {
   final List<String> loadingMsg = const [
     'Please wait politely... I\'m working hard',
     'Making big moves...',
-    'Server overloading...',
+    'Server (over)loading...',
     'Cogs turning...',
     'Patience is the key to success...',
     'Waves be waving...',
-    'Server be serving...'
+    'Server be serving...',
+    'Something is happening somewhere...',
+    'I\'ll be done in a jiffy...'
   ];
 
   @override

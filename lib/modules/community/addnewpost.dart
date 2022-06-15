@@ -1441,20 +1441,24 @@ class PreviewPage extends StatelessWidget {
                         padding: const EdgeInsets.fromLTRB(20, 10, 0, 10),
                       ),
                       Center(
-                        child: Container(
-                            padding: const EdgeInsets.all(10),
-                            width: 50.w,
-                            height: 5.h,
-                            decoration: new BoxDecoration(
-                              border:
-                                  Border.all(color: Colors.black26, width: 1),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: Center(
-                                child: Text(
-                              'Add a comment',
-                              style: TextStyle(fontSize: 13.sp),
-                            ))),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                                decoration: new BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.black26, width: 1),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Center(
+                                    child: Text(
+                                  'Add a comment',
+                                  style: TextStyle(fontSize: 13.sp),
+                                ))),
+                          ],
+                        ),
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(15.0, 15, 15, 0),

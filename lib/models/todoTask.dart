@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ToDoTaskModel {
   String? key;
   String title = '';
   List desc = [];
-  DateTime dateCreated = DateTime.now();
+  Timestamp dateCreated = Timestamp.now();
   List<bool> recur = [false, false, false, false, false, false, false];
   DateTime? reminder;
   bool allComplete = false;

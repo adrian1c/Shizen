@@ -65,10 +65,20 @@ class NotificationService {
     });
   }
 
+  Future getPendingNotifications() async {
+    final List<PendingNotificationRequest> pendingNotificationRequests =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    return pendingNotificationRequests;
+  }
+
+  Future cancelNotification(id) async {
+    await flutterLocalNotificationsPlugin.cancel(id);
+  }
+
   Future<void> showNotification(
-      int id, String title, String body, DateTime dateTime) async {
+      String id, String title, String body, DateTime dateTime) async {
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
+      id.hashCode,
       title,
       body,
       tz.TZDateTime.now(tz.local).add(Duration(
@@ -91,7 +101,7 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-
+      payload: 'todo,$id',
       // Type of time interpretation
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
@@ -101,7 +111,7 @@ class NotificationService {
   }
 
   Future<void> showTrackerDailyNotification(
-      int id, String title, String body, DateTime dateTime) async {
+      String id, String title, String body, DateTime dateTime) async {
     final now = DateTime.now();
     if (dateTime.isBefore(now)) {
       dateTime.add(Duration(days: 1));
@@ -109,7 +119,7 @@ class NotificationService {
     tz.TZDateTime scheduledDate = tz.TZDateTime.now(tz.local).add(
         Duration(seconds: DateTime.now().difference(dateTime).inSeconds.abs()));
     await flutterLocalNotificationsPlugin.zonedSchedule(
-        id,
+        id.hashCode,
         title,
         body,
         scheduledDate,
@@ -131,7 +141,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
-
+        payload: 'trackers,$id',
         // Type of time interpretation
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,

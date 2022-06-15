@@ -76,7 +76,7 @@ exports.sendFriendRequestNotification = functions.firestore
       const senderName = doc.name;
       const senderEmail = doc.email;
 
-      if (doc.status != 0) {
+      if (doc.status != 1) {
         return null;
       }
 
@@ -123,7 +123,7 @@ exports.sendCommentNotification = functions.firestore
       const senderName = doc.name;
       const commentMessage = doc.comment;
 
-      if (idTo == doc.idFrom) {
+      if (idTo == doc.userId) {
         return null;
       }
 

@@ -489,8 +489,9 @@ class PostListTile extends HookWidget {
                                 MaterialPageRoute(builder: (context) {
                               return Scaffold(
                                   appBar: AppBar(
-                                    title:
-                                        Text('${postData['name']}\'s Profile'),
+                                    title: Text(postData['name'].length < 12
+                                        ? '${postData['name']}\'s Profile'
+                                        : 'Profile'),
                                     centerTitle: true,
                                   ),
                                   body: ProfilePage(viewId: postData['uid']));
@@ -932,19 +933,22 @@ class PostListTile extends HookWidget {
                       },
                     );
                   },
-                  child: Container(
-                      padding: const EdgeInsets.all(10),
-                      width: 50.w,
-                      height: 5.h,
-                      decoration: new BoxDecoration(
-                        border: Border.all(color: Colors.black26, width: 1),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Center(
-                          child: Text(
-                        'Add a comment',
-                        style: TextStyle(fontSize: 13.sp),
-                      )))),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                          decoration: new BoxDecoration(
+                            border: Border.all(color: Colors.black26, width: 1),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Center(
+                              child: Text(
+                            'Add a comment',
+                            style: TextStyle(fontSize: 13.sp),
+                          ))),
+                    ],
+                  )),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(15.0, 15, 15, 0),
@@ -1137,8 +1141,11 @@ class CommentPage extends HookWidget {
                                           MaterialPageRoute(builder: (context) {
                                         return Scaffold(
                                             appBar: AppBar(
-                                              title: Text(
-                                                  '${comment['name']}\'s Profile'),
+                                              title: Text(comment['name']
+                                                          .length <
+                                                      12
+                                                  ? '${comment['name']}\'s Profile'
+                                                  : 'Profile'),
                                               centerTitle: true,
                                             ),
                                             body: ProfilePage(

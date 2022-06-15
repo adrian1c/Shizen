@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CommunityPost {
   String uid;
   String desc = '';
-  DateTime dateCreated = DateTime.now();
+  Timestamp dateCreated = Timestamp.now();
   List<String> hashtags = [];
   String visibility = 'Friends Only';
   var attachment;

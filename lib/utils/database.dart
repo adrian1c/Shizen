@@ -52,9 +52,8 @@ class Database {
     }
     await userDoc.collection('todo').add(taskData).then((doc) async {
       if (reminder != null) {
-        print(doc.id.hashCode);
-        await NotificationService().showNotification(doc.id.hashCode,
-            'REMINDER: ${taskData['title']}', notifDesc, reminder);
+        await NotificationService().showNotification(
+            doc.id, 'REMINDER: ${taskData['title']}', notifDesc, reminder);
       } else {
         await NotificationService()
             .flutterLocalNotificationsPlugin
@@ -79,9 +78,8 @@ class Database {
         .update(taskData)
         .then((doc) async {
       if (reminder != null) {
-        print(tid.hashCode);
-        await NotificationService().showNotification(tid.hashCode,
-            'REMINDER: ${taskData['title']}', notifDesc, reminder);
+        await NotificationService().showNotification(
+            tid, 'REMINDER: ${taskData['title']}', notifDesc, reminder);
       } else {
         await NotificationService()
             .flutterLocalNotificationsPlugin
@@ -129,7 +127,7 @@ class Database {
     await userDoc.collection('todo').doc(tid).set({
       'desc': newDesc,
       'allComplete': true,
-      'dateCompleted': DateTime.now()
+      'dateCompleted': Timestamp.now()
     }, SetOptions(merge: true)).then((value) async =>
         await NotificationService()
             .flutterLocalNotificationsPlugin
@@ -558,7 +556,7 @@ class Database {
     });
     userData.addAll({
       'comment': commentText,
-      'dateCreated': DateTime.now(),
+      'dateCreated': Timestamp.now(),
       'posterUid': puid
     });
     postCol.doc(pid).update({'commentCount': FieldValue.increment(1)});
@@ -570,6 +568,7 @@ class Database {
     print("Firing removeComment");
 
     await postCol.doc(pid).collection('comments').doc(cid).delete();
+    await postCol.doc(pid).update({'commentCount': FieldValue.increment(-1)});
   }
 
   Stream getComments(pid) {
@@ -836,11 +835,9 @@ class Database {
         .add(tracker.toJson())
         .then((doc) async {
       if (tracker.reminder != null) {
-        print(doc.id.hashCode);
-
         DateTime reminder = tracker.reminder!;
         await NotificationService().showTrackerDailyNotification(
-          doc.id.hashCode,
+          doc.id,
           'DAILY REMINDER: ${tracker.title}',
           'Keep going, you\'ll get there eventually!',
           reminder,
@@ -863,11 +860,9 @@ class Database {
         .update(tracker.toJson())
         .then((doc) async {
           if (tracker.reminder != null) {
-            print(tid.hashCode);
-
             DateTime reminder = tracker.reminder!;
             await NotificationService().showTrackerDailyNotification(
-              tid.hashCode,
+              tid,
               'DAILY REMINDER: ${tracker.title}',
               'Keep going, you\'ll get there eventually!',
               reminder,
@@ -1014,6 +1009,10 @@ class Database {
     return progressList;
   }
 
+  Future cancelActiveNotification(type, id) async {
+    await userDoc.collection(type).doc(id).update({'reminder': null});
+  }
+
   //-----------------------------------------------------
   //--------------  PROGRESS LIST  ----------------------
   //-----------------------------------------------------
@@ -1059,6 +1058,7 @@ class Database {
   }
 
   Stream getMessages(chatId) {
+    print("Firing getMessages");
     return firestore
         .collection('chats')
         .doc(chatId)
@@ -1086,7 +1086,8 @@ class Database {
       'chatId': chatId,
       'peerId': peerId,
       'lastMsg': '',
-      'lastMsgTime': '',
+      'lastMsgTime': null,
+      'lastMsgSender': null,
       'user': {
         'name': userData['name'],
         'email': userData['email'],
@@ -1101,7 +1102,8 @@ class Database {
       'chatId': chatId,
       'peerId': uid,
       'lastMsg': '',
-      'lastMsgTime': '',
+      'lastMsgTime': null,
+      'lastMsgSender': null,
       'user': {
         'name': selfData['name'],
         'email': selfData['email'],
@@ -1112,18 +1114,19 @@ class Database {
   }
 
   Future sendMessage(chatId, message, idFrom, idTo, attachment) async {
+    var time = FieldValue.serverTimestamp();
     await firestore.collection('chats').doc(chatId).collection('messages').add({
       'message': message,
       'idFrom': idFrom,
       'idTo': idTo,
-      'dateCreated': DateTime.now(),
+      'dateCreated': time,
       'attachment': attachment
     }).then((value) {
       userDoc.collection('chats').doc(idTo).set(
-          {'lastMsg': message, 'lastMsgTime': DateTime.now()},
+          {'lastMsg': message, 'lastMsgTime': time, 'lastMsgSender': idFrom},
           SetOptions(merge: true));
       userCol.doc(idTo).collection('chats').doc(idFrom).set(
-          {'lastMsg': message, 'lastMsgTime': DateTime.now()},
+          {'lastMsg': message, 'lastMsgTime': time, 'lastMsgSender': idFrom},
           SetOptions(merge: true));
     });
   }

@@ -350,7 +350,7 @@ class SearchListTile extends StatelessWidget {
                     type: PageTransitionType.bottomToTop,
                     child: Scaffold(
                         appBar: AppBar(
-                          title: Text(user['name'].length > 12
+                          title: Text(user['name'].length < 12
                               ? '${user['name']}\'s Profile'
                               : 'Profile'),
                           centerTitle: true,
@@ -484,7 +484,9 @@ class FriendsListTile extends StatelessWidget {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   return Scaffold(
                       appBar: AppBar(
-                        title: Text('${friend['name']}\'s Profile'),
+                        title: Text(friend['name'].length < 12
+                            ? '${friend['name']}\'s Profile'
+                            : 'Profile'),
                         centerTitle: true,
                       ),
                       body: ProfilePage(viewId: friend['uid']));
@@ -529,8 +531,9 @@ class FriendsListTile extends StatelessWidget {
                                     type: PageTransitionType.bottomToTop,
                                     child: Scaffold(
                                         appBar: AppBar(
-                                          title: Text(
-                                              '${friend['name']}\'s Profile'),
+                                          title: Text(friend['name'].length < 12
+                                              ? '${friend['name']}\'s Profile'
+                                              : 'Profile'),
                                           centerTitle: true,
                                         ),
                                         body: ProfilePage(

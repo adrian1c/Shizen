@@ -17,6 +17,21 @@ class InstantMessagingPage extends HookWidget {
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final stream = useMemoized(() => Database(uid).getChats(), []);
     final chatStream = useStream(stream);
+
+    // useEffect(() {
+    //   final sub = stream.listen((event) {
+    //     if (!event.metadata.hasPendingWrites && chatStream.hasData) {
+    //       chatStream.data.docs = event.docs;
+    //     }
+    //   }, onDone: () {
+    //     print('Stream closed');
+    //   });
+
+    //   return () {
+    //     sub.cancel();
+    //   };
+    // });
+
     return Scaffold(
         appBar: AppBar(
           title: Text('Chats'),
@@ -36,83 +51,96 @@ class InstantMessagingPage extends HookWidget {
         ),
         body: chatStream.hasData
             ? chatStream.data.docs.length > 0
-                ? Column(
-                    children: [
-                      ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: chatStream.data.docs.length,
-                          itemBuilder: (context, index) {
-                            final friend = chatStream.data.docs[index];
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 15.0),
-                              child: Column(
+                ? ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: chatStream.data.docs.length,
+                    itemBuilder: (context, index) {
+                      final friend = chatStream.data.docs[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                        child: Column(
+                          children: [
+                            Divider(),
+                            ListTile(
+                              onTap: () async {
+                                Database(uid).chattingWith(friend['peerId']);
+                                if (friend['unreadCount'] > 0) {
+                                  Database(uid).resetUnread(friend['peerId']);
+                                }
+                                Navigator.push(
+                                    context,
+                                    PageTransition(
+                                        type: PageTransitionType
+                                            .rightToLeftWithFade,
+                                        child: ChatPage(
+                                            peerId: friend['peerId'],
+                                            peerName: friend['user']['name'])));
+                              },
+                              leading: Padding(
+                                padding: const EdgeInsets.only(right: 10.0),
+                                child: CircleAvatar(
+                                  foregroundImage: friend['user']['image'] != ''
+                                      ? CachedNetworkImageProvider(
+                                          friend['user']['image'])
+                                      : Images.defaultPic.image,
+                                  backgroundColor: Colors.grey,
+                                  radius: 3.h,
+                                ),
+                              ),
+                              title: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Divider(),
-                                  ListTile(
-                                    onTap: () async {
-                                      Database(uid)
-                                          .chattingWith(friend['peerId']);
-                                      if (friend['unreadCount'] > 0) {
-                                        Database(uid)
-                                            .resetUnread(friend['peerId']);
-                                      }
-                                      Navigator.push(
-                                          context,
-                                          PageTransition(
-                                              type: PageTransitionType
-                                                  .rightToLeftWithFade,
-                                              child: ChatPage(
-                                                  peerId: friend['peerId'],
-                                                  peerName: friend['user']
-                                                      ['name'])));
-                                    },
-                                    leading: Padding(
-                                      padding:
-                                          const EdgeInsets.only(right: 10.0),
-                                      child: CircleAvatar(
-                                        foregroundImage:
-                                            friend['user']['image'] != ''
-                                                ? CachedNetworkImageProvider(
-                                                    friend['user']['image'])
-                                                : Images.defaultPic.image,
-                                        backgroundColor: Colors.grey,
-                                        radius: 3.h,
+                                  Flexible(
+                                    child: Text(
+                                      "${friend['user']['name']}",
+                                      overflow: TextOverflow.visible,
+                                      style: TextStyle(
+                                          color: Colors.black, fontSize: 15.sp),
+                                    ),
+                                  ),
+                                  Text(
+                                    friend['lastMsgTime'] != null
+                                        ? DateFormat("hh:mm a")
+                                            .format((friend['lastMsgTime']
+                                                    as Timestamp)
+                                                .toDate())
+                                            .toString()
+                                        : '',
+                                    style: TextStyle(
+                                        color: Colors.black, fontSize: 12.sp),
+                                  ),
+                                ],
+                              ),
+                              subtitle: Row(
+                                children: [
+                                  friend.data().containsKey('lastMsgSender')
+                                      ? friend['lastMsgSender'] == uid
+                                          ? Icon(
+                                              Icons.mark_email_read_outlined,
+                                              color: CustomTheme.sentMsg,
+                                            )
+                                          : Icon(
+                                              Icons.mark_email_unread_outlined,
+                                              color: CustomTheme.receivedMsg)
+                                      : Icon(Icons.email_outlined,
+                                          color: CustomTheme.greyedOutField),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 5.0),
+                                      child: Text(
+                                        "${friend['lastMsg']}",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 13.sp),
                                       ),
                                     ),
-                                    title: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            "${friend['user']['name']}",
-                                            overflow: TextOverflow.visible,
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 20.sp),
-                                          ),
-                                        ),
-                                        Text(
-                                          DateFormat("hh:mm a")
-                                              .format((friend['lastMsgTime']
-                                                      as Timestamp)
-                                                  .toDate())
-                                              .toString(),
-                                          style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12.sp),
-                                        ),
-                                      ],
-                                    ),
-                                    subtitle: Text(
-                                      "${friend['lastMsg']}",
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                          color: Colors.black, fontSize: 13.sp),
-                                    ),
-                                    trailing: friend['unreadCount'] > 0
-                                        ? Container(
+                                  ),
+                                  friend['unreadCount'] > 0
+                                      ? Align(
+                                          alignment: Alignment.centerRight,
+                                          child: Container(
                                             alignment: Alignment.center,
                                             width: 7.w,
                                             decoration: BoxDecoration(
@@ -126,17 +154,18 @@ class InstantMessagingPage extends HookWidget {
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodyText1),
-                                          )
-                                        : null,
-                                    horizontalTitleGap: 0,
-                                    tileColor: Colors.transparent,
-                                  ),
+                                          ),
+                                        )
+                                      : Container(),
                                 ],
                               ),
-                            );
-                          }),
-                    ],
-                  )
+                              horizontalTitleGap: 0,
+                              tileColor: Colors.transparent,
+                            ),
+                          ],
+                        ),
+                      );
+                    })
                 : Center(
                     child: Text(
                     'No Chats.\n\nYou can start a new chat in the top-right corner!',
@@ -265,7 +294,7 @@ class ChatPage extends HookWidget {
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final chatId =
         (uid.hashCode <= peerId.hashCode) ? '$uid-$peerId' : '$peerId-$uid';
-    final stream = useMemoized(() => Database(uid).getMessages(chatId), []);
+    final stream = useMemoized(() => Database(uid).getMessages(chatId));
     final messageStream = useStream(stream);
     final msgController = useTextEditingController();
     final scrollController = useScrollController();
@@ -274,9 +303,11 @@ class ChatPage extends HookWidget {
     final ValueNotifier<Map?> attachment = useState(null);
 
     useEffect(() {
-      final observer = MyObserver(
-          detachedCallBack: () async => await Database(uid).chattingWith(null),
-          resumeCallBack: () async => await Database(uid).chattingWith(peerId));
+      final observer = MyObserver(detachedCallBack: () async {
+        await Database(uid).chattingWith(null);
+      }, resumeCallBack: () async {
+        await Database(uid).chattingWith(peerId);
+      });
       WidgetsBinding.instance!.addObserver(observer);
 
       scrollController.addListener(() {
@@ -288,13 +319,18 @@ class ChatPage extends HookWidget {
         }
       });
 
-      final sub = stream.listen(
-        (event) {
-          if (event.docs.length > 0) {
-            msgs.value.add(event.docs[0].data());
-          }
-        },
-      );
+      final sub = stream.listen((event) {
+        if (!event.metadata.hasPendingWrites) {
+          event.docChanges.forEach((res) {
+            if (res.type == DocumentChangeType.modified ||
+                res.type == DocumentChangeType.added) {
+              msgs.value.add(res.doc.data());
+            }
+          });
+        }
+      }, onDone: () {
+        print('Stream closed');
+      });
 
       focusNode.addListener(() {
         if (focusNode.hasFocus) {
@@ -306,11 +342,15 @@ class ChatPage extends HookWidget {
       return () {
         WidgetsBinding.instance!.removeObserver(observer);
         sub.cancel();
+        print('Cancelled stuff');
+        // stream.
       };
-    }, []);
+    });
 
     if (messageStream.hasData) {
       var msgList = messageStream.data;
+      // print(msgsList.);
+      print(initialLoad.value);
       if (!initialLoad.value) {
         if (msgList.docs.length > 0) {
           msgs.value =
@@ -343,10 +383,14 @@ class ChatPage extends HookWidget {
                       shrinkWrap: true,
                       controller: scrollController,
                       elements: msgs.value,
-                      groupBy: (Map element) => DateTime(
-                          (element['dateCreated'] as Timestamp).toDate().year,
-                          (element['dateCreated'] as Timestamp).toDate().month,
-                          (element['dateCreated'] as Timestamp).toDate().day),
+                      groupBy: (Map element) {
+                        DateTime(
+                            (element['dateCreated'] as Timestamp).toDate().year,
+                            (element['dateCreated'] as Timestamp)
+                                .toDate()
+                                .month,
+                            (element['dateCreated'] as Timestamp).toDate().day);
+                      },
                       groupHeaderBuilder: (Map element) {
                         var formattedDate = '';
                         final elementDate =
@@ -924,14 +968,32 @@ class ChatPage extends HookWidget {
                                                 .then((value) =>
                                                     mustInitializeDoc = false);
                                           }
-                                          await Database(uid).sendMessage(
-                                              chatId,
-                                              msg,
-                                              uid,
-                                              peerId,
-                                              attachment.value);
-                                          attachment.value = null;
-                                          msgController.clear();
+                                          await Database(uid)
+                                              .sendMessage(chatId, msg, uid,
+                                                  peerId, attachment.value)
+                                              .then((value) {
+                                            attachment.value = null;
+                                            msgController.clear();
+                                          }).catchError((err) {
+                                            showDialog(
+                                                context: context,
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text("Error"),
+                                                    content: Text(err.message),
+                                                    actions: [
+                                                      TextButton(
+                                                        child: Text("Ok"),
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                      )
+                                                    ],
+                                                  );
+                                                });
+                                          });
                                         }
                                       },
                                       icon: Icon(Icons.send,
