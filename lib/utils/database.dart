@@ -610,7 +610,8 @@ class Database {
   Future getTrackerCheckInCount(targetUID) {
     return userCol
         .doc(targetUID)
-        .collection('trackerCheckIn')
+        .collection('progress')
+        .where('type', isEqualTo: 'tracker')
         .get()
         .then((value) => value.docs.length);
   }
@@ -898,14 +899,14 @@ class Database {
       'note': note,
       'attachment': attachment
     }).then((value) async =>
-        await userDoc.collection('trackerCheckIn').doc(newCheckInDoc.id).set({
+        await userDoc.collection('progress').doc(newCheckInDoc.id).set({
           'dateCreated': DateTime.now(),
+          'type': 'tracker',
           'day': day,
           'note': note,
           'attachment': attachment,
           'trackerName': name
         }));
-    print(newCheckInDoc.id);
   }
 
   Future resetTrackerTask(tid, note) async {
@@ -991,7 +992,8 @@ class Database {
     List<Map> progressList = [];
 
     await userDoc
-        .collection('trackerCheckIn')
+        .collection('progress')
+        .where('type', isEqualTo: 'tracker')
         .where('dateCreated', isGreaterThanOrEqualTo: filter?.startDate)
         .where('dateCreated',
             isLessThanOrEqualTo: filter?.endDate?.add(Duration(days: 1)) ??
@@ -1018,7 +1020,7 @@ class Database {
   //-----------------------------------------------------
   //
 
-  Future getTodoProgressList(filter, search) async {
+  Future getProgressList(filter, search) async {
     print("Firing getProgressList");
 
     List<Map> progressList = [];
@@ -1030,11 +1032,11 @@ class Database {
         .where('dateCompleted',
             isLessThanOrEqualTo: filter?.endDate?.add(Duration(days: 1)) ??
                 filter?.startDate.add(Duration(days: 1)))
-        .orderBy('dateCompleted', descending: false)
         .get()
         .then((value) {
       value.docs.forEach((element) {
         var currElement = element.data();
+        currElement['type'] = 'todo';
         currElement['taskId'] = element.id;
         currElement['dateCompleted'] =
             (currElement['dateCompleted'] as Timestamp).toDate();
@@ -1042,7 +1044,25 @@ class Database {
       });
     });
 
-    return progressList;
+    await userDoc
+        .collection('progress')
+        .where('dateCreated', isGreaterThanOrEqualTo: filter?.startDate)
+        .where('dateCreated',
+            isLessThanOrEqualTo: filter?.endDate?.add(Duration(days: 1)) ??
+                filter?.startDate.add(Duration(days: 1)))
+        .get()
+        .then((value) {
+      value.docs.forEach((element) {
+        var currElement = element.data();
+        currElement['type'] = 'tracker';
+        currElement['dateCompleted'] =
+            (currElement['dateCreated'] as Timestamp).toDate();
+        progressList.add(currElement);
+      });
+    });
+    var result = progressList;
+
+    return result;
   }
 
   //-----------------------------------------------------

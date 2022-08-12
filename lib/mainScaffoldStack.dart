@@ -407,7 +407,7 @@ class NavDrawer extends HookWidget {
                     color: Colors.white,
                     fontWeight: FontWeight.w300,
                     fontSize: 10)),
-            accountName: Text(user.name,
+            accountName: Text(user.uid,
                 style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.normal,

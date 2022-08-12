@@ -6,9 +6,9 @@ class CustomTheme {
   // static const Color _scaffoldBackground = Color.fromARGB(255, 220, 224, 233);
 
   static const Color _primaryColor = Color.fromARGB(255, 72, 97, 100);
-  static const Color _scaffoldBackground = Color.fromARGB(255, 216, 208, 208);
+  static const Color _scaffoldBackground = Color.fromARGB(255, 224, 218, 218);
 
-  static const Color _white = Color.fromARGB(255, 239, 235, 241);
+  static const Color _white = Color.fromARGB(255, 254, 254, 254);
   static const Color _black = Color(0xff444444);
 
   static const Color onboardingColor = Color.fromARGB(255, 199, 209, 194);

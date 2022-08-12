@@ -20,24 +20,11 @@ class ProgressPage extends HookWidget {
   Widget build(BuildContext context) {
     final ValueNotifier<PickerDateRange?> filterValue = useValueNotifier(null);
     final searchValue = useState(null);
-    final tabController = useTabController(
-      initialLength: 2,
-      initialIndex: 0,
-    );
 
     final scrollController = useScrollController();
     final scrollController2 = useScrollController();
-    final scrollController3 = useScrollController();
 
     final tabIndex = useState(0);
-
-    useEffect(() {
-      tabController.addListener(() {
-        tabIndex.value = tabController.index == 0 ? 0 : 1;
-      });
-
-      return () {};
-    });
 
     return NestedScrollView(
       key: Keys.nestedScrollViewKeyProgressPage,
@@ -48,44 +35,6 @@ class ProgressPage extends HookWidget {
           SliverOverlapAbsorber(
             handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
             sliver: MultiSliver(children: [
-              SliverAppBar(
-                backgroundColor: CustomTheme.dividerBackground,
-                shadowColor: Colors.transparent,
-                automaticallyImplyLeading: false,
-                floating: true,
-                snap: true,
-                forceElevated: false,
-                centerTitle: true,
-                title: Container(
-                  width: 60.w,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).backgroundColor,
-                    borderRadius: BorderRadius.circular(
-                      25.0,
-                    ),
-                  ),
-                  child: TabBar(
-                    controller: tabController,
-                    // give the indicator a decoration (color and border radius)
-                    indicator: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        25.0,
-                      ),
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Theme.of(context).primaryColor,
-                    tabs: [
-                      Tab(
-                        child: Icon(Icons.task_alt),
-                      ),
-                      Tab(
-                        child: Icon(Icons.track_changes),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               SliverAppBar(
                 backgroundColor: CustomTheme.dividerBackground,
                 shadowColor: Colors.transparent,
@@ -185,62 +134,38 @@ class ProgressPage extends HookWidget {
               SliverPinnedHeader(
                 child: PreferredSize(
                   preferredSize: Size(100.w, 3.h),
-                  child: AnimatedTextDivider(
-                      ['TO DO TASKS', 'DAILY TRACKER'], tabIndex),
+                  child: AnimatedTextDivider(['ACTIVITY'], tabIndex),
                 ),
               ),
             ]),
           ),
         ];
       }),
-      body: TabBarView(
-          physics: CustomTabBarViewScrollPhysics(),
-          controller: tabController,
-          children: [
-            KeepAlivePage(
-              child: Builder(builder: (context) {
-                return NestedFix(
-                  globalKey: Keys.nestedScrollViewKeyProgressPage,
-                  child:
-                      CustomScrollView(controller: scrollController2, slivers: [
-                    SliverOverlapInjector(
-                      // This is the flip side of the SliverOverlapAbsorber
-                      // above.
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                          context),
-                    ),
-                    TodoTaskProgressList(
-                      filterValue: filterValue,
-                      searchValue: searchValue,
-                    ),
-                  ]),
-                );
-              }),
-            ),
-            KeepAlivePage(
-              child: Builder(builder: (context) {
-                return NestedFix(
-                  globalKey: Keys.nestedScrollViewKeyProgressPage,
-                  child:
-                      CustomScrollView(controller: scrollController3, slivers: [
-                    SliverOverlapInjector(
-                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                            context)),
-                    TrackerProgressList(
-                      filterValue: filterValue,
-                      searchValue: searchValue,
-                    )
-                  ]),
-                );
-              }),
-            )
-          ]),
+      body: KeepAlivePage(
+        child: Builder(builder: (context) {
+          return NestedFix(
+            globalKey: Keys.nestedScrollViewKeyProgressPage,
+            child: CustomScrollView(controller: scrollController2, slivers: [
+              SliverOverlapInjector(
+                // This is the flip side of the SliverOverlapAbsorber
+                // above.
+                handle:
+                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+              ),
+              ProgressList(
+                filterValue: filterValue,
+                searchValue: searchValue,
+              ),
+            ]),
+          );
+        }),
+      ),
     );
   }
 }
 
-class TodoTaskProgressList extends HookWidget {
-  const TodoTaskProgressList({
+class ProgressList extends HookWidget {
+  const ProgressList({
     Key? key,
     required this.filterValue,
     required this.searchValue,
@@ -253,8 +178,8 @@ class TodoTaskProgressList extends HookWidget {
   Widget build(BuildContext context) {
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final future = useMemoized(
-        () => Database(uid)
-            .getTodoProgressList(filterValue.value, searchValue.value),
+        () =>
+            Database(uid).getProgressList(filterValue.value, searchValue.value),
         [Provider.of<TabProvider>(context).progress]);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
@@ -293,12 +218,18 @@ class TodoTaskProgressList extends HookWidget {
               itemBuilder: (context, dynamic element) {
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                  child: TodoTaskProgressTile(
-                    taskId: element['taskId'],
-                    title: element['title'],
-                    taskList: element['desc'],
-                    timeCompleted: element['dateCompleted'],
-                  ),
+                  child: element['type'] == 'todo'
+                      ? TodoTaskProgressTile(
+                          taskId: element['taskId'],
+                          title: element['title'],
+                          taskList: element['desc'],
+                          timeCompleted: element['dateCompleted'],
+                        )
+                      : TrackerProgressTile(
+                          name: element['trackerName'],
+                          note: element['note'],
+                          timeCompleted: element['dateCompleted'],
+                        ),
                 );
               },
               order: GroupedListOrder.DESC,

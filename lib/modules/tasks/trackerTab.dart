@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
 import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
@@ -70,7 +71,7 @@ class TrackerTile extends HookWidget {
   final task;
   final String uid;
 
-  checkInPopup(context, controller, checkinData) {
+  checkInPopup(context, controller, checkinData, currStreakDate) {
     final _formKey = GlobalKey<FormState>();
     showDialog(
         context: context,
@@ -106,15 +107,12 @@ class TrackerTile extends HookWidget {
                   TextButton(
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                          var ciData = currentDayCheckIn(checkinData);
+                          var ciData =
+                              currentDayCheckIn(checkinData, currStreakDate);
                           await Database(uid).checkInTracker(
                               task.id,
                               task['title'],
-                              DateTime.now()
-                                      .difference(
-                                          (task['currStreakDate'] as Timestamp)
-                                              .toDate())
-                                      .inDays +
+                              DateTime.now().difference(currStreakDate).inDays +
                                   1,
                               controller.text,
                               null,
@@ -122,6 +120,8 @@ class TrackerTile extends HookWidget {
                           controller.clear();
                           Provider.of<TabProvider>(context, listen: false)
                               .rebuildPage('tracker');
+                          Provider.of<TabProvider>(context, listen: false)
+                              .rebuildPage('profileUser');
                           Navigator.pop(context);
                         }
                       },
@@ -136,13 +136,10 @@ class TrackerTile extends HookWidget {
                 ]));
   }
 
-  Map? currentDayCheckIn(List checkinData) {
+  Map? currentDayCheckIn(List checkinData, currStreakDate) {
     for (var i = 0; i < checkinData.length; i++) {
       if (checkinData[i]['day'] ==
-          DateTime.now()
-                  .difference((task['currStreakDate'] as Timestamp).toDate())
-                  .inDays +
-              1) {
+          DateTime.now().difference(currStreakDate).inDays + 1) {
         var result = checkinData[i].data();
         result['checkinId'] = checkinData[i].id;
         return result;
@@ -163,13 +160,18 @@ class TrackerTile extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final checkInController = useTextEditingController();
-    final isExpanded = useState(false);
     final noteController = useTextEditingController();
     final String uid = Provider.of<UserProvider>(context).user.uid;
     final future = useMemoized(
         () => Database(uid).getCheckInButtonData(task.id),
         [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
+    var currCheckIn;
+    if (snapshot.hasData) {
+      currCheckIn = currentDayCheckIn(
+          snapshot.data.docs, (task['currStreakDate'] as Timestamp).toDate());
+      print(task['currStreakDate']);
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
       child: Row(
@@ -361,10 +363,8 @@ class TrackerTile extends HookWidget {
                                                             .toDate())
                                                     .inDays +
                                                 1),
-                                    maxLines: isExpanded.value ? null : 2,
-                                    overflow: isExpanded.value
-                                        ? null
-                                        : TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -422,22 +422,26 @@ class TrackerTile extends HookWidget {
                       Center(
                           child: ElevatedButton(
                               onPressed: snapshot.hasData
-                                  ? currentDayCheckIn(snapshot.data.docs) !=
-                                          null
+                                  ? currCheckIn != null
                                       ? () {
                                           checkInController.text =
-                                              currentDayCheckIn(
-                                                  snapshot.data.docs)!['note'];
+                                              currCheckIn!['note'];
                                           checkInPopup(
                                               context,
                                               checkInController,
-                                              snapshot.data.docs);
+                                              snapshot.data.docs,
+                                              (task['currStreakDate']
+                                                      as Timestamp)
+                                                  .toDate());
                                         }
                                       : () {
                                           checkInPopup(
                                               context,
                                               checkInController,
-                                              snapshot.data.docs);
+                                              snapshot.data.docs,
+                                              (task['currStreakDate']
+                                                      as Timestamp)
+                                                  .toDate());
                                         }
                                   : () {},
                               child: Row(
@@ -446,9 +450,7 @@ class TrackerTile extends HookWidget {
                                   Icon(Icons.check_circle_outline_rounded),
                                   Text(
                                       snapshot.hasData
-                                          ? currentDayCheckIn(
-                                                      snapshot.data.docs) !=
-                                                  null
+                                          ? currCheckIn != null
                                               ? 'Checked-in Today'
                                               : 'Check-in Today'
                                           : 'Check-in Today',
@@ -457,8 +459,7 @@ class TrackerTile extends HookWidget {
                               ),
                               style: ButtonStyle(
                                   backgroundColor: snapshot.hasData
-                                      ? currentDayCheckIn(snapshot.data.docs) !=
-                                              null
+                                      ? currCheckIn != null
                                           ? MaterialStateProperty.all(
                                               CustomTheme.completeColor)
                                           : MaterialStateProperty.all(
@@ -475,18 +476,18 @@ class TrackerTile extends HookWidget {
                       Center(
                           child: IconButton(
                               icon: Icon(
-                                isExpanded.value
-                                    ? Icons.keyboard_arrow_up_rounded
-                                    : Icons.keyboard_arrow_down_rounded,
+                                Icons.keyboard_arrow_right_rounded,
                               ),
                               onPressed: () {
-                                if (isExpanded.value == false) {
-                                  isExpanded.value = true;
-                                } else {
-                                  isExpanded.value = false;
-                                }
+                                Navigator.push(
+                                    context,
+                                    PageTransition(
+                                        type: PageTransitionType
+                                            .rightToLeftWithFade,
+                                        child: TrackerDetailPage(
+                                          task: task,
+                                        )));
                               })),
-                      if (isExpanded.value) ExpandedTracker(task: task)
                     ],
                   )),
             ),
@@ -497,38 +498,10 @@ class TrackerTile extends HookWidget {
   }
 }
 
-class ExpandedTracker extends HookWidget {
-  const ExpandedTracker({
-    Key? key,
-    required this.task,
-  }) : super(key: key);
+class TrackerDetailPage extends HookWidget {
+  const TrackerDetailPage({Key? key, required this.task}) : super(key: key);
 
   final task;
-
-  Widget dividerLabel(msg) {
-    return Row(children: <Widget>[
-      Expanded(
-        child: new Container(
-            margin: const EdgeInsets.only(left: 10.0, right: 10.0),
-            child: Divider(
-              height: 4.h,
-              thickness: 3,
-            )),
-      ),
-      Text(
-        msg,
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-      Expanded(
-        child: new Container(
-            margin: const EdgeInsets.only(left: 10.0, right: 10.0),
-            child: Divider(
-              height: 4.h,
-              thickness: 3,
-            )),
-      ),
-    ]);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -537,66 +510,150 @@ class ExpandedTracker extends HookWidget {
         () => Database(uid).getExpandedTrackerData(task.id),
         [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
-    return Container(
-      width: 100.w,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            dividerLabel('PERSONAL NOTE'),
-            Text(
-              task['note'],
-              textAlign: TextAlign.justify,
-            )
-          ]),
-          Divider(color: Colors.transparent, height: 3.h),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(task['title']),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
             children: [
-              dividerLabel('START DATE'),
-              Text(
-                '${DateFormat('dd MMM yy\t\t\t\t\t\thh:mm a').format((task['startDate'] as Timestamp).toDate())}',
+              Row(
+                children: [
+                  Text(
+                      '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}'),
+                  Icon(Icons.park_rounded),
+                ],
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+              snapshot.hasData
+                  ? Column(
+                      children: [
+                        TextDivider('Check-ins'),
+                        snapshot.data['checkin'].length > 0
+                            ? CheckInList(
+                                checkinList: snapshot.data['checkin'],
+                                task: task)
+                            : Text('No checkins'),
+                        TextDivider('Resets'),
+                        snapshot.data['resets'].length > 0
+                            ? ResetList(resetList: snapshot.data['resets'])
+                            : Text('No resets')
+                      ],
+                    )
+                  : CircularProgressIndicator(),
             ],
           ),
-          Divider(color: Colors.transparent, height: 3.h),
-          Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            dividerLabel('RESETS'),
-            snapshot.hasData
-                ? snapshot.data['resets'].length > 0
-                    ? ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: snapshot.data['resets'].length,
-                        itemBuilder: (context, index) => Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                    '${DateFormat('dd MMM yy').format((snapshot.data['resets'][index]['resetDate'] as Timestamp).toDate())}'),
-                                Text(snapshot.data['resets'][index]['note'] !=
-                                        ''
-                                    ? '${snapshot.data['resets'][index]['note']}'
-                                    : '-')
-                              ],
-                            ))
-                    : Text('You have no resets')
-                : CircularProgressIndicator(),
-          ]),
-          Divider(color: Colors.transparent, height: 3.h),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              dividerLabel('CHECK-IN'),
-              snapshot.hasData
-                  ? CheckInList(
-                      checkinList: snapshot.data['checkin'], task: task)
-                  : CircularProgressIndicator()
-            ],
-          )
-        ],
+        ),
       ),
     );
   }
 }
+
+// class ExpandedTracker extends HookWidget {
+//   const ExpandedTracker({
+//     Key? key,
+//     required this.task,
+//   }) : super(key: key);
+
+//   final task;
+
+//   Widget dividerLabel(msg) {
+//     return Row(children: <Widget>[
+//       Expanded(
+//         child: new Container(
+//             margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+//             child: Divider(
+//               height: 4.h,
+//               thickness: 3,
+//             )),
+//       ),
+//       Text(
+//         msg,
+//         style: TextStyle(fontWeight: FontWeight.bold),
+//       ),
+//       Expanded(
+//         child: new Container(
+//             margin: const EdgeInsets.only(left: 10.0, right: 10.0),
+//             child: Divider(
+//               height: 4.h,
+//               thickness: 3,
+//             )),
+//       ),
+//     ]);
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final String uid = Provider.of<UserProvider>(context).user.uid;
+//     final future = useMemoized(
+//         () => Database(uid).getExpandedTrackerData(task.id),
+//         [Provider.of<TabProvider>(context).tracker]);
+//     final snapshot = useFuture(future);
+//     return Container(
+//       width: 100.w,
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+//             dividerLabel('PERSONAL NOTE'),
+//             Text(
+//               task['note'],
+//               textAlign: TextAlign.justify,
+//             )
+//           ]),
+//           Divider(color: Colors.transparent, height: 3.h),
+//           Column(
+//             crossAxisAlignment: CrossAxisAlignment.center,
+//             children: [
+//               dividerLabel('START DATE'),
+//               Text(
+//                 '${DateFormat('dd MMM yy\t\t\t\t\t\thh:mm a').format((task['startDate'] as Timestamp).toDate())}',
+//               ),
+//             ],
+//           ),
+//           Divider(color: Colors.transparent, height: 3.h),
+//           Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+//             dividerLabel('RESETS'),
+//             snapshot.hasData
+//                 ? snapshot.data['resets'].length > 0
+//                     ? ListView.builder(
+//                         shrinkWrap: true,
+//                         itemCount: snapshot.data['resets'].length,
+//                         itemBuilder: (context, index) => Column(
+//                               crossAxisAlignment: CrossAxisAlignment.start,
+//                               children: [
+//                                 Text(
+//                                     '${DateFormat('dd MMM yy').format((snapshot.data['resets'][index]['resetDate'] as Timestamp).toDate())}'),
+//                                 Text(snapshot.data['resets'][index]['note'] !=
+//                                         ''
+//                                     ? '${snapshot.data['resets'][index]['note']}'
+//                                     : '-')
+//                               ],
+//                             ))
+//                     : Text('You have no resets')
+//                 : CircularProgressIndicator(),
+//           ]),
+//           Divider(color: Colors.transparent, height: 3.h),
+//           Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               dividerLabel('CHECK-IN'),
+//               snapshot.hasData
+//                   ? CheckInList(
+//                       checkinList: snapshot.data['checkin'], task: task)
+//                   : CircularProgressIndicator()
+//             ],
+//           )
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class CheckInList extends HookWidget {
   const CheckInList({Key? key, required this.checkinList, required this.task})
@@ -654,8 +711,7 @@ class CheckInList extends HookWidget {
   Widget build(BuildContext context) {
     final timelineData = generateDays(checkinList);
     return ConstrainedBox(
-      constraints:
-          BoxConstraints(minWidth: 100.w, minHeight: 10.h, maxHeight: 20.h),
+      constraints: BoxConstraints(minWidth: 100.w, maxHeight: 50.h),
       child: ShaderMask(
         shaderCallback: (Rect bounds) {
           return LinearGradient(
@@ -705,6 +761,28 @@ class CheckInList extends HookWidget {
               );
             }),
       ),
+    );
+  }
+}
+
+class ResetList extends StatelessWidget {
+  const ResetList({Key? key, required this.resetList}) : super(key: key);
+
+  final resetList;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: resetList.length,
+      itemBuilder: (context, index) =>
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(
+            '${DateFormat('dd MMM yy').format((resetList[index]['resetDate'] as Timestamp).toDate())}'),
+        Text(resetList[index]['note'] != ''
+            ? '${resetList[index]['note']}'
+            : '-')
+      ]),
     );
   }
 }

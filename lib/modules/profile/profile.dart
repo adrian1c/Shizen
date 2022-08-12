@@ -845,7 +845,8 @@ class UserProfileData extends StatelessWidget {
                                                     context: context,
                                                     api: Database(uid)
                                                         .editUserName(newName),
-                                                    msg: 'New name who dis',
+                                                    msg:
+                                                        'Name changed successfully',
                                                     isSuccess: true)
                                                 .show();
                                             Provider.of<TabProvider>(context,
