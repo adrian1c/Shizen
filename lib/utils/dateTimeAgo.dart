@@ -1,10 +1,16 @@
+import 'package:intl/intl.dart';
+
 extension DateTimeExtension on DateTime {
   String timeAgo({bool numericDates = true}) {
     final date2 = DateTime.now();
     final difference = date2.difference(this);
 
     if ((difference.inDays / 7).floor() >= 1) {
-      return (numericDates) ? '1 week ago' : 'Last week';
+      return '${DateFormat('dd MMM yyyy').format(this)}';
+    } else if ((difference.inDays / 7).floor() == 1) {
+      return (numericDates)
+          ? '${(difference.inDays / 7).floor()} week ago'
+          : 'Last week';
     } else if (difference.inDays >= 2) {
       return '${difference.inDays} days ago';
     } else if (difference.inDays >= 1) {

@@ -233,7 +233,7 @@ class ProfileToDo extends HookWidget {
                   taskDoc: taskDoc,
                   taskList: taskList,
                   title: title);
-            }, childCount: 1))
+            }, childCount: docsLength))
           : SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
               return Padding(

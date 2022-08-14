@@ -21,6 +21,7 @@ class TrackerTask extends HookWidget {
         [Provider.of<TabProvider>(context).tracker]);
     final snapshot = useFuture(future);
     if (snapshot.hasData) {
+      print('Gotem');
       var docsLength = snapshot.data.docs.length;
 
       return docsLength > 0
@@ -162,15 +163,15 @@ class TrackerTile extends HookWidget {
     final checkInController = useTextEditingController();
     final noteController = useTextEditingController();
     final String uid = Provider.of<UserProvider>(context).user.uid;
-    final future = useMemoized(
-        () => Database(uid).getCheckInButtonData(task.id),
-        [Provider.of<TabProvider>(context).tracker]);
+    final future =
+        useMemoized(() => Database(uid).getCheckInButtonData(task.id), []);
     final snapshot = useFuture(future);
+    final hasLoaded = useState(false);
     var currCheckIn;
     if (snapshot.hasData) {
       currCheckIn = currentDayCheckIn(
           snapshot.data.docs, (task['currStreakDate'] as Timestamp).toDate());
-      print(task['currStreakDate']);
+      hasLoaded.value = true;
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
@@ -421,7 +422,7 @@ class TrackerTile extends HookWidget {
                       ),
                       Center(
                           child: ElevatedButton(
-                              onPressed: snapshot.hasData
+                              onPressed: hasLoaded.value
                                   ? currCheckIn != null
                                       ? () {
                                           checkInController.text =
@@ -449,7 +450,7 @@ class TrackerTile extends HookWidget {
                                 children: [
                                   Icon(Icons.check_circle_outline_rounded),
                                   Text(
-                                      snapshot.hasData
+                                      hasLoaded.value
                                           ? currCheckIn != null
                                               ? 'Checked-in Today'
                                               : 'Check-in Today'
@@ -458,7 +459,7 @@ class TrackerTile extends HookWidget {
                                 ],
                               ),
                               style: ButtonStyle(
-                                  backgroundColor: snapshot.hasData
+                                  backgroundColor: hasLoaded.value
                                       ? currCheckIn != null
                                           ? MaterialStateProperty.all(
                                               CustomTheme.completeColor)
@@ -476,7 +477,7 @@ class TrackerTile extends HookWidget {
                       Center(
                           child: IconButton(
                               icon: Icon(
-                                Icons.keyboard_arrow_right_rounded,
+                                Icons.more_horiz_rounded,
                               ),
                               onPressed: () {
                                 Navigator.push(
@@ -519,12 +520,45 @@ class TrackerDetailPage extends HookWidget {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
               Row(
                 children: [
-                  Text(
-                      '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}'),
-                  Icon(Icons.park_rounded),
+                  Expanded(
+                    child: Container(
+                        child: Text(
+                      task['note'],
+                      style: TextStyle(fontSize: 15.sp),
+                    )),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                          '${DateTime.now().difference((task['currStreakDate'] as Timestamp).toDate()).inDays + 1}',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Icon(Icons.park_rounded,
+                          color: Color.fromARGB(255, 147, 182, 117)),
+                    ],
+                  ),
+                ],
+              ),
+              Text(
+                  'Start Date: ${DateFormat('dd MMM yyyy').format((task['startDate'] as Timestamp).toDate())}'),
+              Text(
+                  'Current Streak Start Date: ${DateFormat('dd MMM yyyy').format((task['currStreakDate'] as Timestamp).toDate())}'),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+              TextDivider('Notification'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(task['reminder'] != null
+                      ? 'Everyday @ ${DateFormat('hh:mm a').format((task['reminder'] as Timestamp).toDate())}'
+                      : 'No reminder'),
                 ],
               ),
               Padding(
@@ -545,7 +579,9 @@ class TrackerDetailPage extends HookWidget {
                             : Text('No resets')
                       ],
                     )
-                  : CircularProgressIndicator(),
+                  : Align(
+                      alignment: Alignment.center,
+                      child: CircularProgressIndicator()),
             ],
           ),
         ),

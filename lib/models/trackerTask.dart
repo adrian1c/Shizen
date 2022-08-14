@@ -2,7 +2,6 @@ class TrackerTaskModel {
   String? key;
   String title = '';
   String note = '';
-  DateTime dateCreated = DateTime.now();
   DateTime startDate;
   List milestones = [];
   DateTime? reminder;
@@ -12,7 +11,6 @@ class TrackerTaskModel {
 
   toJson() {
     return {
-      'dateCreated': dateCreated,
       'startDate': startDate,
       'currStreakDate': startDate,
       'title': title,
