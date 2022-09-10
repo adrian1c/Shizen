@@ -22,7 +22,7 @@ class MainScaffoldStack extends HookWidget {
   final List<GButton> screens = [
     GButton(
       icon: Icons.home,
-      text: 'Home',
+      text: 'Routines',
     ),
     GButton(
       icon: Icons.people,
@@ -43,7 +43,7 @@ class MainScaffoldStack extends HookWidget {
   ];
 
   final List<String> title = [
-    'Home',
+    'Routines',
     'Friends',
     'Community',
     'Progress',

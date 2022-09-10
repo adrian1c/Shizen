@@ -13,129 +13,23 @@ class TaskPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    var tabController = useTabController(
-      initialLength: 2,
-      initialIndex: 0,
-    );
+    String uid = Provider.of<UserProvider>(context).user.uid;
 
     final scrollController = useScrollController();
     final scrollController2 = useScrollController();
-    final scrollController3 = useScrollController();
 
-    final tabIndex = useState(0);
-
-    useEffect(() {
-      tabController.addListener(() {
-        tabIndex.value = tabController.index == 0 ? 0 : 1;
-      });
-
-      return () {};
-    });
-    String uid = Provider.of<UserProvider>(context).user.uid;
-
-    return NestedScrollView(
-      key: Keys.nestedScrollViewKeyTaskPage,
-      controller: scrollController,
-      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-        return [
-          SliverOverlapAbsorber(
-            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-            sliver: MultiSliver(children: [
-              SliverAppBar(
-                backgroundColor: CustomTheme.dividerBackground,
-                shadowColor: Colors.transparent,
-                automaticallyImplyLeading: false,
-                floating: true,
-                snap: true,
-                forceElevated: false,
-                centerTitle: true,
-                title: Container(
-                  width: 60.w,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).backgroundColor,
-                    borderRadius: BorderRadius.circular(
-                      25.0,
-                    ),
-                  ),
-                  child: TabBar(
-                    controller: tabController,
-                    // give the indicator a decoration (color and border radius)
-                    indicator: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        25.0,
-                      ),
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Theme.of(context).primaryColor,
-                    tabs: [
-                      Tab(
-                        child: Icon(Icons.task_alt),
-                      ),
-                      Tab(
-                        child: Icon(Icons.track_changes),
-                      ),
-                    ],
-                  ),
-                ),
+    return KeepAlivePage(
+      child: Builder(builder: (BuildContext context) {
+        return CustomScrollView(
+            physics: ClampingScrollPhysics(),
+            controller: scrollController2,
+            slivers: [
+              ToDoTask(
+                controller: scrollController,
+                uid: uid,
               ),
-              SliverPinnedHeader(
-                child: PreferredSize(
-                  preferredSize: Size(100.w, 3.h),
-                  child: AnimatedTextDivider(
-                      ['TO DO TASKS', 'DAILY TRACKER'], tabIndex),
-                ),
-              ),
-            ]),
-          )
-        ];
-      },
-      body: TabBarView(
-        controller: tabController,
-        physics: CustomTabBarViewScrollPhysics(),
-        children: [
-          KeepAlivePage(
-            child: Builder(builder: (BuildContext context) {
-              return NestedFix(
-                globalKey: Keys.nestedScrollViewKeyTaskPage,
-                child: CustomScrollView(
-                    physics: ClampingScrollPhysics(),
-                    controller: scrollController2,
-                    slivers: [
-                      SliverOverlapInjector(
-                          handle:
-                              NestedScrollView.sliverOverlapAbsorberHandleFor(
-                                  context)),
-                      ToDoTask(
-                        controller: scrollController,
-                        uid: uid,
-                      ),
-                    ]),
-              );
-            }),
-          ),
-          KeepAlivePage(
-            child: Builder(builder: (BuildContext context) {
-              return NestedFix(
-                globalKey: Keys.nestedScrollViewKeyTaskPage,
-                child: CustomScrollView(
-                    physics: ClampingScrollPhysics(),
-                    controller: scrollController3,
-                    slivers: [
-                      SliverOverlapInjector(
-                          handle:
-                              NestedScrollView.sliverOverlapAbsorberHandleFor(
-                                  context)),
-                      TrackerTask(
-                        controller: scrollController,
-                        uid: uid,
-                      )
-                    ]),
-              );
-            }),
-          ),
-        ],
-      ),
+            ]);
+      }),
     );
   }
 }
