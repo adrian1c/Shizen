@@ -199,7 +199,7 @@ class LoaderWithToast {
       if (isSuccess) {
         StyledToast(msg: msg).showSuccessToast();
       } else {
-        StyledToast(msg: 'Oops, something went wrong').showDeletedToast();
+        StyledToast(msg: 'Deleted').showDeletedToast();
       }
     }).catchError((error) {
       context.loaderOverlay.hide();
@@ -219,7 +219,7 @@ class LoaderWithToast {
               ],
             );
           });
-      StyledToast(msg: 'Oops, something went wrong').showDeletedToast();
+      StyledToast(msg: error.message).showDeletedToast();
     });
   }
 }

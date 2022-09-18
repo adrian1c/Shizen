@@ -24,9 +24,10 @@ class AddToDoTask extends HookWidget {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).user.uid;
-
+    print(editParams);
     final TextEditingController titleController = useTextEditingController();
     final TextEditingController taskController = useTextEditingController();
+
     useEffect(() {
       tz.initializeTimeZones();
       return null;
@@ -38,10 +39,9 @@ class AddToDoTask extends HookWidget {
         useState(editParams != null ? editParams['title'] : '');
     final ValueNotifier<List> taskList =
         useState(editParams != null ? editParams['desc'] : []);
+    final ValueNotifier note =
+        useState(editParams != null ? editParams['note'] : '');
 
-    final ValueNotifier<List<bool>> recurValue = useState(editParams != null
-        ? editParams['recur']
-        : [false, false, false, false, false, false, false]);
     final ValueNotifier<DateTime?> reminderValue = useState(editParams != null
         ? editParams['reminder'] != null
             ? DateTime.now().isBefore(editParams['reminder'])
@@ -53,11 +53,11 @@ class AddToDoTask extends HookWidget {
         useState(editParams != null ? editParams['isPublic'] : false);
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? "Edit Task" : "Add Task"),
+        title: Text(isEdit ? "Edit Routine" : "Add Routine"),
         centerTitle: true,
       ),
-      body: SafeArea(
-          minimum: EdgeInsets.only(left: 20, right: 20),
+      body: Padding(
+          padding: EdgeInsets.only(left: 20, right: 20),
           child: SingleChildScrollView(
               child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -70,6 +70,24 @@ class AddToDoTask extends HookWidget {
                   taskList: taskList,
                   isValid: isValid,
                 ),
+                TextFormField(
+                  initialValue: note.value,
+                  style: TextStyle(color: Color(0xff58865C)),
+                  keyboardType: TextInputType.multiline,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 10,
+                  maxLength: 500,
+                  decoration: InputDecoration(
+                    hintText: "Routine Note",
+                    contentPadding: EdgeInsets.all(10.0),
+                    labelStyle: CustomTheme.lightTheme.textTheme.bodyText2,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: new BorderSide(),
+                    ),
+                  ),
+                  onChanged: (value) => note.value = value,
+                ),
                 Row(
                   children: [
                     Text('Share with Friends'),
@@ -80,11 +98,6 @@ class AddToDoTask extends HookWidget {
                     )
                   ],
                 ),
-                // RecurButton(
-                //   taskList: taskList,
-                //   recurValue: recurValue,
-                //   isValid: isValid,
-                // ),
                 ReminderButton(
                     taskList: taskList, reminderValue: reminderValue),
                 Padding(
@@ -97,15 +110,17 @@ class AddToDoTask extends HookWidget {
                           if (isValid.value) {
                             if (isEdit) {
                               var newTask = ToDoTaskModel(
-                                  title.value,
-                                  taskList.value,
-                                  recurValue.value,
-                                  reminderValue.value,
-                                  isPublic.value,
-                                  true);
+                                title.value,
+                                taskList.value,
+                                reminderValue.value,
+                                isPublic.value,
+                                note.value,
+                                true,
+                                editParams['timesCompleted'],
+                              );
                               await LoaderWithToast(
                                       context: context,
-                                      api: Database(uid).editToDoTask(
+                                      api: Database(uid).editRoutine(
                                           editParams['id'],
                                           newTask,
                                           reminderValue.value),
@@ -116,12 +131,12 @@ class AddToDoTask extends HookWidget {
                               var newTask = ToDoTaskModel(
                                   title.value,
                                   taskList.value,
-                                  recurValue.value,
                                   reminderValue.value,
-                                  isPublic.value);
+                                  isPublic.value,
+                                  note.value);
                               await LoaderWithToast(
                                       context: context,
-                                      api: Database(uid).addToDoTask(
+                                      api: Database(uid).addRoutine(
                                           newTask, reminderValue.value),
                                       msg: 'Success',
                                       isSuccess: true)
@@ -168,7 +183,7 @@ class TodoTaskList extends HookWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+      padding: const EdgeInsets.fromLTRB(5, 0, 5, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -346,7 +361,7 @@ class TodoTaskList extends HookWidget {
                               },
                             );
                           }))),
-          if (taskList.value.length < 10)
+          if (taskList.value.length < 15)
             Align(
                 alignment: Alignment.center,
                 child: IconButton(
@@ -388,7 +403,7 @@ class TaskDescPopup {
     var _formKey = GlobalKey<FormState>();
     StyledPopup(
       context: context,
-      title: 'Add Task',
+      title: 'Add Routine',
       children: [
         Form(
           key: _formKey,

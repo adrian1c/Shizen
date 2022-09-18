@@ -5,14 +5,14 @@ class ToDoTaskModel {
   String title = '';
   List desc = [];
   Timestamp dateCreated = Timestamp.now();
-  List<bool> recur = [false, false, false, false, false, false, false];
   DateTime? reminder;
-  bool allComplete = false;
   bool isPublic = false;
   bool isEdit;
+  int timesCompleted;
+  String note = '';
 
-  ToDoTaskModel(this.title, this.desc, this.recur, this.reminder, this.isPublic,
-      [this.isEdit = false]);
+  ToDoTaskModel(this.title, this.desc, this.reminder, this.isPublic, this.note,
+      [this.isEdit = false, this.timesCompleted = 0]);
 
   toJson() {
     if (title == '') {
@@ -23,10 +23,10 @@ class ToDoTaskModel {
       return {
         'title': title,
         'desc': desc,
-        'recur': recur,
         'reminder': reminder,
-        'allComplete': allComplete,
         'isPublic': isPublic,
+        'timesCompleted': timesCompleted,
+        'note': note
       };
     }
 
@@ -34,10 +34,10 @@ class ToDoTaskModel {
       'dateCreated': dateCreated,
       'title': title,
       'desc': desc,
-      'recur': recur,
       'reminder': reminder,
-      'allComplete': allComplete,
       'isPublic': isPublic,
+      'timesCompleted': timesCompleted,
+      'note': note
     };
   }
 }

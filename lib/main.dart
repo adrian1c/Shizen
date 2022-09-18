@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/loaderOverlay.dart';
@@ -12,6 +13,7 @@ import './mainScaffoldStack.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:shizen_app/utils/notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +55,12 @@ class MyApp extends StatelessWidget {
               overlayWidget: Loader(),
               overlayOpacity: 0.85,
               child: MaterialApp(
+                localizationsDelegates: [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                  MonthYearPickerLocalizations.delegate,
+                ],
                 scrollBehavior: MyCustomScrollBehavior(),
                 debugShowCheckedModeBanner: false,
                 title: 'Shizen',

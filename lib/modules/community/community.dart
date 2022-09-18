@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shizen_app/modules/profile/profile.dart';
+import 'package:shizen_app/modules/progress/routineprogress.dart';
 import 'package:shizen_app/modules/tasks/addtodo.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/widgets/dropdown.dart';
@@ -10,21 +12,12 @@ import 'package:shizen_app/widgets/field.dart';
 import 'package:shizen_app/utils/dateTimeAgo.dart';
 import 'package:intl/intl.dart';
 
-import './addnewpost.dart';
-
 class CommunityPage extends HookWidget {
   CommunityPage({Key? key}) : super(key: key);
-
-  final List<String> items = [
-    'Everyone',
-    'Friends Only',
-    'Anonymous',
-  ];
 
   @override
   Widget build(BuildContext context) {
     final hashtagController = useTextEditingController();
-    final visibilityValue = useState('Everyone');
     final hashtagValue = useState('');
     final isFocus = useFocusNode();
 
@@ -40,60 +33,35 @@ class CommunityPage extends HookWidget {
     return NestedScrollView(
         floatHeaderSlivers: true,
         headerSliverBuilder: (context, val) => [
-              SliverAppBar(
-                automaticallyImplyLeading: false,
-                forceElevated: true,
-                snap: false,
-                floating: true,
-                flexibleSpace: Container(
-                  decoration:
-                      BoxDecoration(color: CustomTheme.dividerBackground),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Dropdown2(
-                            items: items,
-                            visibilityValue: visibilityValue,
-                            callback: (String? value) {
-                              if (visibilityValue.value == value) {
-                                return;
-                              }
-                              visibilityValue.value = value!;
-                            }),
-                        HashtagFilter(
-                          hashtagController: hashtagController,
-                          hashtagValue: hashtagValue,
-                          isFocus: isFocus,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              //  SliverPersistentHeader(delegate: Delegate(),pinned: true,)
+              // SliverAppBar(
+              //   automaticallyImplyLeading: false,
+              //   forceElevated: true,
+              //   snap: false,
+              //   floating: true,
+              //   flexibleSpace: Container(
+              //     decoration:
+              //         BoxDecoration(color: CustomTheme.dividerBackground),
+              //     child: Padding(
+              //       padding: const EdgeInsets.all(10),
+              //       child: Row(
+              //         crossAxisAlignment: CrossAxisAlignment.start,
+              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //         children: [
+              //           HashtagFilter(
+              //             hashtagController: hashtagController,
+              //             hashtagValue: hashtagValue,
+              //             isFocus: isFocus,
+              //           ),
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
-        body: visibilityValue.value == 'Everyone'
-            ? EveryoneList(
-                visibilityValue: visibilityValue,
-                hashtagValue: hashtagValue,
-                hashtagController: hashtagController,
-              )
-            : visibilityValue.value == 'Friends Only'
-                ? FriendsOnlyList(
-                    visibilityValue: visibilityValue,
-                    hashtagValue: hashtagValue,
-                    hashtagController: hashtagController,
-                  )
-                : visibilityValue.value == 'Anonymous'
-                    ? AnonymousList(
-                        visibilityValue: visibilityValue,
-                        hashtagValue: hashtagValue,
-                        hashtagController: hashtagController,
-                      )
-                    : Center(child: Text('No posts found')));
+        body: FriendsOnlyList(
+          hashtagValue: hashtagValue,
+          hashtagController: hashtagController,
+        ));
   }
 }
 
@@ -194,7 +162,11 @@ class EveryoneList extends HookWidget {
                 },
               ),
             )
-          : Center(child: Text('No posts found'));
+          : Center(
+              child: Text(
+              'No posts found.\nPlease add some friends or start posting!',
+              textAlign: TextAlign.center,
+            ));
     }
 
     return Padding(
@@ -210,12 +182,10 @@ class EveryoneList extends HookWidget {
 class FriendsOnlyList extends HookWidget {
   const FriendsOnlyList({
     Key? key,
-    required this.visibilityValue,
     required this.hashtagValue,
     required this.hashtagController,
   }) : super(key: key);
 
-  final ValueNotifier<String> visibilityValue;
   final ValueNotifier<String> hashtagValue;
   final TextEditingController hashtagController;
 
@@ -246,17 +216,20 @@ class FriendsOnlyList extends HookWidget {
     final lastIndex = useState(0);
     final future = useMemoized(
         () => Database(uid)
-            .getCommunityPostFriendsOnlyFirstLoad(hashtagValue.value),
-        [visibilityValue.value, hashtagValue.value]);
+            .getCommunityPostFriendsOnlyFirstLoad(hashtagValue.value, uid),
+        [hashtagValue.value, Provider.of<TabProvider>(context).community]);
     final snapshot = useFuture(future);
     final scrollController = useScrollController();
+
+    final RefreshController _refreshController =
+        RefreshController(initialRefresh: false);
 
     useEffect(() {
       initialLoad.value = false;
       loadMore.value = null;
 
       return;
-    }, [visibilityValue.value, hashtagValue.value]);
+    }, [hashtagValue.value, Provider.of<TabProvider>(context).community]);
 
     if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
       if (!initialLoad.value) {
@@ -280,37 +253,51 @@ class FriendsOnlyList extends HookWidget {
                 }
                 return true;
               },
-              child: ListView.builder(
-                physics: AlwaysScrollableScrollPhysics(),
-                controller: scrollController,
-                itemCount: posts.value.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == posts.value.length) {
-                    if (loadMore.value == null) {
-                      return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 35));
-                    }
-                    if (loadMore.value == true) {
-                      return Padding(
-                        padding: const EdgeInsets.all(15.0),
-                        child: SpinKitWanderingCubes(
-                            color: Theme.of(context).primaryColor, size: 75),
-                      );
-                    }
-                    return Center(child: Text('----- NO MORE POSTS -----'));
-                  }
-                  return PostListTile(
-                    postData: posts.value[index],
-                    hashtag: hashtagValue,
-                    hashtagController: hashtagController,
-                    posts: posts,
-                    initialLoad: initialLoad,
-                    loadMore: loadMore,
-                  );
+              child: SmartRefresher(
+                enablePullDown: true,
+                header: WaterDropHeader(),
+                controller: _refreshController,
+                onRefresh: () {
+                  Provider.of<TabProvider>(context, listen: false)
+                      .rebuildPage('community');
+                  _refreshController.refreshCompleted();
                 },
+                child: ListView.builder(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  controller: scrollController,
+                  itemCount: posts.value.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == posts.value.length) {
+                      if (loadMore.value == null) {
+                        return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 35));
+                      }
+                      if (loadMore.value == true) {
+                        return Padding(
+                          padding: const EdgeInsets.all(15.0),
+                          child: SpinKitWanderingCubes(
+                              color: Theme.of(context).primaryColor, size: 75),
+                        );
+                      }
+                      return Center(child: Text('----- NO MORE POSTS -----'));
+                    }
+                    return PostListTile(
+                      postData: posts.value[index],
+                      hashtag: hashtagValue,
+                      hashtagController: hashtagController,
+                      posts: posts,
+                      initialLoad: initialLoad,
+                      loadMore: loadMore,
+                    );
+                  },
+                ),
               ),
             )
-          : Center(child: Text('No posts found'));
+          : Center(
+              child: Text(
+              'No posts found.\nPlease add some friends or start posting!',
+              textAlign: TextAlign.center,
+            ));
     }
 
     return Padding(
@@ -423,7 +410,11 @@ class AnonymousList extends HookWidget {
                 },
               ),
             )
-          : Center(child: Text('No posts found'));
+          : Center(
+              child: Text(
+              'No posts found.\nPlease add some friends or start posting!',
+              textAlign: TextAlign.center,
+            ));
     }
 
     return Padding(
@@ -554,274 +545,213 @@ class PostListTile extends HookWidget {
                                 ),
                         fit: BoxFit.fitWidth),
                 if (postData['attachmentType'] == 'task')
-                  Container(
-                    color: CustomTheme.attachmentBackground,
-                    padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
-                    child: Transform.scale(
-                      scale: 0.9,
-                      child: InkWell(
-                        onTap: () {
-                          showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                    title: Text('Create Similar Task?'),
-                                    actions: [
-                                      TextButton(
-                                          onPressed: () async {
-                                            Navigator.pop(context);
-                                            List task = [];
-                                            var taskList =
-                                                postData['attachment']
-                                                    ['taskList'];
-                                            var title =
-                                                postData['attachment']['title'];
+                  InkWell(
+                    onTap: () {
+                      StyledPopup(
+                        context: context,
+                        title: 'Choose an action',
+                        children: [
+                          ElevatedButton(
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                List task = [];
+                                var taskList =
+                                    postData['attachment']['taskList'];
 
-                                            for (var i = 0;
-                                                i < taskList.length;
-                                                i++) {
-                                              var tempMap = {
-                                                'task': taskList[i]['task'],
-                                                'status': false
-                                              };
-                                              task.add(tempMap);
-                                            }
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddToDoTask(
-                                                  editParams: {
-                                                    'id': null,
-                                                    'title': title,
-                                                    'desc': task,
-                                                    'recur': [
-                                                      false,
-                                                      false,
-                                                      false,
-                                                      false,
-                                                      false,
-                                                      false,
-                                                      false
-                                                    ],
-                                                    'reminder': null,
-                                                    'isPublic': false,
-                                                  },
-                                                  isEdit: false,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: Text("Yes")),
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
+                                for (var i = 0; i < taskList.length; i++) {
+                                  var tempMap = {
+                                    'task': taskList[i]['task'],
+                                    'status': false
+                                  };
+                                  task.add(tempMap);
+                                }
+
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddToDoTask(
+                                        editParams: {
+                                          'title': postData['attachment']
+                                              ['title'],
+                                          'desc': task,
+                                          'reminder': null,
+                                          'isPublic': false,
+                                          'timesCompleted': 0,
+                                          'note': ''
                                         },
-                                        child: Text("Cancel"),
+                                        isEdit: false,
                                       ),
-                                    ]);
-                              });
-                        },
+                                    ));
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.track_changes),
+                                  Text('Create Similar Routine'),
+                                ],
+                              ),
+                              style: ButtonStyle(
+                                  padding: MaterialStateProperty.all(
+                                      const EdgeInsets.symmetric(
+                                          vertical: 15.0)),
+                                  backgroundColor: MaterialStateProperty.all(
+                                      Color.fromARGB(255, 138, 151, 175)),
+                                  shape:
+                                      MaterialStateProperty.all<RoundedRectangleBorder>(
+                                          RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(18.0),
+                                              side: BorderSide(
+                                                  color: Color.fromARGB(
+                                                      255, 180, 188, 202)))))),
+                          Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10)),
+                          ElevatedButton(
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                print(postData['attachment']);
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => Scaffold(
+                                          appBar: AppBar(
+                                            title: Text(postData['attachment']
+                                                ['title']),
+                                            centerTitle: true,
+                                          ),
+                                          body: RoutineProgressPage(
+                                            tid: postData['attachment']['tid'],
+                                            title: postData['attachment']
+                                                ['title'],
+                                            timesCompleted:
+                                                postData['attachment']
+                                                    ['timesCompleted'],
+                                          )),
+                                    ));
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_circle_outline_rounded),
+                                  Text('View Activity'),
+                                ],
+                              ),
+                              style: ButtonStyle(
+                                  padding: MaterialStateProperty.all(
+                                      const EdgeInsets.symmetric(
+                                          vertical: 15.0)),
+                                  backgroundColor: MaterialStateProperty.all(
+                                      CustomTheme.completeColor),
+                                  shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(18.0),
+                                          side: BorderSide(
+                                              color: Color.fromARGB(
+                                                  255, 188, 204, 181)))))),
+                        ],
+                      ).showPopup();
+                    },
+                    child: Container(
+                      color: CustomTheme.attachmentBackground,
+                      padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Theme.of(context).backgroundColor,
+                            boxShadow: CustomTheme.boxShadow),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                    constraints: BoxConstraints(
-                                        minWidth: 25.w, minHeight: 5.h),
-                                    decoration: BoxDecoration(
-                                        color: Theme.of(context)
-                                            .primaryColor
-                                            .withAlpha(200),
-                                        borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(15),
-                                            topRight: Radius.circular(15))),
-                                    child: Center(
-                                        child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 15.0),
-                                      child: Text(
-                                          postData['attachment']['title'],
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headline4),
-                                    ))),
-                                Text(postData['attachment']['timeCompleted'] !=
-                                        null
-                                    ? '${DateFormat("d MMM @ h:mm a").format((postData['attachment']['timeCompleted'] as Timestamp).toDate())}'
-                                    : '')
+                                Text(postData['attachment']['title'],
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headline4
+                                        ?.copyWith(
+                                            color: Theme.of(context)
+                                                .primaryColor
+                                                .withAlpha(200))),
+                                Row(
+                                  children: [
+                                    Text(
+                                        '${postData['attachment']['timesCompleted']}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    Icon(Icons.check_circle_rounded,
+                                        color:
+                                            Color.fromARGB(255, 147, 182, 117))
+                                  ],
+                                )
                               ],
                             ),
-                            ConstrainedBox(
-                                constraints: BoxConstraints(
-                                    minHeight: 5.h, minWidth: 100.w),
-                                child: Container(
+                            Padding(padding: EdgeInsets.symmetric(vertical: 5)),
+                            Divider(),
+                            ListView.builder(
+                                physics: NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount:
+                                    postData['attachment']['taskList'].length,
+                                itemBuilder: (context, index) {
+                                  return Container(
+                                    constraints: BoxConstraints(minHeight: 5.h),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 15, vertical: 10),
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .primaryColor
-                                          .withAlpha(200),
-                                      borderRadius: BorderRadius.only(
-                                          bottomLeft: Radius.circular(15),
-                                          bottomRight: Radius.circular(15),
-                                          topRight: Radius.circular(15)),
-                                      boxShadow: CustomTheme.boxShadow,
+                                      color: postData['attachment']['taskList']
+                                              [index]['status']
+                                          ? CustomTheme.completeColor
+                                          : Theme.of(context).backgroundColor,
                                     ),
-                                    child: ListView.builder(
-                                        physics: NeverScrollableScrollPhysics(),
-                                        shrinkWrap: true,
-                                        itemCount: postData['attachment']
-                                                ['taskList']
-                                            .length,
-                                        itemBuilder: (context, index) {
-                                          return Container(
-                                            constraints:
-                                                BoxConstraints(minHeight: 5.h),
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 15, vertical: 10),
-                                            decoration: BoxDecoration(
-                                                color: postData['attachment']
-                                                            ['taskList'][index]
-                                                        ['status']
-                                                    ? CustomTheme.completeColor
-                                                    : Theme.of(context)
-                                                        .backgroundColor,
-                                                borderRadius: index == 0
-                                                    ? BorderRadius.only(
-                                                        topLeft:
-                                                            Radius.circular(15),
-                                                        topRight:
-                                                            Radius.circular(15),
-                                                        bottomLeft:
-                                                            postData['attachment']
-                                                                            [
-                                                                            'taskList']
-                                                                        .length ==
-                                                                    1
-                                                                ? Radius
-                                                                    .circular(
-                                                                        15)
-                                                                : Radius.zero,
-                                                        bottomRight:
-                                                            postData['attachment']
-                                                                            [
-                                                                            'taskList']
-                                                                        .length ==
-                                                                    1
-                                                                ? Radius
-                                                                    .circular(
-                                                                        15)
-                                                                : Radius.zero,
-                                                      )
-                                                    : index ==
-                                                            postData['attachment']
-                                                                        [
-                                                                        'taskList']
-                                                                    .length -
-                                                                1
-                                                        ? BorderRadius.only(
-                                                            bottomLeft:
-                                                                Radius.circular(
-                                                                    15),
-                                                            bottomRight:
-                                                                Radius.circular(
-                                                                    15),
-                                                          )
-                                                        : null),
-                                            child: Row(
-                                              children: [
-                                                AbsorbPointer(
-                                                  child: SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: Checkbox(
-                                                      shape: CircleBorder(),
-                                                      activeColor:
-                                                          Theme.of(context)
-                                                              .backgroundColor,
-                                                      checkColor: Colors
-                                                          .lightGreen[700],
-                                                      value:
-                                                          postData['attachment']
-                                                                  ['taskList']
-                                                              [index]['status'],
-                                                      onChanged: (value) {},
-                                                    ),
-                                                  ),
-                                                ),
-                                                Flexible(
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 10.0),
-                                                    child: Text(
-                                                        postData['attachment']
-                                                                ['taskList']
-                                                            [index]['task'],
-                                                        textAlign:
-                                                            TextAlign.justify,
-                                                        style: TextStyle(
-                                                            decoration: postData[
-                                                                            'attachment']
-                                                                        [
-                                                                        'taskList'][index]
-                                                                    ['status']
-                                                                ? TextDecoration
-                                                                    .lineThrough
-                                                                : null)),
-                                                  ),
-                                                ),
-                                              ],
+                                    child: Row(
+                                      children: [
+                                        AbsorbPointer(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: Checkbox(
+                                              shape: CircleBorder(),
+                                              activeColor: Theme.of(context)
+                                                  .backgroundColor,
+                                              checkColor:
+                                                  Colors.lightGreen[700],
+                                              value: postData['attachment']
+                                                  ['taskList'][index]['status'],
+                                              onChanged: (value) {},
                                             ),
-                                          );
-                                        }))),
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10.0),
+                                            child: Text(
+                                                postData['attachment']
+                                                    ['taskList'][index]['task'],
+                                                textAlign: TextAlign.justify,
+                                                style: TextStyle(
+                                                    decoration:
+                                                        postData['attachment']
+                                                                    ['taskList']
+                                                                [
+                                                                index]['status']
+                                                            ? TextDecoration
+                                                                .lineThrough
+                                                            : null)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                if (postData['attachmentType'] == 'tracker')
-                  Container(
-                    color: CustomTheme.attachmentBackground,
-                    padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Theme.of(context).backgroundColor,
-                          boxShadow: CustomTheme.boxShadow),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(postData['attachment']['title'],
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headline4
-                                      ?.copyWith(
-                                          color: Theme.of(context)
-                                              .primaryColor
-                                              .withAlpha(200))),
-                              Row(
-                                children: [
-                                  Text(
-                                      '${postData['attachment']['currStreak']}',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  Icon(Icons.park_rounded,
-                                      color: Color.fromARGB(255, 147, 182, 117))
-                                ],
-                              )
-                            ],
-                          ),
-                          Padding(padding: EdgeInsets.symmetric(vertical: 5)),
-                          Divider(),
-                          Text(postData['attachment']['note'])
-                        ],
                       ),
                     ),
                   ),

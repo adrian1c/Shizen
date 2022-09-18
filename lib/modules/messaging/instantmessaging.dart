@@ -933,24 +933,24 @@ class ChatPage extends HookWidget {
                                                                 'Daily Tracker'),
                                                           ),
                                                           onTap: () async {
-                                                            Navigator.pop(
-                                                                context);
-                                                            var returnValue =
-                                                                await Navigator
-                                                                    .push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              SelectTrackerPage(),
-                                                                        ));
-                                                            if (returnValue !=
-                                                                null) {
-                                                              returnValue[
-                                                                      'attachmentType'] =
-                                                                  'tracker';
-                                                              attachment.value =
-                                                                  returnValue;
-                                                            }
+                                                            // Navigator.pop(
+                                                            //     context);
+                                                            // var returnValue =
+                                                            //     await Navigator
+                                                            //         .push(
+                                                            //             context,
+                                                            //             MaterialPageRoute(
+                                                            //               builder: (context) =>
+                                                            //                   SelectTrackerPage(),
+                                                            //             ));
+                                                            // if (returnValue !=
+                                                            //     null) {
+                                                            //   returnValue[
+                                                            //           'attachmentType'] =
+                                                            //       'tracker';
+                                                            //   attachment.value =
+                                                            //       returnValue;
+                                                            // }
                                                           })
                                                     ],
                                                   ),
@@ -1128,24 +1128,24 @@ class ChatPage extends HookWidget {
                                                                 'Daily Tracker'),
                                                           ),
                                                           onTap: () async {
-                                                            Navigator.pop(
-                                                                context);
-                                                            var returnValue =
-                                                                await Navigator
-                                                                    .push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              SelectTrackerPage(),
-                                                                        ));
-                                                            if (returnValue !=
-                                                                null) {
-                                                              returnValue[
-                                                                      'attachmentType'] =
-                                                                  'tracker';
-                                                              attachment.value =
-                                                                  returnValue;
-                                                            }
+                                                            // Navigator.pop(
+                                                            //     context);
+                                                            // var returnValue =
+                                                            //     await Navigator
+                                                            //         .push(
+                                                            //             context,
+                                                            //             MaterialPageRoute(
+                                                            //               builder: (context) =>
+                                                            //                   SelectTrackerPage(),
+                                                            //             ));
+                                                            // if (returnValue !=
+                                                            //     null) {
+                                                            //   returnValue[
+                                                            //           'attachmentType'] =
+                                                            //       'tracker';
+                                                            //   attachment.value =
+                                                            //       returnValue;
+                                                            // }
                                                           })
                                                     ],
                                                   ),

@@ -1,15 +1,15 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shizen_app/modules/community/community.dart';
+import 'package:shizen_app/modules/progress/progress.dart';
 import 'package:shizen_app/modules/tasks/tasks.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shizen_app/utils/dateTimeAgo.dart';
 import 'package:shizen_app/utils/nestedFix.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
 import 'package:shizen_app/widgets/divider.dart';
@@ -26,26 +26,21 @@ class ProfilePage extends HookWidget {
   Widget build(BuildContext context) {
     final String uid = viewId ?? Provider.of<UserProvider>(context).user.uid;
     final TextEditingController nameController = useTextEditingController();
+
     final futureUserProfileData = useMemoized(
         () => Database(uid).getCurrentUserData(),
         [Provider.of<TabProvider>(context).profileUser]);
     final snapshotUserProfileData = useFuture(futureUserProfileData);
-    final tasksCompletedData = useMemoized(
-        () => Database(uid).getCompletedTasksCount(uid),
-        [Provider.of<TabProvider>(context).profileUser]);
-    final snapshotTasksCompletedData = useFuture(tasksCompletedData);
-    final checkinData = useMemoized(
-        () => Database(uid).getTrackerCheckInCount(uid),
-        [Provider.of<TabProvider>(context).profileUser]);
-    final snapshotCheckinData = useFuture(checkinData);
+
     final tabController = useTabController(
-      initialLength: 2,
+      initialLength: 3,
       initialIndex: 0,
     );
 
     final scrollController = useScrollController();
     final scrollController2 = useScrollController();
     final scrollController3 = useScrollController();
+    final scrollController4 = useScrollController();
 
     final tabIndex = useState(0);
 
@@ -58,119 +53,384 @@ class ProfilePage extends HookWidget {
     });
 
     if (snapshotUserProfileData.hasData) {
-      return NestedScrollView(
-        key: viewId != null
-            ? Keys.nestedScrollViewKeyProfileOtherPage
-            : Keys.nestedScrollViewKeyProfilePage,
-        controller: scrollController,
-        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-          return [
-            SliverOverlapAbsorber(
-                handle:
-                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-                sliver: MultiSliver(children: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: UserProfileData(
-                            data: snapshotUserProfileData.data,
-                            uid: uid,
-                            nameController: nameController,
-                            viewId: viewId,
-                            tasksCompleted: snapshotTasksCompletedData.data,
-                            checkinData: snapshotCheckinData.data),
-                      ),
+      if (uid != Provider.of<UserProvider>(context).user.uid &&
+          snapshotUserProfileData.data!.data()!['private'] == true) {
+        final checkPrivateFriend = useMemoized(
+            () => Database(uid).checkIfFriend(uid),
+            [Provider.of<TabProvider>(context).profileUser]);
+        final snapshot = useFuture(checkPrivateFriend);
+
+        if (snapshot.hasData) {
+          if (snapshot.data != 2) {
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10.h,
+                          height: 10.h,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 5.0,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            foregroundImage: snapshotUserProfileData.data!
+                                        .data()!['image'] !=
+                                    ''
+                                ? CachedNetworkImageProvider(
+                                    snapshotUserProfileData.data!
+                                        .data()!['image'])
+                                : Images.defaultPic.image,
+                            backgroundColor: Colors.grey,
+                          ),
+                        ),
+                        Flexible(
+                          flex: 7,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    snapshotUserProfileData.data!
+                                        .data()!['name'],
+                                    style: TextStyle(fontSize: 20.sp)),
+                                Text(
+                                    snapshotUserProfileData.data!
+                                        .data()!['name'],
+                                    style: TextStyle(fontSize: 13.sp)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  SliverAppBar(
-                    backgroundColor: CustomTheme.dividerBackground,
-                    shadowColor: Colors.transparent,
-                    automaticallyImplyLeading: false,
-                    floating: false,
-                    forceElevated: false,
-                    centerTitle: true,
-                    title: Container(
-                      width: 80.w,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).backgroundColor,
-                        borderRadius: BorderRadius.circular(
-                          25.0,
+                    Padding(padding: const EdgeInsets.all(30)),
+                    Text('This account is private.'),
+                    Icon(Icons.lock, color: Colors.grey),
+                    Padding(padding: const EdgeInsets.all(30)),
+                    Text('Click the button below to add them as friend'),
+                    ProfileAddFriendButton(targetUID: uid)
+                  ],
+                ),
+              ),
+            );
+          }
+          final tasksCompletedData = useMemoized(
+              () => Database(uid).getCompletedTasksCount(uid),
+              [Provider.of<TabProvider>(context).profileUser]);
+          final snapshotTasksCompletedData = useFuture(tasksCompletedData);
+          final checkinData = useMemoized(
+              () => Database(uid).getTrackerCheckInCount(uid),
+              [Provider.of<TabProvider>(context).profileUser]);
+          final snapshotCheckinData = useFuture(checkinData);
+
+          return NestedScrollView(
+            key: viewId != null
+                ? Keys.nestedScrollViewKeyProfileOtherPage
+                : Keys.nestedScrollViewKeyProfilePage,
+            controller: scrollController,
+            headerSliverBuilder:
+                (BuildContext context, bool innerBoxIsScrolled) {
+              return [
+                SliverOverlapAbsorber(
+                    handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                        context),
+                    sliver: MultiSliver(children: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: UserProfileData(
+                                data: snapshotUserProfileData.data,
+                                uid: uid,
+                                nameController: nameController,
+                                viewId: viewId,
+                                tasksCompleted: snapshotTasksCompletedData.data,
+                                checkinData: snapshotCheckinData.data),
+                          ),
                         ),
                       ),
-                      child: TabBar(
-                        controller: tabController,
-                        // give the indicator a decoration (color and border radius)
-                        indicator: BoxDecoration(
+                      SliverAppBar(
+                        backgroundColor: CustomTheme.dividerBackground,
+                        shadowColor: Colors.transparent,
+                        automaticallyImplyLeading: false,
+                        floating: false,
+                        forceElevated: false,
+                        centerTitle: true,
+                        title: Container(
+                          width: 80.w,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).backgroundColor,
+                            borderRadius: BorderRadius.circular(
+                              25.0,
+                            ),
+                          ),
+                          child: TabBar(
+                            controller: tabController,
+                            indicator: BoxDecoration(
+                              borderRadius: BorderRadius.circular(
+                                25.0,
+                              ),
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            labelColor: Colors.white,
+                            unselectedLabelColor:
+                                Theme.of(context).primaryColor,
+                            tabs: [
+                              Tab(
+                                child: Icon(Icons.insert_chart_rounded),
+                              ),
+                              Tab(
+                                child: Icon(Icons.track_changes),
+                              ),
+                              Tab(
+                                child: Icon(Icons.dynamic_feed),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                      SliverPinnedHeader(
+                        child: PreferredSize(
+                          preferredSize: Size(100.w, 3.h),
+                          child: AnimatedTextDivider(
+                              ['STATS', 'ROUTINES', 'POSTS'], tabIndex),
+                        ),
+                      ),
+                    ]))
+              ];
+            },
+            body: TabBarView(
+              physics: CustomTabBarViewScrollPhysics(),
+              controller: tabController,
+              children: [
+                KeepAlivePage(
+                  child: Builder(builder: (context) {
+                    return NestedFix(
+                      globalKey: viewId != null
+                          ? Keys.nestedScrollViewKeyProfileOtherPage
+                          : Keys.nestedScrollViewKeyProfilePage,
+                      child: CustomScrollView(
+                          controller: scrollController2,
+                          slivers: [
+                            SliverOverlapInjector(
+                              handle: NestedScrollView
+                                  .sliverOverlapAbsorberHandleFor(context),
+                            ),
+                            RoutinesStats(
+                              targetUID: uid,
+                            ),
+                          ]),
+                    );
+                  }),
+                ),
+                KeepAlivePage(
+                  child: Builder(builder: (context) {
+                    return NestedFix(
+                      globalKey: viewId != null
+                          ? Keys.nestedScrollViewKeyProfileOtherPage
+                          : Keys.nestedScrollViewKeyProfilePage,
+                      child: CustomScrollView(
+                          controller: scrollController3,
+                          slivers: [
+                            SliverOverlapInjector(
+                              handle: NestedScrollView
+                                  .sliverOverlapAbsorberHandleFor(context),
+                            ),
+                            ProfileToDo(
+                                uid: uid,
+                                ownProfile: viewId != null ? false : true)
+                          ]),
+                    );
+                  }),
+                ),
+                KeepAlivePage(
+                  child: Builder(builder: (context) {
+                    return NestedFix(
+                      globalKey: viewId != null
+                          ? Keys.nestedScrollViewKeyProfileOtherPage
+                          : Keys.nestedScrollViewKeyProfilePage,
+                      child: CustomScrollView(
+                          controller: scrollController4,
+                          slivers: [
+                            SliverOverlapInjector(
+                                handle: NestedScrollView
+                                    .sliverOverlapAbsorberHandleFor(context)),
+                            ProfilePosts(
+                                uid: uid,
+                                ownProfile: viewId != null ? false : true)
+                          ]),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        final tasksCompletedData = useMemoized(
+            () => Database(uid).getCompletedTasksCount(uid),
+            [Provider.of<TabProvider>(context).profileUser]);
+        final snapshotTasksCompletedData = useFuture(tasksCompletedData);
+        final checkinData = useMemoized(
+            () => Database(uid).getTrackerCheckInCount(uid),
+            [Provider.of<TabProvider>(context).profileUser]);
+        final snapshotCheckinData = useFuture(checkinData);
+
+        return NestedScrollView(
+          key: viewId != null
+              ? Keys.nestedScrollViewKeyProfileOtherPage
+              : Keys.nestedScrollViewKeyProfilePage,
+          controller: scrollController,
+          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+            return [
+              SliverOverlapAbsorber(
+                  handle:
+                      NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                  sliver: MultiSliver(children: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: UserProfileData(
+                              data: snapshotUserProfileData.data,
+                              uid: uid,
+                              nameController: nameController,
+                              viewId: viewId,
+                              tasksCompleted: snapshotTasksCompletedData.data,
+                              checkinData: snapshotCheckinData.data),
+                        ),
+                      ),
+                    ),
+                    SliverAppBar(
+                      backgroundColor: CustomTheme.dividerBackground,
+                      shadowColor: Colors.transparent,
+                      automaticallyImplyLeading: false,
+                      floating: false,
+                      forceElevated: false,
+                      centerTitle: true,
+                      title: Container(
+                        width: 80.w,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).backgroundColor,
                           borderRadius: BorderRadius.circular(
                             25.0,
                           ),
-                          color: Theme.of(context).primaryColor,
                         ),
-                        labelColor: Colors.white,
-                        unselectedLabelColor: Theme.of(context).primaryColor,
-                        tabs: [
-                          Tab(
-                            child: Icon(Icons.track_changes),
+                        child: TabBar(
+                          controller: tabController,
+                          indicator: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                              25.0,
+                            ),
+                            color: Theme.of(context).primaryColor,
                           ),
-                          Tab(
-                            child: Icon(Icons.dynamic_feed),
-                          )
-                        ],
+                          labelColor: Colors.white,
+                          unselectedLabelColor: Theme.of(context).primaryColor,
+                          tabs: [
+                            Tab(
+                              child: Icon(Icons.insert_chart_rounded),
+                            ),
+                            Tab(
+                              child: Icon(Icons.track_changes),
+                            ),
+                            Tab(
+                              child: Icon(Icons.dynamic_feed),
+                            )
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  SliverPinnedHeader(
-                    child: PreferredSize(
-                      preferredSize: Size(100.w, 3.h),
-                      child:
-                          AnimatedTextDivider(['ROUTINES', 'POSTS'], tabIndex),
+                    SliverPinnedHeader(
+                      child: PreferredSize(
+                        preferredSize: Size(100.w, 3.h),
+                        child: AnimatedTextDivider(
+                            ['STATS', 'ROUTINES', 'POSTS'], tabIndex),
+                      ),
                     ),
-                  ),
-                ]))
-          ];
-        },
-        body: TabBarView(
-          physics: CustomTabBarViewScrollPhysics(),
-          controller: tabController,
-          children: [
-            KeepAlivePage(
-              child: Builder(builder: (context) {
-                return NestedFix(
-                  globalKey: viewId != null
-                      ? Keys.nestedScrollViewKeyProfileOtherPage
-                      : Keys.nestedScrollViewKeyProfilePage,
-                  child:
-                      CustomScrollView(controller: scrollController2, slivers: [
-                    SliverOverlapInjector(
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                          context),
-                    ),
-                    ProfileToDo(
-                        uid: uid, ownProfile: viewId != null ? false : true)
-                  ]),
-                );
-              }),
-            ),
-            KeepAlivePage(
-              child: Builder(builder: (context) {
-                return NestedFix(
-                  globalKey: Keys.nestedScrollViewKeyProfilePage,
-                  child:
-                      CustomScrollView(controller: scrollController3, slivers: [
-                    SliverOverlapInjector(
-                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                            context)),
-                    ProfilePosts(
-                        uid: uid, ownProfile: viewId != null ? false : true)
-                  ]),
-                );
-              }),
-            ),
-          ],
-        ),
-      );
+                  ]))
+            ];
+          },
+          body: TabBarView(
+            physics: CustomTabBarViewScrollPhysics(),
+            controller: tabController,
+            children: [
+              KeepAlivePage(
+                child: Builder(builder: (context) {
+                  return NestedFix(
+                    globalKey: viewId != null
+                        ? Keys.nestedScrollViewKeyProfileOtherPage
+                        : Keys.nestedScrollViewKeyProfilePage,
+                    child: CustomScrollView(
+                        controller: scrollController2,
+                        slivers: [
+                          SliverOverlapInjector(
+                            handle:
+                                NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                    context),
+                          ),
+                          RoutinesStats(
+                            targetUID: uid,
+                          ),
+                        ]),
+                  );
+                }),
+              ),
+              KeepAlivePage(
+                child: Builder(builder: (context) {
+                  return NestedFix(
+                    globalKey: viewId != null
+                        ? Keys.nestedScrollViewKeyProfileOtherPage
+                        : Keys.nestedScrollViewKeyProfilePage,
+                    child: CustomScrollView(
+                        controller: scrollController3,
+                        slivers: [
+                          SliverOverlapInjector(
+                            handle:
+                                NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                    context),
+                          ),
+                          ProfileToDo(
+                              uid: uid,
+                              ownProfile: viewId != null ? false : true)
+                        ]),
+                  );
+                }),
+              ),
+              KeepAlivePage(
+                child: Builder(builder: (context) {
+                  return NestedFix(
+                    globalKey: viewId != null
+                        ? Keys.nestedScrollViewKeyProfileOtherPage
+                        : Keys.nestedScrollViewKeyProfilePage,
+                    child: CustomScrollView(
+                        controller: scrollController4,
+                        slivers: [
+                          SliverOverlapInjector(
+                              handle: NestedScrollView
+                                  .sliverOverlapAbsorberHandleFor(context)),
+                          ProfilePosts(
+                              uid: uid,
+                              ownProfile: viewId != null ? false : true)
+                        ]),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      }
     }
 
     return Padding(
@@ -217,7 +477,7 @@ class ProfileToDo extends HookWidget {
               return Padding(
                   padding: const EdgeInsets.fromLTRB(30, 50, 30, 50),
                   child: Text(
-                    'No To Do Tasks on display',
+                    'No Routines on display',
                     textAlign: TextAlign.center,
                   ));
             }, childCount: 1));
@@ -343,6 +603,7 @@ class UserProfileData extends StatelessWidget {
                   : () async => await changeProfilePic(context, false),
         ),
         Flexible(
+          flex: 7,
           child: Padding(
             padding: const EdgeInsets.only(left: 20),
             child: Column(
@@ -384,8 +645,13 @@ class UserProfileData extends StatelessWidget {
                                             var newName = nameController.text;
                                             await LoaderWithToast(
                                                     context: context,
-                                                    api: Database(uid)
-                                                        .editUserName(newName),
+                                                    api: Database(uid).editUserName(
+                                                        newName,
+                                                        Provider.of<UserProvider>(
+                                                                context,
+                                                                listen: false)
+                                                            .user
+                                                            .email),
                                                     msg:
                                                         'Name changed successfully',
                                                     isSuccess: true)
@@ -408,7 +674,7 @@ class UserProfileData extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Tasks Completed: \t',
+                      'Routines Completed: \t',
                       textAlign: TextAlign.center,
                     ),
                     Text(
@@ -417,22 +683,23 @@ class UserProfileData extends StatelessWidget {
                     )
                   ],
                 ),
-                Row(
-                  children: [
-                    Text(
-                      'Check-ins: \t',
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      '$checkinData',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  ],
-                )
+                // Row(
+                //   children: [
+                //     Text(
+                //       'Streak: \t',
+                //       textAlign: TextAlign.center,
+                //     ),
+                //     Text(
+                //       '$checkinData',
+                //       style: TextStyle(fontWeight: FontWeight.bold),
+                //     )
+                //   ],
+                // )
               ],
             ),
           ),
         ),
+        Flexible(flex: 1, child: ProfileAddFriendButton(targetUID: uid))
       ],
     );
   }
@@ -604,5 +871,90 @@ class UserProfileData extends StatelessWidget {
               ),
             ],
     ).showPopup();
+  }
+}
+
+class ProfileAddFriendButton extends HookWidget {
+  const ProfileAddFriendButton({
+    Key? key,
+    required this.targetUID,
+  }) : super(key: key);
+
+  final String targetUID;
+
+  @override
+  Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).user.uid;
+    if (targetUID == uid) {
+      return Container();
+    }
+    final future = useMemoized(() => Database(uid).checkIfFriend(targetUID),
+        [Provider.of<TabProvider>(context).friendButton]);
+    final snapshot = useFuture(future);
+    if (snapshot.hasData) {
+      print(snapshot.data);
+      if (snapshot.data == 4) {
+        return IconButton(
+          onPressed: () async {
+            await LoaderWithToast(
+                    context: context,
+                    api: Database(uid).sendFriendReq(targetUID).then((value) {
+                      Provider.of<TabProvider>(context, listen: false)
+                          .rebuildPage('friendButton');
+                    }),
+                    msg: 'Sent',
+                    isSuccess: true)
+                .show();
+          },
+          icon: Icon(Icons.person_add),
+        );
+      }
+      if (snapshot.data == 0) {
+        return IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.pending, color: CustomTheme.inactiveIcon));
+      } else if (snapshot.data == 2) {
+        return IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.handshake, color: CustomTheme.activeIcon));
+      } else if (snapshot.data == 1) {
+        return Column(
+          children: [
+            IconButton(
+                onPressed: () async {
+                  await LoaderWithToast(
+                          context: context,
+                          api: Database(uid)
+                              .acceptFriendReq(targetUID)
+                              .then((value) {
+                            Provider.of<TabProvider>(context, listen: false)
+                                .rebuildPage('friendButton');
+                            Provider.of<TabProvider>(context, listen: false)
+                                .rebuildPage('friendPage');
+                          }),
+                          msg: 'You are now friends',
+                          isSuccess: true)
+                      .show();
+                },
+                icon: Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: CustomTheme.activeButton,
+                )),
+            IconButton(
+                onPressed: () async {
+                  await Database(uid).declineFriendReq(targetUID).then((value) {
+                    Provider.of<TabProvider>(context, listen: false)
+                        .rebuildPage('friendButton');
+                    Provider.of<TabProvider>(context, listen: false)
+                        .rebuildPage('friendPage');
+                  });
+                },
+                icon:
+                    Icon(Icons.cancel_outlined, color: CustomTheme.redButton)),
+          ],
+        );
+      }
+    }
+    return Container();
   }
 }

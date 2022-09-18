@@ -2,10 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shizen_app/models/trackerTask.dart';
-import 'package:intl/intl.dart';
+import 'package:shizen_app/modules/signup/widgets.dart';
 import 'package:shizen_app/utils/notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
 
 class Database {
   Database(this.uid);
@@ -118,16 +116,28 @@ class Database {
   Future<void> completeTask(tid, newDesc) async {
     print("Firing completeTask");
 
-    await userDoc.collection('todo').doc(tid).update({'desc': newDesc});
+    await userDoc.collection('routines').doc(tid).update({'desc': newDesc});
   }
 
-  Future<void> completeTaskAll(tid, newDesc) async {
+  Future<void> completeTaskAll(tid, newDesc, note) async {
     print("Firing completeTaskAll");
 
-    await userDoc.collection('todo').doc(tid).set({
+    var dateCompleted = Timestamp.now();
+
+    await userDoc
+        .collection('routines')
+        .doc(tid)
+        .collection('completed')
+        .add({'desc': newDesc, 'dateCompleted': dateCompleted, 'note': note});
+
+    for (var i = 0; i < newDesc.length; i++) {
+      newDesc[i]['status'] = false;
+    }
+
+    await userDoc.collection('routines').doc(tid).set({
       'desc': newDesc,
-      'allComplete': true,
-      'dateCompleted': Timestamp.now()
+      'timesCompleted': FieldValue.increment(1),
+      'dateCompleted': dateCompleted,
     }, SetOptions(merge: true)).then((value) async =>
         await NotificationService()
             .flutterLocalNotificationsPlugin
@@ -151,12 +161,12 @@ class Database {
   //      1 = Received Request
   //      2 = Accepted Friends
 
-  Future<List<QuerySnapshot>> getFriendSearch(email) async {
+  Future<List<QuerySnapshot>> getFriendSearch(query) async {
     print("Firing getFriendSearch");
-
+    query = query.replaceAll(' ', '');
     List<QuerySnapshot> results = [];
     results
-        .add(await userCol.where('email', isGreaterThanOrEqualTo: email).get());
+        .add(await userCol.where('searchKeywords', arrayContains: query).get());
     print(results);
     results.add(await userDoc.collection('friends').get());
     return results;
@@ -339,35 +349,23 @@ class Database {
   //-----------------------------------------------------
   //
 
-  Future<void> addNewPost(
-      Map<String, dynamic> postData, visibility, attachmentType) async {
+  Future<void> addNewPost(Map<String, dynamic> postData, attachmentType) async {
     print("Firing addNewPost");
     print(postData['attachment']);
 
     var batch = firestore.batch();
     var newPostDoc = firestore.collection('posts').doc();
 
-    // IF visibility is EVERYONE or FRIENDS ONLY
-    if (visibility != 'Anonymous') {
-      await getCurrentUserData().then((value) {
-        var data = value.data()!;
-        var map = {
-          'email': data['email'],
-          'name': data['name'],
-          'age': data['age'],
-          'image': data['image']
-        };
-        postData.addAll(map);
-      });
-    } else {
+    await getCurrentUserData().then((value) {
+      var data = value.data()!;
       var map = {
-        'email': 'anon@somewhere.com',
-        'name': 'Anonymous',
-        'age': '0',
-        'image': '',
+        'email': data['email'],
+        'name': data['name'],
+        'age': data['age'],
+        'image': data['image']
       };
       postData.addAll(map);
-    }
+    });
 
     if (attachmentType == 'image') {
       FirebaseStorage storage = FirebaseStorage.instance;
@@ -383,20 +381,18 @@ class Database {
     batch.set(
         userDoc,
         {
-          'posts': FieldValue.arrayUnion([newPostDoc.id])
+          'posts': FieldValue.arrayUnion([newPostDoc.id]),
         },
         SetOptions(merge: true));
 
-    if (visibility != 'Anonymous') {
-      batch.set(
-          userDoc,
-          {
-            'friendsOnlyPosts': FieldValue.arrayUnion([
-              {'postId': newPostDoc.id, 'dateCreated': postData['dateCreated']},
-            ])
-          },
-          SetOptions(merge: true));
-    }
+    batch.set(
+        userDoc,
+        {
+          'friendsOnlyPosts': FieldValue.arrayUnion([
+            {'postId': newPostDoc.id, 'dateCreated': postData['dateCreated']},
+          ])
+        },
+        SetOptions(merge: true));
 
     // TODO: Implement cloud function to check if array is >100 length
 
@@ -441,8 +437,8 @@ class Database {
     return [results, lastDoc];
   }
 
-  Future getCommunityPostFriendsOnlyFirstLoad(hashtag) async {
-    List<String> friendIds = [];
+  Future getCommunityPostFriendsOnlyFirstLoad(hashtag, uid) async {
+    List<String> friendIds = [uid];
     await userDoc
         .collection('friends')
         .where('status', isEqualTo: 2)
@@ -466,14 +462,12 @@ class Database {
     for (var i = 0; i < postIds.length; i++) {
       lastIndex++;
       if (posts.length < 10) {
-        print(postIds[i]['postId']);
         await postCol.doc(postIds[i]['postId']).get().then((value) {
           var currDoc = value.data();
           if (hashtag != '') {
             if ((currDoc!['hashtags'].firstWhere((item) => item == hashtag,
                     orElse: () => null)) !=
                 null) {
-              print('TYRESUIO YRESOUHR');
               currDoc['postId'] = value.id;
               posts.add(currDoc);
             }
@@ -500,7 +494,6 @@ class Database {
             if (currDoc!['hashtags'].firstWhere((item) => item == hashtag,
                     orElse: () => null) !=
                 null) {
-              print('ESESRESR');
               currDoc['postId'] = value.id;
               result.add(currDoc);
             }
@@ -616,13 +609,18 @@ class Database {
         .then((value) => value.docs.length);
   }
 
-  Future getCompletedTasksCount(targetUID) {
-    return userCol
+  Future getCompletedTasksCount(targetUID) async {
+    var result = 0;
+
+    await userCol
         .doc(targetUID)
-        .collection('todo')
-        .where('allComplete', isEqualTo: true)
+        .collection('routines')
         .get()
-        .then((value) => value.docs.length);
+        .then((value) => value.docs.forEach((element) {
+              result += element.data()['timesCompleted'] as int;
+            }));
+
+    return result;
   }
 
   Future uploadProfilePic(image, {hasPic = false, currPicUrl}) async {
@@ -697,11 +695,14 @@ class Database {
     await batch.commit();
   }
 
-  Future editUserName(newName) async {
+  Future editUserName(newName, email) async {
     print("Firing editUserName");
 
     var batch = firestore.batch();
-    batch.update(userDoc, {'name': newName});
+    batch.update(userDoc, {
+      'name': newName,
+      'searchKeywords': generateSearchKeywords(newName, email)
+    });
 
     var userDoc1 = await userDoc.get().then((value) => value.data());
 
@@ -791,10 +792,8 @@ class Database {
 
     return userCol
         .doc(uid)
-        .collection('todo')
-        .where('allComplete', isEqualTo: false)
+        .collection('routines')
         .where('isPublic', isEqualTo: true)
-        .orderBy('dateCreated', descending: true)
         .snapshots();
   }
 
@@ -1167,5 +1166,158 @@ class Database {
         .collection('chats')
         .where('unreadCount', isGreaterThan: 0)
         .snapshots();
+  }
+
+  //-----------------------------------------------------
+  //------------------  ROUTINES  -----------------------
+  //-----------------------------------------------------
+  //
+
+  Future getRoutines([filter, search]) {
+    return userDoc
+        .collection('routines')
+        .orderBy("dateCreated", descending: true)
+        .get();
+  }
+
+  Future getProgressRoutines(search) async {
+    List<Map> results = [];
+
+    await userDoc
+        .collection('routines')
+        .orderBy("dateCreated", descending: true)
+        .get()
+        .then((value) {
+      value.docs.forEach((element) {
+        var currElement = element.data();
+        currElement['taskId'] = element.id;
+        currElement['dateCompleted'] =
+            (currElement['dateCreated'] as Timestamp).toDate();
+        results.add(currElement);
+      });
+    });
+
+    return results;
+  }
+
+  Future getAllRoutineData(uid) async {
+    var results = [];
+
+    var test1 = await userCol.doc(uid).collection('routines').get();
+    for (var element in test1.docs) {
+      var temp = await userCol
+          .doc(uid)
+          .collection('routines')
+          .doc(element.id)
+          .collection('completed')
+          .get();
+      temp.docs.forEach((element) {
+        results.add(element.data());
+      });
+    }
+
+    return results;
+  }
+
+  Future getRoutineActivity(tid, filter) async {
+    List<Map> results = [];
+
+    await userDoc
+        .collection('routines')
+        .doc(tid)
+        .collection('completed')
+        .where('dateCompleted', isGreaterThanOrEqualTo: filter?.startDate)
+        .where('dateCompleted',
+            isLessThanOrEqualTo: filter?.endDate?.add(Duration(days: 1)) ??
+                filter?.startDate.add(Duration(days: 1)))
+        .get()
+        .then((value) {
+      value.docs.forEach((element) {
+        var currElement = element.data();
+        currElement['activityId'] = element.id;
+        currElement['dateCompleted'] =
+            (currElement['dateCompleted'] as Timestamp).toDate();
+        results.add(currElement);
+      });
+    });
+    return results;
+  }
+
+  Future addRoutine(toDoTask, reminder) async {
+    var taskData = toDoTask.toJson();
+    var notifDesc = '';
+    for (var i = 0; i < taskData['desc'].length; i++) {
+      notifDesc += '${taskData['desc'][i]['task']}';
+      if (i != taskData['desc'].length - 1) {
+        notifDesc += ', ';
+      }
+    }
+
+    await userDoc.collection('routines').add(taskData).then((doc) async {
+      if (reminder != null) {
+        await NotificationService().showNotification(
+            doc.id, 'REMINDER: ${taskData['title']}', notifDesc, reminder);
+      } else {
+        await NotificationService()
+            .flutterLocalNotificationsPlugin
+            .cancel(doc.id.hashCode);
+      }
+    }).whenComplete(() => print("Done"));
+  }
+
+  Future<void> editRoutine(tid, toDoTask, reminder) async {
+    var taskData = toDoTask.toJson();
+    var notifDesc = '';
+    for (var i = 0; i < taskData['desc'].length; i++) {
+      notifDesc += '${taskData['desc'][i]['task']}';
+      if (i != taskData['desc'].length - 1) {
+        notifDesc += ', ';
+      }
+    }
+    await userDoc
+        .collection('routines')
+        .doc(tid)
+        .update(taskData)
+        .then((doc) async {
+      if (reminder != null) {
+        await NotificationService().showNotification(
+            tid, 'REMINDER: ${taskData['title']}', notifDesc, reminder);
+      } else {
+        await NotificationService()
+            .flutterLocalNotificationsPlugin
+            .cancel(tid.hashCode);
+      }
+    }).whenComplete(() => print("Done"));
+  }
+
+  Future<void> deleteRoutine(tid) async {
+    await userDoc.collection('routines').doc(tid).delete().then((value) async {
+      await NotificationService()
+          .flutterLocalNotificationsPlugin
+          .cancel(tid.hashCode);
+    }).whenComplete(() => print("Done"));
+  }
+
+  Future addRoutineNote(tid, note) async {
+    await userDoc.collection('routines').doc(tid).update({'note': note});
+  }
+
+  Future addRoutineImage(tid, img) async {
+    return;
+  }
+
+  Future checkIfFriend(uid) async {
+    var result = 4;
+    await userDoc.collection('friends').doc(uid).get().then((value) {
+      if (value.data() != null) {
+        result = value.data()!['status'];
+      }
+    });
+
+    return result;
+  }
+
+  Future togglePrivateAccount(value) async {
+    await userDoc.update({'private': value});
   }
 }

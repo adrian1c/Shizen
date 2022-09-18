@@ -1,14 +1,22 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:double_back_to_close_app/double_back_to_close_app.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shizen_app/models/user.dart';
 import 'package:shizen_app/modules/community/addnewpost.dart';
 import 'package:shizen_app/modules/tasks/addtodo.dart';
-import 'package:shizen_app/modules/tasks/addtracker.dart';
 import 'package:shizen_app/utils/allUtils.dart';
 import 'package:shizen_app/utils/notifications.dart';
 import 'package:shizen_app/utils/useAutomaticKeepAliveClientMixin.dart';
-import 'package:shizen_app/widgets/divider.dart';
 import 'package:shizen_app/widgets/field.dart';
 import './modules/tasks/tasks.dart';
 import './modules/friends/friends.dart';
@@ -16,7 +24,9 @@ import './modules/community/community.dart';
 import './modules/progress/progress.dart';
 import './modules/profile/profile.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_email_sender/flutter_email_sender.dart';
+// import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:path_provider/path_provider.dart';
 
 class MainScaffoldStack extends HookWidget {
   final List<GButton> screens = [
@@ -33,25 +43,27 @@ class MainScaffoldStack extends HookWidget {
       text: 'Community',
     ),
     GButton(
-      icon: Icons.insert_chart_rounded,
-      text: 'Progress',
-    ),
-    GButton(
       icon: Icons.person,
       text: 'Profile',
     ),
   ];
 
-  final List<String> title = [
-    'Routines',
-    'Friends',
-    'Community',
-    'Progress',
-    'Profile'
-  ];
+  final List<String> title = ['Routines', 'Friends', 'Community', 'Profile'];
+
+  final qrKey = GlobalKey();
+
+  showInvalidQRPopup(context) {
+    Navigator.pop(context);
+    StyledPopup(
+        context: context,
+        title: 'Invalid image',
+        children: [Text('No/Invalid QR Code found.')]).showPopup();
+    return;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final String uid = Provider.of<UserProvider>(context).user.uid;
     return Scaffold(
         appBar: AppBar(
           leading: Builder(
@@ -75,8 +87,158 @@ class MainScaffoldStack extends HookWidget {
               style: TextStyle(
                   color: Theme.of(context).backgroundColor,
                   fontWeight: FontWeight.bold)),
-          actions:
-              Provider.of<TabProvider>(context, listen: false).selectedIndex ==
+          actions: Provider.of<TabProvider>(context, listen: false)
+                      .selectedIndex ==
+                  1
+              ? [
+                  IconButton(
+                    icon: Icon(Icons.qr_code_scanner_rounded),
+                    onPressed: () {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text("Scan Profile Code"),
+                              contentPadding: const EdgeInsets.all(0),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    height: 50.h,
+                                    child: MobileScanner(
+                                        allowDuplicates: false,
+                                        controller: MobileScannerController(
+                                            facing: CameraFacing.back,
+                                            torchEnabled: false),
+                                        onDetect: (barcode, args) async {
+                                          if (barcode.rawValue != null) {
+                                            if (barcode.rawValue!
+                                                .contains('/')) {
+                                              showInvalidQRPopup(context);
+                                              return;
+                                            }
+
+                                            var friend = await Database(uid)
+                                                .getUserProfileData(
+                                                    barcode.rawValue);
+                                            if (friend.data() == null) {
+                                              showInvalidQRPopup(context);
+                                              return;
+                                            }
+                                            Navigator.pop(context);
+                                            Navigator.push(context,
+                                                MaterialPageRoute(
+                                                    builder: (context) {
+                                              return Scaffold(
+                                                  appBar: AppBar(
+                                                    title: Text(friend
+                                                                .data()!['name']
+                                                                .length <
+                                                            12
+                                                        ? '${friend.data()!['name']}\'s Profile'
+                                                        : 'Profile'),
+                                                    centerTitle: true,
+                                                  ),
+                                                  body: ProfilePage(
+                                                      viewId:
+                                                          barcode.rawValue));
+                                            }));
+                                          }
+                                        }),
+                                  ),
+                                  Padding(
+                                      padding: const EdgeInsets.all(20),
+                                      child: TextButton(
+                                        child: Text('Select From Gallery'),
+                                        onPressed: () async {
+                                          final picker = ImagePicker();
+                                          final XFile? result =
+                                              await picker.pickImage(
+                                                  source: ImageSource.gallery);
+
+                                          if (result == null) {
+                                            Navigator.pop(context);
+                                            return;
+                                          }
+
+                                          MobileScannerController
+                                              cameraController =
+                                              MobileScannerController();
+                                          late StreamSubscription sub;
+                                          sub = cameraController
+                                              .barcodesController.stream
+                                              .listen((barcode) async {
+                                            if (barcode.rawValue != null) {
+                                              if (barcode.rawValue!
+                                                  .contains('/')) {
+                                                showInvalidQRPopup(context);
+                                                return;
+                                              }
+                                              var friend = await Database(uid)
+                                                  .getUserProfileData(
+                                                      barcode.rawValue);
+                                              if (friend.data() == null) {
+                                                showInvalidQRPopup(context);
+                                                return;
+                                              }
+                                              Navigator.pop(context);
+                                              Navigator.push(context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) {
+                                                return Scaffold(
+                                                    appBar: AppBar(
+                                                      title: Text(friend
+                                                                  .data()![
+                                                                      'name']
+                                                                  .length <
+                                                              12
+                                                          ? '${friend.data()!['name']}\'s Profile'
+                                                          : 'Profile'),
+                                                      centerTitle: true,
+                                                    ),
+                                                    body: ProfilePage(
+                                                        viewId:
+                                                            barcode.rawValue));
+                                              }));
+                                            }
+
+                                            sub.cancel();
+                                          });
+
+                                          await cameraController
+                                              .analyzeImage(result.path)
+                                              .then((value) {
+                                            if (!value) {
+                                              Navigator.pop(context);
+                                              StyledPopup(
+                                                  context: context,
+                                                  title: 'Invalid image',
+                                                  children: [
+                                                    Text(
+                                                        'No QR Code found from the image.')
+                                                  ]).showPopup();
+                                            }
+                                          });
+                                        },
+                                      )),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              actions: [
+                                TextButton(
+                                  child: Text("Ok"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                )
+                              ],
+                            );
+                          });
+                    },
+                  )
+                ]
+              : Provider.of<TabProvider>(context, listen: false)
+                          .selectedIndex ==
                       2
                   ? [
                       TextButton(
@@ -89,7 +251,93 @@ class MainScaffoldStack extends HookWidget {
                                   color: Theme.of(context).backgroundColor,
                                   fontWeight: FontWeight.bold)))
                     ]
-                  : null,
+                  : Provider.of<TabProvider>(context, listen: false)
+                              .selectedIndex ==
+                          3
+                      ? [
+                          IconButton(
+                            icon: Icon(Icons.qr_code_2),
+                            onPressed: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text("Profile"),
+                                          IconButton(
+                                              icon: Icon(Icons.share),
+                                              onPressed: () async {
+                                                try {
+                                                  RenderRepaintBoundary
+                                                      boundary = qrKey
+                                                              .currentContext!
+                                                              .findRenderObject()
+                                                          as RenderRepaintBoundary;
+
+                                                  var image =
+                                                      await boundary.toImage();
+                                                  ByteData? byteData =
+                                                      await image.toByteData(
+                                                          format:
+                                                              ImageByteFormat
+                                                                  .png);
+                                                  Uint8List pngBytes = byteData!
+                                                      .buffer
+                                                      .asUint8List();
+                                                  final appDir =
+                                                      await getApplicationDocumentsDirectory();
+                                                  var datetime = DateTime.now();
+                                                  var file = await File(
+                                                          '${appDir.path}/$datetime.png')
+                                                      .create();
+                                                  await file
+                                                      .writeAsBytes(pngBytes);
+                                                  await Share.shareFiles(
+                                                      [file.path],
+                                                      mimeTypes: ['image/png'],
+                                                      text: 'My Profile');
+                                                } catch (e) {
+                                                  print(e.toString());
+                                                }
+                                              })
+                                        ],
+                                      ),
+                                      content: RepaintBoundary(
+                                          key: qrKey,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(10),
+                                            color: Colors.white,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                    '${Provider.of<UserProvider>(context).user.name}\'s Profile'),
+                                                QrImage(
+                                                  data: uid,
+                                                  embeddedImage:
+                                                      Images.bonsai.image,
+                                                ),
+                                              ],
+                                            ),
+                                          )),
+                                      alignment: Alignment.center,
+                                      actions: [
+                                        TextButton(
+                                          child: Text("Ok"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        )
+                                      ],
+                                    );
+                                  });
+                            },
+                          )
+                        ]
+                      : null,
         ),
         drawer: NavDrawer(),
         floatingActionButton:
@@ -104,7 +352,7 @@ class MainScaffoldStack extends HookWidget {
             activeColor: Colors.white,
             iconSize: 20,
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-            tabMargin: EdgeInsets.fromLTRB(5, 10, 5, 10),
+            tabMargin: EdgeInsets.all(10),
             duration: Duration(milliseconds: 400),
             tabBackgroundColor: Color(0xff444444),
             color: Color(0xff444444),
@@ -135,7 +383,6 @@ class MainScaffoldStack extends HookWidget {
                 KeepAlivePage(child: TaskPage()),
                 KeepAlivePage(child: FriendsPage()),
                 KeepAlivePage(child: CommunityPage()),
-                KeepAlivePage(child: ProgressPage()),
                 KeepAlivePage(child: ProfilePage()),
               ]),
         ));
@@ -149,48 +396,8 @@ class FABubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Create a Task'),
-                  Divider(
-                    thickness: 1,
-                  ),
-                ],
-              ),
-              contentPadding: const EdgeInsets.fromLTRB(10, 10, 10, 30),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => AddToDoTask()));
-                    },
-                    child: DemoToDoTask(),
-                  ),
-                  Padding(padding: const EdgeInsets.symmetric(vertical: 5.0)),
-                  TextDivider('OR'),
-                  Padding(padding: const EdgeInsets.symmetric(vertical: 5.0)),
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => AddTrackerTask()));
-                    },
-                    child: DemoTrackerTask(),
-                  )
-                ],
-              )),
-        );
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => AddToDoTask()));
       },
       child: Icon(
         Icons.add_rounded,
@@ -407,7 +614,7 @@ class NavDrawer extends HookWidget {
                     color: Colors.white,
                     fontWeight: FontWeight.w300,
                     fontSize: 10)),
-            accountName: Text(user.uid,
+            accountName: Text(user.name,
                 style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.normal,
@@ -423,7 +630,7 @@ class NavDrawer extends HookWidget {
               onTap: () {
                 Navigator.pop(context);
                 Provider.of<TabProvider>(context, listen: false)
-                    .changeTabPage(4);
+                    .changeTabPage(3);
               },
             ),
             decoration: BoxDecoration(
@@ -538,26 +745,65 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String uid = Provider.of<UserProvider>(context).user.uid;
     return Scaffold(
         appBar: AppBar(
           title: Text('SETTINGS'),
           centerTitle: true,
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Dark Theme'),
-              Switch(
-                onChanged: (value) async {
-                  await Provider.of<AppTheme>(context, listen: false)
-                      .toggleTheme();
-                },
-                value: Provider.of<AppTheme>(context, listen: false).darkTheme,
-              )
-            ],
-          ),
+        body: Column(
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Private Account'),
+                  Switch(
+                    onChanged: (value) async {
+                      await LoaderWithToast(
+                              context: context,
+                              api: Database(uid).togglePrivateAccount(value),
+                              msg: 'Your account privacy has been changed',
+                              isSuccess: true)
+                          .show();
+                      Provider.of<UserProvider>(context, listen: false)
+                          .togglePrivate(value);
+                    },
+                    value: Provider.of<UserProvider>(context).user.private,
+                  )
+                ],
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Dark Theme'),
+                  Switch(
+                    onChanged: (value) async {
+                      // await Provider.of<AppTheme>(context, listen: false)
+                      //     .toggleTheme();
+                      StyledPopup(
+                              context: context,
+                              title: 'Coming Soon',
+                              children: [
+                                Text(
+                                    'This feature is still in development. Please bear with us :)')
+                              ],
+                              cancelText: 'OK')
+                          .showPopup();
+                    },
+                    value:
+                        Provider.of<AppTheme>(context, listen: false).darkTheme,
+                  )
+                ],
+              ),
+            ),
+          ],
         ));
   }
 }
@@ -780,28 +1026,28 @@ When incorporating a new habit, or starting our journey on self-improvement, it 
                         Size((MediaQuery.of(context).size.width * 0.25), 45),
                   ),
                   onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      final bodyText =
-                          '''Hello, I am ${Provider.of<UserProvider>(context, listen: false).user.name}. 
-This is my feedback:
+//                     if (_formKey.currentState!.validate()) {
+//                       final bodyText =
+//                           '''Hello, I am ${Provider.of<UserProvider>(context, listen: false).user.name}.
+// This is my feedback:
 
-${feedbackController.text}''';
-                      final Email email = Email(
-                        body: bodyText,
-                        subject: 'Feedback for Shizen',
-                        recipients: ['adrianching1@gmail.com'],
-                        cc: [],
-                        bcc: [],
-                        isHTML: false,
-                      );
-                      await LoaderWithToast(
-                              context: context,
-                              api: FlutterEmailSender.send(email),
-                              msg: 'Success',
-                              isSuccess: true)
-                          .show();
-                      feedbackController.clear();
-                    }
+// ${feedbackController.text}''';
+//                       final Email email = Email(
+//                         body: bodyText,
+//                         subject: 'Feedback for Shizen',
+//                         recipients: ['adrianching1@gmail.com'],
+//                         cc: [],
+//                         bcc: [],
+//                         isHTML: false,
+//                       );
+//                       await LoaderWithToast(
+//                               context: context,
+//                               api: FlutterEmailSender.send(email),
+//                               msg: 'Success',
+//                               isSuccess: true)
+//                           .show();
+//                       feedbackController.clear();
+//                     }
                   },
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

@@ -64,6 +64,12 @@ dependencies:
   shared_preferences: ^2.0.15
   page_transition: ^2.0.5
   sliver_tools: ^0.2.6
+  fl_chart: ^0.55.1
+  month_year_picker: ^0.1.0+3
+  qr_flutter: ^4.0.0
+  mobile_scanner: ^1.1.2
+  share_plus: ^4.1.0
+  pull_to_refresh: ^2.0.0
 
 dev_dependencies:
   flutter_test:

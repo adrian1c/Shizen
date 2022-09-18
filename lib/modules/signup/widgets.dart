@@ -110,6 +110,26 @@ class SignupField extends StatelessWidget {
   }
 }
 
+List<String> generateSearchKeywords(String name, String email) {
+  List<String> results = [];
+  name = name.toLowerCase().replaceAll(' ', '');
+  email = email.toLowerCase().replaceAll(' ', '');
+
+  var currName = name.substring(0, 3);
+  for (var i = 3; i < name.length; i++) {
+    currName += name[i];
+    results.add(currName);
+  }
+
+  var currEmail = email.substring(0, 3);
+  for (var i = 3; i < email.length; i++) {
+    currEmail += email[i];
+    results.add(currEmail);
+  }
+
+  return results;
+}
+
 Future<void> registerToDb(
   TextEditingController emailController,
   TextEditingController passwordController,
@@ -129,18 +149,31 @@ Future<void> registerToDb(
             final prefs = await SharedPreferences.getInstance();
             await prefs.setBool('onboarding', false);
             await firestore.collection('users').doc(result.user!.uid).set({
-              'email': emailController.text,
-              'age': ageController.text,
-              'name': nameController.text,
+              'email': emailController.text.trim(),
+              'age': ageController.text.trim(),
+              'name': nameController.text.trim(),
               'image': '',
               'friendCount': 0,
+              'private': false,
+              'searchKeywords': generateSearchKeywords(
+                  nameController.text.trim(), emailController.text.trim())
             });
+            await result.user!.sendEmailVerification();
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => EmailLogIn()),
+              MaterialPageRoute(builder: (context) => WelcomePage()),
             );
+            StyledPopup(
+                    context: context,
+                    title: 'Success!',
+                    children: [
+                      Text(
+                          'An email has been sent to ${result.user!.email}. Please click on the link in the email to verify your account before logging in. If you cannot find the email, please check your SPAM folder too!'),
+                    ],
+                    cancelText: 'OK')
+                .showPopup();
           }),
-          msg: 'Success! You can log in now',
+          msg: 'Success!',
           isSuccess: true)
       .show();
 }

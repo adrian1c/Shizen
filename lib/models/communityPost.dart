@@ -9,8 +9,8 @@ class CommunityPost {
   var attachment;
   String? attachmentType;
 
-  CommunityPost(this.uid, this.desc, this.hashtags, this.visibility,
-      this.attachment, this.attachmentType);
+  CommunityPost(
+      this.uid, this.desc, this.hashtags, this.attachment, this.attachmentType);
 
   toJson() {
     return {

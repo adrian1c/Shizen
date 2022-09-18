@@ -8,6 +8,7 @@ import 'package:badges/badges.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import 'package:shizen_app/utils/allUtils.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class FriendsPage extends HookWidget {
   const FriendsPage({Key? key}) : super(key: key);
@@ -40,48 +41,62 @@ class FriendsPage extends HookWidget {
     String uid = Provider.of<UserProvider>(context).user.uid;
     final searchController = useTextEditingController();
 
+    final RefreshController refreshController =
+        RefreshController(initialRefresh: false);
+
     return SafeArea(
       minimum: EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              FriendsSearchField(uid: uid, searchController: searchController),
-              IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => InstantMessagingPage()));
-                  },
-                  icon: StreamBuilder(
-                      stream: Database(uid).getUnreadMessageCount(),
-                      builder: (context, AsyncSnapshot snapshot) {
-                        if (snapshot.hasData) {
-                          if (snapshot.data!.docs.length > 0) {
-                            return Badge(
-                                badgeContent: Text(
-                                    snapshot.data!.docs.length.toString(),
-                                    style: TextStyle(color: Colors.white)),
-                                child: Icon(Icons.message_outlined,
-                                    color: Theme.of(context).primaryColor));
-                          } else {
-                            return Icon(Icons.message_outlined,
-                                color: Theme.of(context).primaryColor);
-                          }
-                        }
+      child: SmartRefresher(
+        enablePullDown: true,
+        header: WaterDropHeader(),
+        controller: refreshController,
+        onRefresh: () {
+          Provider.of<TabProvider>(context, listen: false)
+              .rebuildPage('friendPage');
+          refreshController.refreshCompleted();
+        },
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                FriendsSearchField(
+                    uid: uid, searchController: searchController),
+                // IconButton(
+                //     onPressed: () {
+                //       Navigator.push(
+                //           context,
+                //           MaterialPageRoute(
+                //               builder: (context) => InstantMessagingPage()));
+                //     },
+                //     icon: StreamBuilder(
+                //         stream: Database(uid).getUnreadMessageCount(),
+                //         builder: (context, AsyncSnapshot snapshot) {
+                //           if (snapshot.hasData) {
+                //             if (snapshot.data!.docs.length > 0) {
+                //               return Badge(
+                //                   badgeContent: Text(
+                //                       snapshot.data!.docs.length.toString(),
+                //                       style: TextStyle(color: Colors.white)),
+                //                   child: Icon(Icons.message_outlined,
+                //                       color: Theme.of(context).primaryColor));
+                //             } else {
+                //               return Icon(Icons.message_outlined,
+                //                   color: Theme.of(context).primaryColor);
+                //             }
+                //           }
 
-                        return Icon(Icons.message_outlined,
-                            color: Theme.of(context).primaryColor);
-                      }))
-            ],
-          ),
-          Divider(),
-          NewRequestList(),
-          Divider(),
-          Expanded(child: FriendsList()),
-        ],
+                //           return Icon(Icons.message_outlined,
+                //               color: Theme.of(context).primaryColor);
+                //         }))
+              ],
+            ),
+            Divider(),
+            NewRequestList(),
+            Divider(),
+            Expanded(child: FriendsList()),
+          ],
+        ),
       ),
     );
   }
@@ -219,6 +234,7 @@ class FriendsList extends HookWidget {
                   alignment: Alignment.center,
                   child: Text(
                     'You have no friends.\nYou can add friends by searching above.',
+                    textAlign: TextAlign.center,
                   ),
                 ),
           Flexible(
@@ -272,9 +288,6 @@ class FriendsSearchField extends StatelessWidget {
               .inputDecoration(),
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.search,
-          inputFormatters: [
-            FilteringTextInputFormatter.deny(RegExp(r'\s')),
-          ],
           controller: searchController,
           maxLines: 1,
           validator: (value) {
@@ -381,7 +394,8 @@ class SearchListTile extends StatelessWidget {
               : status == 0
                   ? IconButton(onPressed: () {}, icon: Icon(Icons.pending))
                   : status == 2
-                      ? IconButton(onPressed: () {}, icon: Icon(Icons.check))
+                      ? IconButton(
+                          onPressed: () {}, icon: Icon(Icons.handshake))
                       : status == 1
                           ? null
                           : IconButton(
@@ -400,7 +414,7 @@ class SearchListTile extends StatelessWidget {
                               icon: Icon(Icons.person_add),
                             ),
           horizontalTitleGap: 0,
-          tileColor: Colors.amberAccent[700],
+          tileColor: CustomTheme.attachmentBackground,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),

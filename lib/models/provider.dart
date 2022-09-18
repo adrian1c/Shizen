@@ -7,26 +7,32 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shizen_app/main.dart';
 import 'package:shizen_app/mainscaffoldstack.dart';
 import 'package:shizen_app/models/user.dart';
+import 'package:shizen_app/widgets/field.dart';
 import 'package:shizen_app/widgets/onboarding.dart';
 
 class UserProvider extends ChangeNotifier {
-  UserModel user = UserModel('', '', '', '', '');
+  UserModel user = UserModel('', '', '', '', '', true);
 
   bool checkLoggedIn() {
     var currUser = FirebaseAuth.instance.currentUser;
     if (currUser != null) {
-      user.uid = currUser.uid;
-      FirebaseFirestore.instance
-          .collection('users')
-          .doc(this.user.uid)
-          .get()
-          .then((value) {
-        var data = value.data();
-        user.name = data!['name'];
-        user.email = data['email'];
-        user.age = data['age'];
-        user.image = data['image'];
-      });
+      if (!currUser.emailVerified) {
+        return false;
+      } else {
+        user.uid = currUser.uid;
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(this.user.uid)
+            .get()
+            .then((value) {
+          var data = value.data();
+          user.name = data!['name'];
+          user.email = data['email'];
+          user.age = data['age'];
+          user.image = data['image'];
+          user.private = data['private'];
+        });
+      }
       return true;
     }
     return false;
@@ -42,43 +48,68 @@ class UserProvider extends ChangeNotifier {
     await firebaseAuth
         .signInWithEmailAndPassword(email: email, password: password)
         .then((result) async {
-      user.uid = result.user!.uid;
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(this.user.uid)
-          .get()
-          .then((value) {
-        var data = value.data();
-        user.name = data!['name'];
-        user.email = data['email'];
-        user.age = data['age'];
-        user.image = data['image'];
-      });
-      await FirebaseMessaging.instance.getToken().then((value) {
-        String? token = value;
-        FirebaseFirestore.instance
+      if (result.user!.emailVerified) {
+        user.uid = result.user!.uid;
+        await FirebaseFirestore.instance
             .collection('users')
-            .doc(user.uid)
-            .set({'pushToken': token}, SetOptions(merge: true));
-      });
-      final pref = await SharedPreferences.getInstance();
-      var onboarding = pref.getBool('onboarding');
-      if (onboarding != true) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (BuildContext context) => OnboardingPage(),
-          ),
-          (route) => false,
-        );
+            .doc(this.user.uid)
+            .get()
+            .then((value) {
+          var data = value.data();
+          user.name = data!['name'];
+          user.email = data['email'];
+          user.age = data['age'];
+          user.image = data['image'];
+          user.private = data['private'];
+        });
+        await FirebaseMessaging.instance.getToken().then((value) {
+          String? token = value;
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({'pushToken': token}, SetOptions(merge: true));
+        });
+        final pref = await SharedPreferences.getInstance();
+        var onboarding = pref.getBool('onboarding');
+        if (onboarding != true) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (BuildContext context) => OnboardingPage(),
+            ),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (BuildContext context) => MainScaffoldStack(),
+            ),
+            (route) => false,
+          );
+        }
       } else {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (BuildContext context) => MainScaffoldStack(),
-          ),
-          (route) => false,
-        );
+        StyledPopup(
+                context: context,
+                title: 'Not verified',
+                children: [
+                  Text(
+                      'Please verify your account by clicking on the link sent to your email address.'),
+                  TextButton(
+                    child: Text('Resend Verification Email'),
+                    onPressed: () async {
+                      await LoaderWithToast(
+                              context: context,
+                              api: result.user!.sendEmailVerification(),
+                              msg: 'Verification Email Sent!',
+                              isSuccess: true)
+                          .show();
+                      Navigator.pop(context);
+                    },
+                  )
+                ],
+                cancelText: 'OK')
+            .showPopup();
       }
     }).catchError((err) {
       showDialog(
@@ -106,7 +137,7 @@ class UserProvider extends ChangeNotifier {
         .doc(user.uid)
         .set({'pushToken': null}, SetOptions(merge: true));
     await FirebaseAuth.instance.signOut().then((result) {
-      user = UserModel('', '', '', '', '');
+      user = UserModel('', '', '', '', '', true);
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => WelcomePage()),
@@ -132,6 +163,11 @@ class UserProvider extends ChangeNotifier {
           });
     });
   }
+
+  void togglePrivate(value) {
+    user.private = value;
+    notifyListeners();
+  }
 }
 
 class TabProvider extends ChangeNotifier {
@@ -140,9 +176,11 @@ class TabProvider extends ChangeNotifier {
   int todo = 0;
   int tracker = 0;
   int friendPage = 0;
+  int friendButton = 0;
   int community = 0;
   int comment = 0;
   int progress = 0;
+  int progressActivity = 0;
   int profileUser = 0;
   int profileTracker = 0;
   int profileTodo = 0;
@@ -154,7 +192,7 @@ class TabProvider extends ChangeNotifier {
     pageController.animateToPage(
       selectedIndex,
       curve: Curves.linear,
-      duration: Duration(milliseconds: 600),
+      duration: Duration(milliseconds: 300),
     );
     notifyListeners();
   }
@@ -180,6 +218,9 @@ class TabProvider extends ChangeNotifier {
       case 'friendPage':
         friendPage++;
         break;
+      case 'friendButton':
+        friendButton++;
+        break;
       case 'community':
         community++;
         break;
@@ -188,6 +229,9 @@ class TabProvider extends ChangeNotifier {
         break;
       case 'progress':
         progress++;
+        break;
+      case 'progressActivity':
+        progressActivity++;
         break;
       case 'profileUser':
         profileUser++;
